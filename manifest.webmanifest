@@ -1,0 +1,12 @@
+{
+  "name": "手ざわり計画表",
+  "short_name": "計画表",
+  "description": "1週間の勉強計画を書く紙の計画表。書いた計画は手ざわり手帳の今日のページに印刷されます。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#2b251f",
+  "theme_color": "#2b251f",
+  "orientation": "portrait",
+  "lang": "ja"
+}

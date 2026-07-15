@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>手ざわり計画表</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="手ざわり計画表">
+<meta name="theme-color" content="#2b251f">
+<link rel="manifest" href="manifest.webmanifest">
+<!-- 手書き風フォント。v1はGoogle Fonts（製品化時は手ざわり手帳と同じく同梱に切り替える） -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Shippori+Mincho:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; }
+  html { background: #2b251f; }
+
+  /* 紙の色（手ざわり手帳のアイボリーと同じテーマ変数） */
+  :root {
+    --paper: #fdf8ea;
+    --paper-back-2: #faf4e6;
+    --ink-strong: #454a58;
+    --ink-text: #4a4e5c;
+    --ink-soft: #8a8d99;
+    --placeholder: rgba(122, 126, 140, 0.4);
+    --rule: rgba(122, 158, 196, 0.38);
+    --rule-strong: rgba(122, 158, 196, 0.55);
+    --margin-line: rgba(214, 130, 122, 0.55);
+    --print: #5d6f93;
+    --sun: #c4645c;
+    --sat: #5b7fa6;
+    --today-ring: rgba(200, 80, 70, 0.75);
+    --stitch: rgba(120, 100, 70, 0.4);
+    --divider-label: #b08a84;
+  }
+
+  /* 机（手ざわり手帳と同じ木目の暗色） */
+  body {
+    background:
+      radial-gradient(ellipse at 50% 30%, rgba(255, 244, 214, 0.10), transparent 60%),
+      linear-gradient(160deg, #3a322b, #2b251f 55%, #241f1a);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Klee One', cursive;
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+    color: var(--ink-text);
+  }
+
+  /* 計画表の紙（1週間で1枚。壁に貼る計画表なのでめくりではなく貼り替え） */
+  .sheet-wrap {
+    position: relative;
+    width: min(94vw, 440px);
+    height: min(86vh, 720px);
+  }
+  .sheet-wrap::before { /* 下に重なる先週までの紙の束 */
+    content: '';
+    position: absolute;
+    inset: 4px -6px -8px 2px;
+    background: var(--paper-back-2);
+    border-radius: 4px 10px 10px 4px;
+    box-shadow: 2px 3px 0 #ddd5c2, 4px 6px 0 #d2c9b4, 6px 10px 18px rgba(0, 0, 0, 0.55);
+  }
+  .sheet {
+    position: absolute;
+    inset: 0;
+    background-color: var(--paper);
+    background-image:
+      url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.38 0 0 0 0 0.32 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+    border-radius: 3px 9px 9px 3px;
+    box-shadow: inset 12px 0 22px -14px rgba(90, 70, 40, 0.5);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.18s ease, opacity 0.18s ease;
+  }
+  .sheet.slide-out-left  { transform: translateX(-28px); opacity: 0; }
+  .sheet.slide-out-right { transform: translateX(28px);  opacity: 0; }
+  .sheet::before { /* 綴じ（左端のステッチ） */
+    content: '';
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    left: 10px;
+    width: 0;
+    border-left: 2.5px dashed var(--stitch);
+    pointer-events: none;
+    z-index: 3;
+  }
+  @media (max-width: 600px) {
+    .sheet-wrap { width: 100vw; height: 100dvh; }
+    .sheet-wrap::before { display: none; }
+    .sheet { border-radius: 0; }
+  }
+
+  /* 週のヘッダー（鉛筆で書いたタイトル風） */
+  .sheet-head {
+    flex: none;
+    padding: calc(14px + env(safe-area-inset-top)) 16px 6px 34px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .sheet-head .big {
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--ink-strong);
+    letter-spacing: 1px;
+  }
+  .sheet-head .small { font-size: 12px; color: var(--ink-soft); }
+  .sheet-head .spacer { flex: 1; }
+  .week-nav {
+    display: flex;
+    gap: 6px;
+  }
+  .week-nav button {
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1;
+    padding: 7px 10px;
+    border: 1px solid rgba(110, 130, 160, 0.3);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+  .week-nav button.today-btn { font-size: 12px; }
+
+  .sheet-sub {
+    flex: none;
+    padding: 0 16px 6px 34px;
+    font-size: 11px;
+    color: var(--divider-label);
+  }
+
+  /* ---- 計画表グリッド ---- */
+  .grid-scroll {
+    flex: 1;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom));
+  }
+  table.plan {
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;
+  }
+  table.plan th, table.plan td {
+    border: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  table.plan th { border-top: none; }
+  table.plan th:first-child, table.plan td:first-child { border-left: none; }
+  table.plan tr:last-child td { border-bottom: none; }
+
+  /* 教材（列見出し） */
+  th.subject {
+    height: 34px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink-strong);
+    vertical-align: middle;
+    cursor: pointer;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    padding: 0 4px;
+  }
+  th.corner {
+    width: 46px;
+  }
+  th.add-col {
+    width: 40px;
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--ink-soft);
+    vertical-align: middle;
+    cursor: pointer;
+  }
+
+  /* 日付（行見出し）。左端＝手帳の赤線の内側の余白のイメージ */
+  td.day-label {
+    width: 46px;
+    padding: 6px 3px 0 0;
+    text-align: center;
+    font-size: 11px;
+    color: var(--ink-soft);
+    position: relative;
+  }
+  td.day-label .date-num {
+    display: block;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--ink-strong);
+    line-height: 1.1;
+  }
+  td.day-label.dow-sun .date-num, td.day-label.dow-sun { color: var(--sun); }
+  td.day-label.dow-sat .date-num, td.day-label.dow-sat { color: var(--sat); }
+  /* 今日＝赤鉛筆の丸（手ざわり手帳と同じ約束） */
+  td.day-label.is-today::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-3deg);
+    width: 34px;
+    height: 34px;
+    border: 2px solid var(--today-ring);
+    border-radius: 50% 46% 52% 48% / 48% 52% 46% 52%;
+    pointer-events: none;
+  }
+
+  /* 計画セル */
+  td.cell {
+    height: 60px;
+    padding: 4px 5px;
+    cursor: pointer;
+    position: relative;
+  }
+  td.cell .cell-text {
+    font-size: 13px;
+    line-height: 1.35;
+    color: var(--ink-text);
+    word-break: break-word;
+    white-space: pre-wrap;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+  }
+  /* できた＝赤鉛筆の○（丸付け） */
+  td.cell.done::after {
+    content: '';
+    position: absolute;
+    inset: 5px 9px 7px 9px;
+    border: 2.5px solid var(--today-ring);
+    border-radius: 48% 52% 46% 54% / 54% 46% 52% 48%;
+    transform: rotate(-4deg);
+    pointer-events: none;
+  }
+  td.cell.done .cell-text { color: var(--ink-soft); }
+
+  /* はじめて（教材ゼロ）の案内 */
+  .empty-note {
+    padding: 40px 30px 0 44px;
+    font-size: 15px;
+    line-height: 2;
+    color: var(--ink-soft);
+  }
+  .empty-note b { color: var(--ink-strong); font-weight: 600; }
+
+  /* 保存の合図（手ざわり手帳と同じ） */
+  .save-note {
+    position: fixed;
+    bottom: calc(14px + env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    color: #d8cdb4;
+    opacity: 0;
+    transition: opacity 0.25s;
+    pointer-events: none;
+    z-index: 30;
+  }
+  .save-note.show { opacity: 1; }
+
+  /* ---- 書くところ（モーダル。紙のカード） ---- */
+  .modal-back {
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 16, 12, 0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    padding: 18px;
+  }
+  .modal-back.show { display: flex; }
+  .modal-card {
+    width: min(92vw, 360px);
+    background: var(--paper);
+    background-image:
+      url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.38 0 0 0 0 0.32 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+    border-radius: 8px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+    padding: 16px 16px 14px;
+  }
+  .modal-card h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink-strong);
+    margin-bottom: 10px;
+  }
+  .modal-card h2 .sub { font-size: 12px; font-weight: 400; color: var(--ink-soft); margin-left: 6px; }
+  .modal-card textarea, .modal-card input[type="text"] {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid var(--rule-strong);
+    background: transparent;
+    outline: none;
+    font-family: inherit;
+    font-size: 16px;
+    line-height: 28px;
+    color: var(--ink-text);
+    caret-color: var(--ink-text);
+    resize: none;
+    /* 罫線つきの書き込み欄 */
+    background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 27px, var(--rule) 27px, var(--rule) 28px);
+  }
+  .modal-card textarea { height: 112px; border-bottom: none; }
+  .modal-card ::placeholder { color: var(--placeholder); }
+  .done-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    font-size: 14px;
+    color: var(--ink-text);
+    cursor: pointer;
+    width: fit-content;
+  }
+  .done-toggle .ring {
+    width: 22px;
+    height: 22px;
+    border: 2px solid rgba(110, 130, 160, 0.4);
+    border-radius: 50%;
+    position: relative;
+  }
+  .done-toggle.on .ring {
+    border-color: transparent;
+  }
+  .done-toggle.on .ring::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border: 2.5px solid var(--today-ring);
+    border-radius: 48% 52% 46% 54% / 54% 46% 52% 48%;
+    transform: rotate(-4deg);
+  }
+  .modal-btns {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .modal-btns button {
+    font-family: inherit;
+    font-size: 14px;
+    padding: 9px 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(110, 130, 160, 0.3);
+    background: transparent;
+    color: var(--ink-text);
+    cursor: pointer;
+  }
+  .modal-btns button.primary {
+    background: var(--ink-strong);
+    border-color: var(--ink-strong);
+    color: var(--paper);
+  }
+  .modal-btns button.danger { color: var(--sun); border-color: rgba(196, 100, 92, 0.4); }
+  .modal-btns .spacer { flex: 1; }
+</style>
+</head>
+<body>
+
+<div class="sheet-wrap">
+  <div class="sheet" id="sheet">
+    <div class="sheet-head">
+      <span class="big" id="weekRange"></span>
+      <span class="small" id="weekYear"></span>
+      <span class="spacer"></span>
+      <div class="week-nav">
+        <button id="prevWeek" aria-label="前の週">◀</button>
+        <button id="todayBtn" class="today-btn">今週</button>
+        <button id="nextWeek" aria-label="次の週">▶</button>
+      </div>
+    </div>
+    <div class="sheet-sub">勉強の計画表　—　書いた計画は、手ざわり手帳の今日のページに印刷されます</div>
+    <div class="grid-scroll" id="gridScroll"></div>
+  </div>
+</div>
+
+<div class="save-note" id="saveNote">とじた（ほぞんずみ）</div>
+
+<!-- セルの書き込みモーダル -->
+<div class="modal-back" id="cellModal">
+  <div class="modal-card">
+    <h2 id="cellModalTitle"></h2>
+    <textarea id="cellText" placeholder="やることを書く（例: 長文2ページ）" maxlength="200"></textarea>
+    <div class="done-toggle" id="doneToggle">
+      <span class="ring"></span>
+      <span>できた（○をつける）</span>
+    </div>
+    <div class="modal-btns">
+      <button class="danger" id="cellClear">けす</button>
+      <span class="spacer"></span>
+      <button id="cellCancel">とじる</button>
+      <button class="primary" id="cellSave">書きこむ</button>
+    </div>
+  </div>
+</div>
+
+<!-- 教材の追加・改名モーダル -->
+<div class="modal-back" id="subjectModal">
+  <div class="modal-card">
+    <h2 id="subjectModalTitle">教材をふやす</h2>
+    <input type="text" id="subjectName" placeholder="教材や科目の名前（例: 英語）" maxlength="20">
+    <div class="modal-btns">
+      <button class="danger" id="subjectDelete" style="display:none">この列をけす</button>
+      <span class="spacer"></span>
+      <button id="subjectCancel">とじる</button>
+      <button class="primary" id="subjectSave">書きこむ</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---- 日付ユーティリティ ----
+  var DOW = ['日', '月', '火', '水', '木', '金', '土'];
+  function toISO(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function fromISO(iso) {
+    var p = iso.split('-');
+    return new Date(+p[0], +p[1] - 1, +p[2]);
+  }
+  function addDays(iso, n) {
+    var d = fromISO(iso);
+    d.setDate(d.getDate() + n);
+    return toISO(d);
+  }
+  function warekiOf(d) {
+    var y = d.getFullYear() - 2018; // 令和のみ対応（このアプリの守備範囲では十分）
+    return '令和' + (y === 1 ? '元' : y) + '年';
+  }
+
+  // 週の始まり: 自分の設定pk:weekStartがなければ手ざわり手帳のpt:weekStartに従う（同じオリジンで共有）
+  function weekStartDow() {
+    var v = localStorage.getItem('pk:weekStart') || localStorage.getItem('pt:weekStart');
+    var n = parseInt(v, 10);
+    return (n >= 0 && n <= 6) ? n : 1; // 既定は月曜
+  }
+  function weekStartOf(iso) {
+    var d = fromISO(iso);
+    var diff = (d.getDay() - weekStartDow() + 7) % 7;
+    d.setDate(d.getDate() - diff);
+    return toISO(d);
+  }
+
+  // ---- ストレージ ----
+  // pk:subjects           = [{id, name}]                     教材の列
+  // pk:cell:ISO:subjectId = "やることのテキスト"               計画の中身（持ち主はこのアプリ）
+  // pk:feed:ISO           = {v:1, updated, items:[...]}       手ざわり手帳への「印刷」フィード。
+  //                         done（○）の持ち主はフィード側。手帳はdoneの書き換えだけ許される
+  function readSubjects() {
+    try {
+      var a = JSON.parse(localStorage.getItem('pk:subjects') || '[]');
+      return Array.isArray(a) ? a : [];
+    } catch (e) { return []; }
+  }
+  function writeSubjects(arr) {
+    localStorage.setItem('pk:subjects', JSON.stringify(arr));
+  }
+  function keyCell(iso, sid) { return 'pk:cell:' + iso + ':' + sid; }
+  function readCell(iso, sid) { return localStorage.getItem(keyCell(iso, sid)) || ''; }
+  function writeCell(iso, sid, text) {
+    if (text) localStorage.setItem(keyCell(iso, sid), text);
+    else localStorage.removeItem(keyCell(iso, sid));
+    rebuildFeed(iso);
+  }
+  function keyFeed(iso) { return 'pk:feed:' + iso; }
+  function readFeed(iso) {
+    try {
+      var f = JSON.parse(localStorage.getItem(keyFeed(iso)) || 'null');
+      return (f && f.v === 1 && Array.isArray(f.items)) ? f : null;
+    } catch (e) { return null; }
+  }
+  function feedDone(iso, sid) {
+    var f = readFeed(iso);
+    if (!f) return false;
+    for (var i = 0; i < f.items.length; i++) if (f.items[i].id === sid) return !!f.items[i].done;
+    return false;
+  }
+  // セルの中身からフィードを組み立て直す。○（done）は同じ教材のぶんを引き継ぐ
+  function rebuildFeed(iso) {
+    var old = readFeed(iso);
+    var oldDone = {};
+    if (old) old.items.forEach(function (it) { oldDone[it.id] = !!it.done; });
+    var items = [];
+    readSubjects().forEach(function (s) {
+      var t = readCell(iso, s.id);
+      if (!t) return;
+      items.push({ id: s.id, subject: s.name, text: t, done: !!oldDone[s.id] });
+    });
+    if (items.length) {
+      localStorage.setItem(keyFeed(iso), JSON.stringify({ v: 1, updated: new Date().toISOString(), items: items }));
+    } else {
+      localStorage.removeItem(keyFeed(iso));
+    }
+  }
+  function setDone(iso, sid, done) {
+    var f = readFeed(iso);
+    if (!f) return;
+    f.items.forEach(function (it) { if (it.id === sid) it.done = !!done; });
+    f.updated = new Date().toISOString();
+    localStorage.setItem(keyFeed(iso), JSON.stringify(f));
+  }
+  // 教材の改名・削除をすべての日のフィード/セルへ反映する
+  function forEachStoredKey(prefix, fn) {
+    var keys = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.indexOf(prefix) === 0) keys.push(k);
+    }
+    keys.forEach(fn);
+  }
+  function renameSubjectEverywhere(sid, newName) {
+    forEachStoredKey('pk:feed:', function (k) {
+      var iso = k.slice('pk:feed:'.length);
+      var f = readFeed(iso);
+      if (!f) return;
+      var hit = false;
+      f.items.forEach(function (it) { if (it.id === sid) { it.subject = newName; hit = true; } });
+      if (hit) localStorage.setItem(k, JSON.stringify(f));
+    });
+  }
+  function deleteSubjectEverywhere(sid) {
+    var feedDays = {};
+    forEachStoredKey('pk:cell:', function (k) {
+      // pk:cell:YYYY-MM-DD:sid
+      var rest = k.slice('pk:cell:'.length);
+      var iso = rest.slice(0, 10);
+      var owner = rest.slice(11);
+      if (owner === sid) { localStorage.removeItem(k); feedDays[iso] = true; }
+    });
+    Object.keys(feedDays).forEach(rebuildFeed);
+  }
+
+  // ---- 保存の合図 ----
+  var saveNoteTimer = 0;
+  function flashSaved() {
+    var el = document.getElementById('saveNote');
+    el.classList.add('show');
+    clearTimeout(saveNoteTimer);
+    saveNoteTimer = setTimeout(function () { el.classList.remove('show'); }, 900);
+  }
+
+  // ---- 描画 ----
+  var currentWeek = weekStartOf(toISO(new Date()));
+
+  function render() {
+    var start = fromISO(currentWeek);
+    var endIso = addDays(currentWeek, 6);
+    var end = fromISO(endIso);
+    document.getElementById('weekRange').textContent =
+      (start.getMonth() + 1) + '/' + start.getDate() + '〜' +
+      (end.getMonth() !== start.getMonth() ? (end.getMonth() + 1) + '/' : '') + end.getDate();
+    document.getElementById('weekYear').textContent = warekiOf(start) + ' ' + start.getFullYear();
+
+    var scroll = document.getElementById('gridScroll');
+    scroll.innerHTML = '';
+    var subjects = readSubjects();
+
+    if (!subjects.length) {
+      var note = document.createElement('div');
+      note.className = 'empty-note';
+      note.innerHTML = 'まだ何もありません。<br><b>右上の「＋」</b>から教材や科目をふやして、<br>1週間の計画を書きこもう。<br><br>書いた計画は<b>手ざわり手帳</b>の<br>その日のタスク欄に印刷されます。';
+      var table0 = buildTable([], null);
+      scroll.appendChild(table0);
+      scroll.appendChild(note);
+      return;
+    }
+    scroll.appendChild(buildTable(subjects, toISO(new Date())));
+  }
+
+  function buildTable(subjects, todayIso) {
+    var table = document.createElement('table');
+    table.className = 'plan';
+
+    // 見出し行: 空きマス + 教材列 + ＋
+    var thead = document.createElement('tr');
+    var corner = document.createElement('th');
+    corner.className = 'corner';
+    thead.appendChild(corner);
+    subjects.forEach(function (s) {
+      var th = document.createElement('th');
+      th.className = 'subject';
+      th.textContent = s.name;
+      th.addEventListener('click', function () { openSubjectModal(s); });
+      thead.appendChild(th);
+    });
+    var addTh = document.createElement('th');
+    addTh.className = 'add-col';
+    addTh.textContent = '＋';
+    addTh.setAttribute('aria-label', '教材をふやす');
+    addTh.addEventListener('click', function () { openSubjectModal(null); });
+    thead.appendChild(addTh);
+    table.appendChild(thead);
+
+    // 日の行 ×7
+    for (var i = 0; i < 7; i++) {
+      var iso = addDays(currentWeek, i);
+      var d = fromISO(iso);
+      var tr = document.createElement('tr');
+
+      var label = document.createElement('td');
+      label.className = 'day-label' +
+        (d.getDay() === 0 ? ' dow-sun' : d.getDay() === 6 ? ' dow-sat' : '') +
+        (iso === todayIso ? ' is-today' : '');
+      label.innerHTML = '<span class="date-num">' + d.getDate() + '</span>' + DOW[d.getDay()];
+      tr.appendChild(label);
+
+      subjects.forEach(function (s) {
+        var td = document.createElement('td');
+        td.className = 'cell';
+        var text = readCell(iso, s.id);
+        if (text) {
+          var span = document.createElement('span');
+          span.className = 'cell-text';
+          span.textContent = text;
+          td.appendChild(span);
+          if (feedDone(iso, s.id)) td.classList.add('done');
+        }
+        (function (iso2, s2) {
+          td.addEventListener('click', function () { openCellModal(iso2, s2); });
+        })(iso, s);
+        tr.appendChild(td);
+      });
+
+      var filler = document.createElement('td'); // ＋列の下の空きマス
+      filler.className = 'cell';
+      filler.style.cursor = 'default';
+      tr.appendChild(filler);
+      table.appendChild(tr);
+    }
+    return table;
+  }
+
+  // ---- セルの書き込みモーダル ----
+  var editing = null; // {iso, subject}
+  var doneOn = false;
+  var cellModal = document.getElementById('cellModal');
+  var doneToggle = document.getElementById('doneToggle');
+
+  function openCellModal(iso, subject) {
+    editing = { iso: iso, subject: subject };
+    var d = fromISO(iso);
+    document.getElementById('cellModalTitle').innerHTML =
+      subject.name + '<span class="sub">' + (d.getMonth() + 1) + '月' + d.getDate() + '日（' + DOW[d.getDay()] + '）</span>';
+    document.getElementById('cellText').value = readCell(iso, subject.id);
+    doneOn = feedDone(iso, subject.id);
+    doneToggle.classList.toggle('on', doneOn);
+    cellModal.classList.add('show');
+    if (!readCell(iso, subject.id)) document.getElementById('cellText').focus();
+  }
+  function closeCellModal() {
+    cellModal.classList.remove('show');
+    editing = null;
+  }
+  doneToggle.addEventListener('click', function () {
+    doneOn = !doneOn;
+    doneToggle.classList.toggle('on', doneOn);
+  });
+  document.getElementById('cellSave').addEventListener('click', function () {
+    if (!editing) return;
+    var text = document.getElementById('cellText').value.trim();
+    writeCell(editing.iso, editing.subject.id, text);
+    if (text) setDone(editing.iso, editing.subject.id, doneOn);
+    closeCellModal();
+    render();
+    flashSaved();
+  });
+  document.getElementById('cellClear').addEventListener('click', function () {
+    if (!editing) return;
+    writeCell(editing.iso, editing.subject.id, '');
+    closeCellModal();
+    render();
+    flashSaved();
+  });
+  document.getElementById('cellCancel').addEventListener('click', closeCellModal);
+  cellModal.addEventListener('click', function (e) { if (e.target === cellModal) closeCellModal(); });
+
+  // ---- 教材モーダル ----
+  var editingSubject = null; // null=新規
+  var subjectModal = document.getElementById('subjectModal');
+
+  function openSubjectModal(subject) {
+    editingSubject = subject;
+    document.getElementById('subjectModalTitle').textContent = subject ? '教材の名前をかえる' : '教材をふやす';
+    document.getElementById('subjectName').value = subject ? subject.name : '';
+    document.getElementById('subjectDelete').style.display = subject ? '' : 'none';
+    subjectModal.classList.add('show');
+    if (!subject) document.getElementById('subjectName').focus();
+  }
+  function closeSubjectModal() {
+    subjectModal.classList.remove('show');
+    editingSubject = null;
+  }
+  document.getElementById('subjectSave').addEventListener('click', function () {
+    var name = document.getElementById('subjectName').value.trim();
+    if (!name) { closeSubjectModal(); return; }
+    var subjects = readSubjects();
+    if (editingSubject) {
+      subjects.forEach(function (s) { if (s.id === editingSubject.id) s.name = name; });
+      writeSubjects(subjects);
+      renameSubjectEverywhere(editingSubject.id, name);
+    } else {
+      subjects.push({ id: 's' + Date.now().toString(36), name: name });
+      writeSubjects(subjects);
+    }
+    closeSubjectModal();
+    render();
+    flashSaved();
+  });
+  document.getElementById('subjectDelete').addEventListener('click', function () {
+    if (!editingSubject) return;
+    if (!confirm('「' + editingSubject.name + '」の列と、書いた計画をぜんぶ消します。よろしいですか？')) return;
+    writeSubjects(readSubjects().filter(function (s) { return s.id !== editingSubject.id; }));
+    deleteSubjectEverywhere(editingSubject.id);
+    closeSubjectModal();
+    render();
+    flashSaved();
+  });
+  document.getElementById('subjectCancel').addEventListener('click', closeSubjectModal);
+  subjectModal.addEventListener('click', function (e) { if (e.target === subjectModal) closeSubjectModal(); });
+
+  // ---- 週送り（貼り替えの小さなアニメーション） ----
+  function goWeek(delta) {
+    var sheet = document.getElementById('sheet');
+    sheet.classList.add(delta > 0 ? 'slide-out-left' : 'slide-out-right');
+    setTimeout(function () {
+      currentWeek = delta === 0 ? weekStartOf(toISO(new Date())) : addDays(currentWeek, delta * 7);
+      render();
+      sheet.classList.remove('slide-out-left', 'slide-out-right');
+    }, 180);
+  }
+  document.getElementById('prevWeek').addEventListener('click', function () { goWeek(-1); });
+  document.getElementById('nextWeek').addEventListener('click', function () { goWeek(1); });
+  document.getElementById('todayBtn').addEventListener('click', function () { goWeek(0); });
+
+  // ---- 手ざわり手帳がつけた○を取りこむ ----
+  // 別タブ/別ウィンドウの手帳がpk:feed:を書き換えたら描き直す
+  window.addEventListener('storage', function (e) {
+    if (e.key && e.key.indexOf('pk:feed:') === 0) render();
+  });
+  // アプリを切り替えて戻ってきたときも描き直す（iPhoneはstorageイベントが飛ばない場面がある）
+  var lastForeground = 0;
+  function foregroundRefresh() {
+    if (Date.now() - lastForeground < 2000) return;
+    lastForeground = Date.now();
+    render();
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') foregroundRefresh();
+  });
+  window.addEventListener('focus', foregroundRefresh);
+  window.addEventListener('pageshow', foregroundRefresh);
+
+  render();
+
+  // テスト用フック（アプリ動作には不使用）
+  window._pk = { rebuildFeed: rebuildFeed, readFeed: readFeed, weekStartOf: weekStartOf };
+
+  // オフライン対応（Service Worker）。file://で開いたときは黙って諦める
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    navigator.serviceWorker.register('sw.js').catch(function () { /* 未対応環境 */ });
+  }
+})();
+</script>
+</body>
+</html>

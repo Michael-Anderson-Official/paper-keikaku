@@ -1,0 +1,58 @@
+// 手ざわり計画表 Service Worker
+// - アプリ本体（シェル）は事前キャッシュ。ページはネット優先→落ちたらキャッシュ（更新がすぐ届く）
+// - フォント（Google Fonts）はキャッシュ優先で使い回し（表示した字からオフライン化）
+var CACHE = 'tezawari-keikaku-v1';
+var SHELL = [
+  './',
+  './manifest.webmanifest'
+];
+
+self.addEventListener('install', function (ev) {
+  ev.waitUntil(
+    caches.open(CACHE).then(function (cache) { return cache.addAll(SHELL); })
+      .then(function () { return self.skipWaiting(); })
+  );
+});
+
+self.addEventListener('activate', function (ev) {
+  ev.waitUntil(
+    caches.keys().then(function (keys) {
+      return Promise.all(keys.map(function (k) { if (k !== CACHE) return caches.delete(k); }));
+    }).then(function () { return self.clients.claim(); })
+  );
+});
+
+self.addEventListener('fetch', function (ev) {
+  var req = ev.request;
+  if (req.method !== 'GET') return;
+  var url = new URL(req.url);
+
+  if (req.mode === 'navigate') {
+    ev.respondWith(
+      fetch(req).then(function (res) {
+        var copy = res.clone();
+        caches.open(CACHE).then(function (cache) { cache.put('./', copy); });
+        return res;
+      }).catch(function () { return caches.match('./'); })
+    );
+    return;
+  }
+
+  var cacheable = url.origin === location.origin ||
+    url.hostname === 'fonts.googleapis.com' ||
+    url.hostname === 'fonts.gstatic.com';
+  if (!cacheable) return;
+
+  ev.respondWith(
+    caches.match(req).then(function (hit) {
+      if (hit) return hit;
+      return fetch(req).then(function (res) {
+        if (res.ok || res.type === 'opaque') {
+          var copy = res.clone();
+          caches.open(CACHE).then(function (cache) { cache.put(req, copy); });
+        }
+        return res;
+      });
+    })
+  );
+});
