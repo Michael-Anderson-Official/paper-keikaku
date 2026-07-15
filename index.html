@@ -21,7 +21,9 @@
   /* 紙の色（手ざわり手帳のアイボリーと同じテーマ変数） */
   :root {
     --paper: #fdf8ea;
+    --paper-back-1: #f4eeda;
     --paper-back-2: #faf4e6;
+    --paper-back-3: #ebe4d0;
     --ink-strong: #454a58;
     --ink-text: #4a4e5c;
     --ink-soft: #8a8d99;
@@ -30,6 +32,7 @@
     --rule-strong: rgba(122, 158, 196, 0.55);
     --margin-line: rgba(214, 130, 122, 0.55);
     --print: #5d6f93;
+    --print-soft: #8291b0;
     --sun: #c4645c;
     --sat: #5b7fa6;
     --today-ring: rgba(200, 80, 70, 0.75);
@@ -37,7 +40,7 @@
     --divider-label: #b08a84;
   }
 
-  /* 机（手ざわり手帳と同じ木目の暗色） */
+  /* 机（手ざわり手帳と同じ木目の暗色。紙を引き立てる） */
   body {
     background:
       radial-gradient(ellipse at 50% 30%, rgba(255, 244, 214, 0.10), transparent 60%),
@@ -53,13 +56,13 @@
     color: var(--ink-text);
   }
 
-  /* 計画表の紙（1週間で1枚。壁に貼る計画表なのでめくりではなく貼り替え） */
-  .sheet-wrap {
+  /* ノート本体（手ざわり手帳と同じ体裁。計画表は1週間で1ページ） */
+  .book {
     position: relative;
-    width: min(94vw, 440px);
-    height: min(86vh, 720px);
+    width: min(92vw, 440px);
+    height: min(84vh, 700px);
   }
-  .sheet-wrap::before { /* 下に重なる先週までの紙の束 */
+  .book::before { /* 下に重なる「これまでの週」の束 */
     content: '';
     position: absolute;
     inset: 4px -6px -8px 2px;
@@ -67,7 +70,8 @@
     border-radius: 4px 10px 10px 4px;
     box-shadow: 2px 3px 0 #ddd5c2, 4px 6px 0 #d2c9b4, 6px 10px 18px rgba(0, 0, 0, 0.55);
   }
-  .sheet {
+  /* 紙面（手帳の月・週ページと同じ無地。粒状ノイズのみ） */
+  .paper {
     position: absolute;
     inset: 0;
     background-color: var(--paper);
@@ -76,13 +80,11 @@
     border-radius: 3px 9px 9px 3px;
     box-shadow: inset 12px 0 22px -14px rgba(90, 70, 40, 0.5);
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
     transition: transform 0.18s ease, opacity 0.18s ease;
   }
-  .sheet.slide-out-left  { transform: translateX(-28px); opacity: 0; }
-  .sheet.slide-out-right { transform: translateX(28px);  opacity: 0; }
-  .sheet::before { /* 綴じ（左端のステッチ） */
+  .paper.slide-out-left  { transform: translateX(-26px); opacity: 0; }
+  .paper.slide-out-right { transform: translateX(26px);  opacity: 0; }
+  .paper::before { /* 綴じ（左端のステッチ） */
     content: '';
     position: absolute;
     top: 10px;
@@ -93,76 +95,52 @@
     pointer-events: none;
     z-index: 3;
   }
-  @media (max-width: 600px) {
-    .sheet-wrap { width: 100vw; height: 100dvh; }
-    .sheet-wrap::before { display: none; }
-    .sheet { border-radius: 0; }
-  }
 
-  /* 週のヘッダー（鉛筆で書いたタイトル風） */
-  .sheet-head {
-    flex: none;
-    padding: calc(14px + env(safe-area-inset-top)) 16px 6px 34px;
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-  }
-  .sheet-head .big {
-    font-size: 26px;
-    font-weight: 600;
+  /* 週のヘッダー（手帳の日付ヘッダーと同じ体裁） */
+  .page-date {
+    position: absolute;
+    top: 22px;
+    left: 34px;
+    right: 18px;
     color: var(--ink-strong);
-    letter-spacing: 1px;
+    line-height: 1.15;
+    pointer-events: none;
   }
-  .sheet-head .small { font-size: 12px; color: var(--ink-soft); }
-  .sheet-head .spacer { flex: 1; }
-  .week-nav {
-    display: flex;
-    gap: 6px;
-  }
-  .week-nav button {
-    font-family: inherit;
-    font-size: 15px;
-    line-height: 1;
-    padding: 7px 10px;
-    border: 1px solid rgba(110, 130, 160, 0.3);
-    border-radius: 6px;
-    background: transparent;
-    color: var(--ink-soft);
-    cursor: pointer;
-  }
-  .week-nav button.today-btn { font-size: 12px; }
+  .page-date .big { font-size: 30px; font-weight: 600; letter-spacing: 0.04em; }
+  .page-date .small { display: block; font-size: 13px; color: var(--ink-soft); margin-top: 2px; }
 
-  .sheet-sub {
-    flex: none;
-    padding: 0 16px 6px 34px;
+  /* 案内文（ヘッダーの下・手帳のわき役の色） */
+  .plan-sub {
+    position: absolute;
+    top: 84px;
+    left: 34px;
+    right: 18px;
     font-size: 11px;
+    line-height: 1.5;
     color: var(--divider-label);
+    pointer-events: none;
   }
 
   /* ---- 計画表グリッド ---- */
   .grid-scroll {
-    flex: 1;
+    position: absolute;
+    top: 118px;
+    left: 0;
+    right: 0;
+    bottom: 0;
     overflow: auto;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: calc(8px + env(safe-area-inset-bottom));
+    padding: 0 12px 14px 30px;
   }
-  table.plan {
-    border-collapse: collapse;
-    width: 100%;
-    table-layout: fixed;
-  }
-  table.plan th, table.plan td {
-    border: 1px solid var(--rule);
-    vertical-align: top;
-  }
+  table.plan { border-collapse: collapse; width: 100%; table-layout: fixed; }
+  table.plan th, table.plan td { border: 1px solid var(--rule); vertical-align: top; }
   table.plan th { border-top: none; }
   table.plan th:first-child, table.plan td:first-child { border-left: none; }
   table.plan tr:last-child td { border-bottom: none; }
 
-  /* 教材（列見出し） */
   th.subject {
-    height: 34px;
-    font-size: 14px;
+    height: 36px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--ink-strong);
     vertical-align: middle;
@@ -172,21 +150,18 @@
     text-overflow: ellipsis;
     padding: 0 4px;
   }
-  th.corner {
-    width: 46px;
-  }
+  th.corner { width: 42px; }
   th.add-col {
-    width: 40px;
-    font-size: 18px;
+    width: 38px;
+    font-size: 19px;
     font-weight: 400;
     color: var(--ink-soft);
     vertical-align: middle;
     cursor: pointer;
   }
 
-  /* 日付（行見出し）。左端＝手帳の赤線の内側の余白のイメージ */
   td.day-label {
-    width: 46px;
+    width: 42px;
     padding: 6px 3px 0 0;
     text-align: center;
     font-size: 11px;
@@ -195,14 +170,14 @@
   }
   td.day-label .date-num {
     display: block;
-    font-size: 17px;
+    font-size: 18px;
     font-weight: 600;
     color: var(--ink-strong);
     line-height: 1.1;
   }
-  td.day-label.dow-sun .date-num, td.day-label.dow-sun { color: var(--sun); }
-  td.day-label.dow-sat .date-num, td.day-label.dow-sat { color: var(--sat); }
-  /* 今日＝赤鉛筆の丸（手ざわり手帳と同じ約束） */
+  td.day-label.dow-sun, td.day-label.dow-sun .date-num { color: var(--sun); }
+  td.day-label.dow-sat, td.day-label.dow-sat .date-num { color: var(--sat); }
+  /* 今日＝赤鉛筆の丸（手帳と同じ約束） */
   td.day-label.is-today::after {
     content: '';
     position: absolute;
@@ -216,16 +191,12 @@
     pointer-events: none;
   }
 
-  /* 計画セル */
-  td.cell {
-    height: 60px;
-    padding: 4px 5px;
-    cursor: pointer;
-    position: relative;
-  }
+  td.cell { height: 62px; padding: 5px 6px; cursor: pointer; position: relative; }
   td.cell .cell-text {
-    font-size: 13px;
-    line-height: 1.35;
+    /* 書いた計画は「自分の字」＝書く字（明朝）で。手帳の書き込みと字を揃える */
+    font-family: 'Shippori Mincho', 'Klee One', serif;
+    font-size: 13.5px;
+    line-height: 1.4;
     color: var(--ink-text);
     word-break: break-word;
     white-space: pre-wrap;
@@ -234,7 +205,7 @@
     -webkit-line-clamp: 3;
     overflow: hidden;
   }
-  /* できた＝赤鉛筆の○（丸付け） */
+  /* できた＝赤鉛筆の○ */
   td.cell.done::after {
     content: '';
     position: absolute;
@@ -246,16 +217,211 @@
   }
   td.cell.done .cell-text { color: var(--ink-soft); }
 
-  /* はじめて（教材ゼロ）の案内 */
   .empty-note {
-    padding: 40px 30px 0 44px;
+    padding: 34px 20px 0 14px;
     font-size: 15px;
     line-height: 2;
     color: var(--ink-soft);
   }
   .empty-note b { color: var(--ink-strong); font-weight: 600; }
 
-  /* 保存の合図（手ざわり手帳と同じ） */
+  /* ---- 下部ツールバー（手ざわり手帳と同じ） ---- */
+  .toolbar { display: flex; gap: 6px; margin-top: 14px; align-items: center; }
+  .toolbar button {
+    font-family: inherit;
+    font-size: 13.5px;
+    color: #4a4030;
+    background: linear-gradient(180deg, #f3ecd9, #e7dfc8);
+    border: 1px solid rgba(120, 100, 60, 0.35);
+    border-radius: 6px;
+    padding: 7px 11px;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+    cursor: pointer;
+  }
+  .toolbar button:active { transform: translateY(1px); }
+
+  /* ---- 縁なし（埋め込み）モード。スマホは画面のふちまで紙（手帳と同じ） ---- */
+  @media (max-width: 600px) {
+    html, body { background: var(--paper); }
+    .book { position: fixed; inset: 0; width: auto; height: auto; }
+    .book::before { display: none; }
+    .paper { border-radius: 0; }
+    .page-date { top: calc(22px + env(safe-area-inset-top, 0px)); }
+    .plan-sub { top: calc(84px + env(safe-area-inset-top, 0px)); }
+    .grid-scroll {
+      top: calc(118px + env(safe-area-inset-top, 0px));
+      bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+    }
+    .toolbar {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      margin: 0;
+      justify-content: center;
+      padding: 8px 8px calc(10px + env(safe-area-inset-bottom, 0px));
+      z-index: 50;
+    }
+    .toolbar button {
+      background: linear-gradient(180deg, rgba(243, 236, 217, 0.92), rgba(231, 223, 200, 0.92));
+      box-shadow: 0 2px 6px rgba(60, 45, 25, 0.25);
+    }
+  }
+
+  /* ---- 右上のメニュー（手帳と同じ） ---- */
+  .menu-btn {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 10px);
+    right: 10px;
+    z-index: 60;
+    width: 40px; height: 40px;
+    border: 1px solid rgba(120, 100, 60, 0.35);
+    border-radius: 10px;
+    background: linear-gradient(180deg, rgba(243, 236, 217, 0.92), rgba(231, 223, 200, 0.92));
+    color: #4a4030;
+    font-size: 18px;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(60, 45, 25, 0.25);
+  }
+  .menu-panel {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 54px);
+    right: 10px;
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    min-width: 190px;
+    background: #f8f3e6;
+    border: 1px solid rgba(120, 100, 60, 0.35);
+    border-radius: 10px;
+    box-shadow: 0 6px 18px rgba(40, 30, 15, 0.35);
+    overflow: hidden;
+  }
+  .menu-panel button {
+    font-family: inherit;
+    font-size: 15px;
+    color: #4a4030;
+    background: transparent;
+    border: 0;
+    padding: 12px 16px;
+    text-align: left;
+    cursor: pointer;
+  }
+  .menu-panel button:active { background: rgba(120, 100, 60, 0.12); }
+
+  /* ---- 設定・モーダル（手帳と同じ紙のカード） ---- */
+  .settings-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    background: rgba(35, 28, 20, 0.45);
+    display: flex;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: calc(24px + env(safe-area-inset-top, 0px)) 24px calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+  .settings-card {
+    margin: auto;
+    width: 100%;
+    max-width: 340px;
+    background: #f8f3e6;
+    border: 1px solid rgba(120, 100, 60, 0.35);
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(30, 22, 10, 0.5);
+    padding: 18px 18px 16px;
+    color: #454a58;
+  }
+  .settings-card h2 { font-size: 20px; font-weight: 600; margin-bottom: 12px; }
+  .settings-card h2 .sub { font-size: 13px; font-weight: 400; color: var(--ink-soft); margin-left: 8px; }
+  .settings-label { font-size: 14px; color: #6b6046; margin-bottom: 8px; }
+  .settings-note { font-size: 12px; color: #8a8d99; margin-top: 10px; }
+  .week-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .week-chips button {
+    width: 40px; height: 40px;
+    font-family: inherit;
+    font-size: 15px;
+    color: #4a4e5c;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(120, 100, 60, 0.3);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  .week-chips button.wide { width: auto; padding: 0 16px; border-radius: 20px; }
+  .week-chips button.active {
+    background: #5a7d5a;
+    border-color: #4d6b4d;
+    color: #fff;
+    font-weight: 600;
+  }
+  .settings-close {
+    margin-top: 14px;
+    width: 100%;
+    padding: 10px;
+    font-family: inherit;
+    font-size: 15px;
+    color: #4a4030;
+    background: linear-gradient(180deg, #f3ecd9, #e7dfc8);
+    border: 1px solid rgba(120, 100, 60, 0.35);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  /* 書き込み欄（罫線つき。手帳の書く欄と同じ字＝明朝） */
+  .write-input, .write-textarea {
+    width: 100%;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-family: 'Shippori Mincho', 'Klee One', serif;
+    font-size: 16px;
+    line-height: 28px;
+    color: var(--ink-text);
+    caret-color: var(--ink-text);
+    resize: none;
+    background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 27px, var(--rule) 27px, var(--rule) 28px);
+  }
+  .write-input { border-bottom: 1px solid var(--rule-strong); background-image: none; }
+  .write-textarea { height: 112px; }
+  .write-input::placeholder, .write-textarea::placeholder { color: var(--placeholder); }
+  /* できた○のトグル（設定内で完結する丸つけ） */
+  .done-toggle {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 14px;
+    font-size: 14px;
+    color: var(--ink-text);
+    cursor: pointer;
+    width: fit-content;
+  }
+  .done-toggle .ring {
+    width: 22px; height: 22px;
+    border: 2px solid rgba(110, 130, 160, 0.4);
+    border-radius: 50%;
+    position: relative;
+  }
+  .done-toggle.on .ring { border-color: transparent; }
+  .done-toggle.on .ring::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border: 2.5px solid var(--today-ring);
+    border-radius: 48% 52% 46% 54% / 54% 46% 52% 48%;
+    transform: rotate(-4deg);
+  }
+  .modal-btns { display: flex; gap: 8px; margin-top: 14px; align-items: center; }
+  .modal-btns .spacer { flex: 1; }
+  .modal-btns button {
+    font-family: inherit;
+    font-size: 14px;
+    padding: 9px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(120, 100, 60, 0.35);
+    background: linear-gradient(180deg, #f3ecd9, #e7dfc8);
+    color: #4a4030;
+    cursor: pointer;
+  }
+  .modal-btns button.primary { background: #5a7d5a; border-color: #4d6b4d; color: #fff; }
+  .modal-btns button.danger { color: var(--sun); }
+
+  /* 保存の合図（手帳と同じ） */
   .save-note {
     position: fixed;
     bottom: calc(14px + env(safe-area-inset-bottom));
@@ -266,136 +432,68 @@
     opacity: 0;
     transition: opacity 0.25s;
     pointer-events: none;
-    z-index: 30;
+    z-index: 80;
   }
   .save-note.show { opacity: 1; }
-
-  /* ---- 書くところ（モーダル。紙のカード） ---- */
-  .modal-back {
-    position: fixed;
-    inset: 0;
-    background: rgba(20, 16, 12, 0.55);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 20;
-    padding: 18px;
-  }
-  .modal-back.show { display: flex; }
-  .modal-card {
-    width: min(92vw, 360px);
-    background: var(--paper);
-    background-image:
-      url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.38 0 0 0 0 0.32 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
-    border-radius: 8px;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
-    padding: 16px 16px 14px;
-  }
-  .modal-card h2 {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--ink-strong);
-    margin-bottom: 10px;
-  }
-  .modal-card h2 .sub { font-size: 12px; font-weight: 400; color: var(--ink-soft); margin-left: 6px; }
-  .modal-card textarea, .modal-card input[type="text"] {
-    width: 100%;
-    border: none;
-    border-bottom: 1px solid var(--rule-strong);
-    background: transparent;
-    outline: none;
-    font-family: inherit;
-    font-size: 16px;
-    line-height: 28px;
-    color: var(--ink-text);
-    caret-color: var(--ink-text);
-    resize: none;
-    /* 罫線つきの書き込み欄 */
-    background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 27px, var(--rule) 27px, var(--rule) 28px);
-  }
-  .modal-card textarea { height: 112px; border-bottom: none; }
-  .modal-card ::placeholder { color: var(--placeholder); }
-  .done-toggle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 12px;
-    font-size: 14px;
-    color: var(--ink-text);
-    cursor: pointer;
-    width: fit-content;
-  }
-  .done-toggle .ring {
-    width: 22px;
-    height: 22px;
-    border: 2px solid rgba(110, 130, 160, 0.4);
-    border-radius: 50%;
-    position: relative;
-  }
-  .done-toggle.on .ring {
-    border-color: transparent;
-  }
-  .done-toggle.on .ring::after {
-    content: '';
-    position: absolute;
-    inset: -2px;
-    border: 2.5px solid var(--today-ring);
-    border-radius: 48% 52% 46% 54% / 54% 46% 52% 48%;
-    transform: rotate(-4deg);
-  }
-  .modal-btns {
-    display: flex;
-    gap: 8px;
-    margin-top: 14px;
-  }
-  .modal-btns button {
-    font-family: inherit;
-    font-size: 14px;
-    padding: 9px 14px;
-    border-radius: 6px;
-    border: 1px solid rgba(110, 130, 160, 0.3);
-    background: transparent;
-    color: var(--ink-text);
-    cursor: pointer;
-  }
-  .modal-btns button.primary {
-    background: var(--ink-strong);
-    border-color: var(--ink-strong);
-    color: var(--paper);
-  }
-  .modal-btns button.danger { color: var(--sun); border-color: rgba(196, 100, 92, 0.4); }
-  .modal-btns .spacer { flex: 1; }
+  @media (max-width: 600px) { .save-note { bottom: calc(80px + env(safe-area-inset-bottom)); } }
 </style>
 </head>
 <body>
 
-<div class="sheet-wrap">
-  <div class="sheet" id="sheet">
-    <div class="sheet-head">
+<div class="book" id="book">
+  <div class="paper" id="sheet">
+    <div class="page-date">
       <span class="big" id="weekRange"></span>
       <span class="small" id="weekYear"></span>
-      <span class="spacer"></span>
-      <div class="week-nav">
-        <button id="prevWeek" aria-label="前の週">◀</button>
-        <button id="todayBtn" class="today-btn">今週</button>
-        <button id="nextWeek" aria-label="次の週">▶</button>
-      </div>
     </div>
-    <div class="sheet-sub">勉強の計画表　—　書いた計画は、手ざわり手帳の今日のページに印刷されます</div>
+    <div class="plan-sub" id="planSub"></div>
     <div class="grid-scroll" id="gridScroll"></div>
   </div>
 </div>
 
-<div class="save-note" id="saveNote">とじた（ほぞんずみ）</div>
+<div class="toolbar">
+  <button id="prevWeek" type="button">◀ 前へ</button>
+  <button id="todayBtn" type="button">今週</button>
+  <button id="nextWeek" type="button">次へ ▶</button>
+</div>
 
-<!-- セルの書き込みモーダル -->
-<div class="modal-back" id="cellModal">
-  <div class="modal-card">
+<div class="save-note" id="saveNote">とじました</div>
+
+<!-- 右上のメニュー（☰）と設定（手帳と同じ） -->
+<button id="menuBtn" type="button" class="menu-btn" aria-label="メニュー">☰</button>
+<div id="menuPanel" class="menu-panel" style="display:none;">
+  <button id="menuSettings" type="button">⚙ 設定</button>
+  <button id="menuTecho" type="button">📖 手ざわり手帳をひらく</button>
+</div>
+
+<div id="settingsModal" class="settings-modal" style="display:none;">
+  <div class="settings-card">
+    <h2 id="stTitle">設定</h2>
+    <p class="settings-label">ことばづかい</p>
+    <div id="wordingChips" class="week-chips"></div>
+    <p class="settings-note" id="stWordingNote"></p>
+    <p class="settings-label" id="stWeekStartLabel" style="margin-top:16px;">週の始まり</p>
+    <div id="weekStartChips" class="week-chips"></div>
+    <p class="settings-note" id="stWeekStartNote"></p>
+    <p class="settings-label" id="stBackupLabel" style="margin-top:16px;">データのひかえ</p>
+    <p class="settings-note" id="stBackupNote" style="margin-top:0;"></p>
+    <div style="display:flex; gap:8px;">
+      <button id="backupExportBtn" type="button" class="settings-close" style="margin-top:0;">ファイルに保存</button>
+      <button id="backupImportBtn" type="button" class="settings-close" style="margin-top:0;">復元</button>
+    </div>
+    <input id="backupImportInput" type="file" accept="application/json" style="display:none;">
+    <button id="settingsClose" type="button" class="settings-close">とじる</button>
+  </div>
+</div>
+
+<!-- セルの書き込み（手帳の予定エディタと同じ紙カード） -->
+<div id="cellModal" class="settings-modal" style="display:none;">
+  <div class="settings-card">
     <h2 id="cellModalTitle"></h2>
-    <textarea id="cellText" placeholder="やることを書く（例: 長文2ページ）" maxlength="200"></textarea>
+    <textarea id="cellText" class="write-textarea" maxlength="200"></textarea>
     <div class="done-toggle" id="doneToggle">
       <span class="ring"></span>
-      <span>できた（○をつける）</span>
+      <span id="doneToggleLabel">できた（○をつける）</span>
     </div>
     <div class="modal-btns">
       <button class="danger" id="cellClear">けす</button>
@@ -406,11 +504,11 @@
   </div>
 </div>
 
-<!-- 教材の追加・改名モーダル -->
-<div class="modal-back" id="subjectModal">
-  <div class="modal-card">
+<!-- 教材の追加・改名 -->
+<div id="subjectModal" class="settings-modal" style="display:none;">
+  <div class="settings-card">
     <h2 id="subjectModalTitle">教材をふやす</h2>
-    <input type="text" id="subjectName" placeholder="教材や科目の名前（例: 英語）" maxlength="20">
+    <input type="text" id="subjectName" class="write-input" maxlength="20">
     <div class="modal-btns">
       <button class="danger" id="subjectDelete" style="display:none">この列をけす</button>
       <span class="spacer"></span>
@@ -424,28 +522,92 @@
 (function () {
   'use strict';
 
+  // ---- ことばづかい（手ざわり手帳と同じしくみ。'adult'=大人向け・漢字 / 'kid'=やさしい・ひらがな。既定は大人向け） ----
+  var WORDS = {
+    planSub:        { adult: '勉強の計画表　—　書いた計画は、手ざわり手帳の今日のページに印刷されます',
+                      kid:   'べんきょうの計画ひょう　—　書いたことは、手ざわり手帳のきょうのページに出るよ' },
+    emptyNote:      { adult: 'まだ何もありません。<br>右上の「＋」から教材や科目をふやして、<br>1週間の計画を書きこもう。<br><br>書いた計画は<b>手ざわり手帳</b>の<br>その日のタスク欄に印刷されます。',
+                      kid:   'まだ何もないよ。<br>右上の「＋」からきょうざいをふやして、<br>1しゅうかんのけいかくを書こう。<br><br>書いたことは<b>手ざわり手帳</b>の<br>その日のやること欄に出るよ。' },
+    subjectAdd:     { adult: '教材をふやす',                 kid: 'きょうざいをふやす' },
+    subjectEdit:    { adult: '教材の名前をかえる',           kid: 'きょうざいのなまえをかえる' },
+    subjectPlace:   { adult: '教材や科目の名前（例: 英語）',  kid: 'きょうざいのなまえ（れい: えいご）' },
+    subjectDelete:  { adult: 'この列をけす',                 kid: 'このれつをけす' },
+    deleteConfirm:  { adult: '「{name}」の列と、書いた計画をぜんぶ消します。よろしいですか？',
+                      kid:   '「{name}」のれつと、書いたことをぜんぶけします。いいですか？' },
+    cellPlace:      { adult: 'やることを書く（例: 長文2ページ）', kid: 'やることを書く（れい: かん字ドリル2ページ）' },
+    doneLabel:      { adult: 'できた（○をつける）',          kid: 'できた（○をつける）' },
+    clearBtn:       { adult: 'けす',                         kid: 'けす' },
+    closeBtn:       { adult: 'とじる',                       kid: 'とじる' },
+    saveBtn:        { adult: '書きこむ',                     kid: '書きこむ' },
+    prevBtn:        { adult: '◀ 前へ',                       kid: '◀ まえ' },
+    nextBtn:        { adult: '次へ ▶',                       kid: 'つぎ ▶' },
+    todayBtn:       { adult: '今週',                         kid: 'こんしゅう' },
+    menuSettings:   { adult: '⚙ 設定',                      kid: '⚙ せってい' },
+    menuTecho:      { adult: '📖 手ざわり手帳をひらく',      kid: '📖 手ざわり手帳をひらく' },
+    stTitle:        { adult: '設定',                         kid: 'せってい' },
+    stWordingNote:  { adult: '画面の文言を「大人向け（漢字）」か「やさしい（ひらがな多め）」に切り替えます。',
+                      kid:   'がめんのことばを「大人向け（かん字）」か「やさしい（ひらがな）」にかえます。' },
+    stWeekStart:    { adult: '週の始まり',                   kid: 'しゅうのはじまり' },
+    stWeekStartNote:{ adult: '計画表の曜日の並びが変わります。手ざわり手帳と共通の設定です。',
+                      kid:   'ようびのならびがかわります。手ざわり手帳といっしょのせっていだよ。' },
+    stBackup:       { adult: 'データのひかえ',               kid: 'データのひかえ' },
+    stBackupNote:   { adult: '計画表の中身をファイルに保存できます。機種変や、アイコンを消す前のお守りに。',
+                      kid:   'けいかくの中みをファイルにほぞんできるよ。スマホをかえるときのおまもりに。' },
+    backupExport:   { adult: 'ファイルに保存',               kid: 'ファイルにほぞん' },
+    backupImport:   { adult: '復元',                         kid: 'もどす' },
+    restoreConfirm: { adult: 'このファイルの中身で計画表を復元します。いま書いてある同じ日の計画は上書きされます。よろしいですか？',
+                      kid:   'このファイルで計画表をもどします。いま書いてある同じ日のけいかくは上書きされます。いいですか？' },
+    restoreDone:    { adult: '復元しました。開き直します。',  kid: 'もどしました。ひらきなおすね。' },
+    restoreBad:     { adult: '復元できませんでした。「手ざわり計画表のひかえ」ファイルか確認してください。',
+                      kid:   'もどせなかったよ。「手ざわり計画表のひかえ」ファイルかたしかめてね。' },
+    wordingAdult:   { adult: '大人向け',                     kid: '大人向け' },
+    wordingKid:     { adult: 'やさしい',                     kid: 'やさしい' }
+  };
+  function getWordMode() { return localStorage.getItem('pk:wording') === 'kid' ? 'kid' : 'adult'; }
+  function tx(key, vars) {
+    var w = WORDS[key];
+    var s = w ? w[getWordMode()] : '';
+    if (vars) { for (var k in vars) s = s.replace('{' + k + '}', vars[k]); }
+    return s;
+  }
+  // 常に画面にある静的DOMの文言をことばづかいに合わせて更新する
+  function applyWording() {
+    function setText(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
+    document.getElementById('planSub').innerHTML = tx('planSub');
+    setText('prevWeek', tx('prevBtn'));
+    setText('nextWeek', tx('nextBtn'));
+    setText('todayBtn', tx('todayBtn'));
+    setText('menuSettings', tx('menuSettings'));
+    setText('menuTecho', tx('menuTecho'));
+    setText('stTitle', tx('stTitle'));
+    setText('stWordingNote', tx('stWordingNote'));
+    setText('stWeekStartLabel', tx('stWeekStart'));
+    setText('stWeekStartNote', tx('stWeekStartNote'));
+    setText('stBackupLabel', tx('stBackup'));
+    setText('stBackupNote', tx('stBackupNote'));
+    setText('backupExportBtn', tx('backupExport'));
+    setText('backupImportBtn', tx('backupImport'));
+    setText('settingsClose', tx('closeBtn'));
+    setText('doneToggleLabel', tx('doneLabel'));
+    document.getElementById('cellText').placeholder = tx('cellPlace');
+    document.getElementById('subjectName').placeholder = tx('subjectPlace');
+    setText('subjectDelete', tx('subjectDelete'));
+    document.title = '手ざわり計画表';
+  }
+
   // ---- 日付ユーティリティ ----
   var DOW = ['日', '月', '火', '水', '木', '金', '土'];
   function toISO(d) {
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
-  function fromISO(iso) {
-    var p = iso.split('-');
-    return new Date(+p[0], +p[1] - 1, +p[2]);
-  }
-  function addDays(iso, n) {
-    var d = fromISO(iso);
-    d.setDate(d.getDate() + n);
-    return toISO(d);
-  }
-  function warekiOf(d) {
-    var y = d.getFullYear() - 2018; // 令和のみ対応（このアプリの守備範囲では十分）
-    return '令和' + (y === 1 ? '元' : y) + '年';
-  }
+  function fromISO(iso) { var p = iso.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function addDays(iso, n) { var d = fromISO(iso); d.setDate(d.getDate() + n); return toISO(d); }
+  function warekiOf(d) { var y = d.getFullYear() - 2018; return '令和' + (y === 1 ? '元' : y) + '年'; }
 
-  // 週の始まり: 自分の設定pk:weekStartがなければ手ざわり手帳のpt:weekStartに従う（同じオリジンで共有）
+  // 週の始まり: pk:weekStart。無ければ手ざわり手帳のpt:weekStartに従う（同じオリジンで設定共有）
   function weekStartDow() {
-    var v = localStorage.getItem('pk:weekStart') || localStorage.getItem('pt:weekStart');
+    var v = localStorage.getItem('pk:weekStart');
+    if (v === null) v = localStorage.getItem('pt:weekStart');
     var n = parseInt(v, 10);
     return (n >= 0 && n <= 6) ? n : 1; // 既定は月曜
   }
@@ -457,19 +619,14 @@
   }
 
   // ---- ストレージ ----
-  // pk:subjects           = [{id, name}]                     教材の列
-  // pk:cell:ISO:subjectId = "やることのテキスト"               計画の中身（持ち主はこのアプリ）
-  // pk:feed:ISO           = {v:1, updated, items:[...]}       手ざわり手帳への「印刷」フィード。
-  //                         done（○）の持ち主はフィード側。手帳はdoneの書き換えだけ許される
+  // pk:subjects           = [{id, name}]
+  // pk:cell:ISO:subjectId = 計画テキスト（持ち主はこのアプリ）
+  // pk:feed:ISO           = {v:1, updated, items:[...]}（手ざわり手帳への「印刷」フィード。doneの持ち主はフィード側）
   function readSubjects() {
-    try {
-      var a = JSON.parse(localStorage.getItem('pk:subjects') || '[]');
-      return Array.isArray(a) ? a : [];
-    } catch (e) { return []; }
+    try { var a = JSON.parse(localStorage.getItem('pk:subjects') || '[]'); return Array.isArray(a) ? a : []; }
+    catch (e) { return []; }
   }
-  function writeSubjects(arr) {
-    localStorage.setItem('pk:subjects', JSON.stringify(arr));
-  }
+  function writeSubjects(arr) { localStorage.setItem('pk:subjects', JSON.stringify(arr)); }
   function keyCell(iso, sid) { return 'pk:cell:' + iso + ':' + sid; }
   function readCell(iso, sid) { return localStorage.getItem(keyCell(iso, sid)) || ''; }
   function writeCell(iso, sid, text) {
@@ -479,10 +636,8 @@
   }
   function keyFeed(iso) { return 'pk:feed:' + iso; }
   function readFeed(iso) {
-    try {
-      var f = JSON.parse(localStorage.getItem(keyFeed(iso)) || 'null');
-      return (f && f.v === 1 && Array.isArray(f.items)) ? f : null;
-    } catch (e) { return null; }
+    try { var f = JSON.parse(localStorage.getItem(keyFeed(iso)) || 'null'); return (f && f.v === 1 && Array.isArray(f.items)) ? f : null; }
+    catch (e) { return null; }
   }
   function feedDone(iso, sid) {
     var f = readFeed(iso);
@@ -492,8 +647,7 @@
   }
   // セルの中身からフィードを組み立て直す。○（done）は同じ教材のぶんを引き継ぐ
   function rebuildFeed(iso) {
-    var old = readFeed(iso);
-    var oldDone = {};
+    var old = readFeed(iso), oldDone = {};
     if (old) old.items.forEach(function (it) { oldDone[it.id] = !!it.done; });
     var items = [];
     readSubjects().forEach(function (s) {
@@ -501,11 +655,8 @@
       if (!t) return;
       items.push({ id: s.id, subject: s.name, text: t, done: !!oldDone[s.id] });
     });
-    if (items.length) {
-      localStorage.setItem(keyFeed(iso), JSON.stringify({ v: 1, updated: new Date().toISOString(), items: items }));
-    } else {
-      localStorage.removeItem(keyFeed(iso));
-    }
+    if (items.length) localStorage.setItem(keyFeed(iso), JSON.stringify({ v: 1, updated: new Date().toISOString(), items: items }));
+    else localStorage.removeItem(keyFeed(iso));
   }
   function setDone(iso, sid, done) {
     var f = readFeed(iso);
@@ -514,19 +665,14 @@
     f.updated = new Date().toISOString();
     localStorage.setItem(keyFeed(iso), JSON.stringify(f));
   }
-  // 教材の改名・削除をすべての日のフィード/セルへ反映する
   function forEachStoredKey(prefix, fn) {
     var keys = [];
-    for (var i = 0; i < localStorage.length; i++) {
-      var k = localStorage.key(i);
-      if (k && k.indexOf(prefix) === 0) keys.push(k);
-    }
+    for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && k.indexOf(prefix) === 0) keys.push(k); }
     keys.forEach(fn);
   }
   function renameSubjectEverywhere(sid, newName) {
     forEachStoredKey('pk:feed:', function (k) {
-      var iso = k.slice('pk:feed:'.length);
-      var f = readFeed(iso);
+      var iso = k.slice('pk:feed:'.length), f = readFeed(iso);
       if (!f) return;
       var hit = false;
       f.items.forEach(function (it) { if (it.id === sid) { it.subject = newName; hit = true; } });
@@ -536,10 +682,7 @@
   function deleteSubjectEverywhere(sid) {
     var feedDays = {};
     forEachStoredKey('pk:cell:', function (k) {
-      // pk:cell:YYYY-MM-DD:sid
-      var rest = k.slice('pk:cell:'.length);
-      var iso = rest.slice(0, 10);
-      var owner = rest.slice(11);
+      var rest = k.slice('pk:cell:'.length), iso = rest.slice(0, 10), owner = rest.slice(11);
       if (owner === sid) { localStorage.removeItem(k); feedDays[iso] = true; }
     });
     Object.keys(feedDays).forEach(rebuildFeed);
@@ -558,9 +701,7 @@
   var currentWeek = weekStartOf(toISO(new Date()));
 
   function render() {
-    var start = fromISO(currentWeek);
-    var endIso = addDays(currentWeek, 6);
-    var end = fromISO(endIso);
+    var start = fromISO(currentWeek), endIso = addDays(currentWeek, 6), end = fromISO(endIso);
     document.getElementById('weekRange').textContent =
       (start.getMonth() + 1) + '/' + start.getDate() + '〜' +
       (end.getMonth() !== start.getMonth() ? (end.getMonth() + 1) + '/' : '') + end.getDate();
@@ -569,13 +710,11 @@
     var scroll = document.getElementById('gridScroll');
     scroll.innerHTML = '';
     var subjects = readSubjects();
-
     if (!subjects.length) {
       var note = document.createElement('div');
       note.className = 'empty-note';
-      note.innerHTML = 'まだ何もありません。<br><b>右上の「＋」</b>から教材や科目をふやして、<br>1週間の計画を書きこもう。<br><br>書いた計画は<b>手ざわり手帳</b>の<br>その日のタスク欄に印刷されます。';
-      var table0 = buildTable([], null);
-      scroll.appendChild(table0);
+      note.innerHTML = tx('emptyNote');
+      scroll.appendChild(buildTable([], null));
       scroll.appendChild(note);
       return;
     }
@@ -585,12 +724,8 @@
   function buildTable(subjects, todayIso) {
     var table = document.createElement('table');
     table.className = 'plan';
-
-    // 見出し行: 空きマス + 教材列 + ＋
     var thead = document.createElement('tr');
-    var corner = document.createElement('th');
-    corner.className = 'corner';
-    thead.appendChild(corner);
+    var corner = document.createElement('th'); corner.className = 'corner'; thead.appendChild(corner);
     subjects.forEach(function (s) {
       var th = document.createElement('th');
       th.className = 'subject';
@@ -601,24 +736,19 @@
     var addTh = document.createElement('th');
     addTh.className = 'add-col';
     addTh.textContent = '＋';
-    addTh.setAttribute('aria-label', '教材をふやす');
     addTh.addEventListener('click', function () { openSubjectModal(null); });
     thead.appendChild(addTh);
     table.appendChild(thead);
 
-    // 日の行 ×7
     for (var i = 0; i < 7; i++) {
-      var iso = addDays(currentWeek, i);
-      var d = fromISO(iso);
+      var iso = addDays(currentWeek, i), d = fromISO(iso);
       var tr = document.createElement('tr');
-
       var label = document.createElement('td');
       label.className = 'day-label' +
         (d.getDay() === 0 ? ' dow-sun' : d.getDay() === 6 ? ' dow-sat' : '') +
         (iso === todayIso ? ' is-today' : '');
       label.innerHTML = '<span class="date-num">' + d.getDate() + '</span>' + DOW[d.getDay()];
       tr.appendChild(label);
-
       subjects.forEach(function (s) {
         var td = document.createElement('td');
         td.className = 'cell';
@@ -630,27 +760,20 @@
           td.appendChild(span);
           if (feedDone(iso, s.id)) td.classList.add('done');
         }
-        (function (iso2, s2) {
-          td.addEventListener('click', function () { openCellModal(iso2, s2); });
-        })(iso, s);
+        (function (iso2, s2) { td.addEventListener('click', function () { openCellModal(iso2, s2); }); })(iso, s);
         tr.appendChild(td);
       });
-
-      var filler = document.createElement('td'); // ＋列の下の空きマス
-      filler.className = 'cell';
-      filler.style.cursor = 'default';
+      var filler = document.createElement('td'); filler.className = 'cell'; filler.style.cursor = 'default';
       tr.appendChild(filler);
       table.appendChild(tr);
     }
     return table;
   }
 
-  // ---- セルの書き込みモーダル ----
-  var editing = null; // {iso, subject}
-  var doneOn = false;
+  // ---- セルの書き込み ----
+  var editing = null, doneOn = false;
   var cellModal = document.getElementById('cellModal');
   var doneToggle = document.getElementById('doneToggle');
-
   function openCellModal(iso, subject) {
     editing = { iso: iso, subject: subject };
     var d = fromISO(iso);
@@ -659,52 +782,38 @@
     document.getElementById('cellText').value = readCell(iso, subject.id);
     doneOn = feedDone(iso, subject.id);
     doneToggle.classList.toggle('on', doneOn);
-    cellModal.classList.add('show');
-    if (!readCell(iso, subject.id)) document.getElementById('cellText').focus();
+    cellModal.style.display = 'flex';
+    if (!readCell(iso, subject.id)) setTimeout(function () { document.getElementById('cellText').focus(); }, 50);
   }
-  function closeCellModal() {
-    cellModal.classList.remove('show');
-    editing = null;
-  }
-  doneToggle.addEventListener('click', function () {
-    doneOn = !doneOn;
-    doneToggle.classList.toggle('on', doneOn);
-  });
+  function closeCellModal() { cellModal.style.display = 'none'; editing = null; }
+  doneToggle.addEventListener('click', function () { doneOn = !doneOn; doneToggle.classList.toggle('on', doneOn); });
   document.getElementById('cellSave').addEventListener('click', function () {
     if (!editing) return;
     var text = document.getElementById('cellText').value.trim();
     writeCell(editing.iso, editing.subject.id, text);
     if (text) setDone(editing.iso, editing.subject.id, doneOn);
-    closeCellModal();
-    render();
-    flashSaved();
+    closeCellModal(); render(); flashSaved();
   });
   document.getElementById('cellClear').addEventListener('click', function () {
     if (!editing) return;
     writeCell(editing.iso, editing.subject.id, '');
-    closeCellModal();
-    render();
-    flashSaved();
+    closeCellModal(); render(); flashSaved();
   });
   document.getElementById('cellCancel').addEventListener('click', closeCellModal);
   cellModal.addEventListener('click', function (e) { if (e.target === cellModal) closeCellModal(); });
 
   // ---- 教材モーダル ----
-  var editingSubject = null; // null=新規
+  var editingSubject = null;
   var subjectModal = document.getElementById('subjectModal');
-
   function openSubjectModal(subject) {
     editingSubject = subject;
-    document.getElementById('subjectModalTitle').textContent = subject ? '教材の名前をかえる' : '教材をふやす';
+    document.getElementById('subjectModalTitle').textContent = subject ? tx('subjectEdit') : tx('subjectAdd');
     document.getElementById('subjectName').value = subject ? subject.name : '';
     document.getElementById('subjectDelete').style.display = subject ? '' : 'none';
-    subjectModal.classList.add('show');
-    if (!subject) document.getElementById('subjectName').focus();
+    subjectModal.style.display = 'flex';
+    if (!subject) setTimeout(function () { document.getElementById('subjectName').focus(); }, 50);
   }
-  function closeSubjectModal() {
-    subjectModal.classList.remove('show');
-    editingSubject = null;
-  }
+  function closeSubjectModal() { subjectModal.style.display = 'none'; editingSubject = null; }
   document.getElementById('subjectSave').addEventListener('click', function () {
     var name = document.getElementById('subjectName').value.trim();
     if (!name) { closeSubjectModal(); return; }
@@ -717,23 +826,19 @@
       subjects.push({ id: 's' + Date.now().toString(36), name: name });
       writeSubjects(subjects);
     }
-    closeSubjectModal();
-    render();
-    flashSaved();
+    closeSubjectModal(); render(); flashSaved();
   });
   document.getElementById('subjectDelete').addEventListener('click', function () {
     if (!editingSubject) return;
-    if (!confirm('「' + editingSubject.name + '」の列と、書いた計画をぜんぶ消します。よろしいですか？')) return;
+    if (!confirm(tx('deleteConfirm', { name: editingSubject.name }))) return;
     writeSubjects(readSubjects().filter(function (s) { return s.id !== editingSubject.id; }));
     deleteSubjectEverywhere(editingSubject.id);
-    closeSubjectModal();
-    render();
-    flashSaved();
+    closeSubjectModal(); render(); flashSaved();
   });
   document.getElementById('subjectCancel').addEventListener('click', closeSubjectModal);
   subjectModal.addEventListener('click', function (e) { if (e.target === subjectModal) closeSubjectModal(); });
 
-  // ---- 週送り（貼り替えの小さなアニメーション） ----
+  // ---- 週送り（貼り替えの小さなスライド） ----
   function goWeek(delta) {
     var sheet = document.getElementById('sheet');
     sheet.classList.add(delta > 0 ? 'slide-out-left' : 'slide-out-right');
@@ -747,28 +852,119 @@
   document.getElementById('nextWeek').addEventListener('click', function () { goWeek(1); });
   document.getElementById('todayBtn').addEventListener('click', function () { goWeek(0); });
 
-  // ---- 手ざわり手帳がつけた○を取りこむ ----
-  // 別タブ/別ウィンドウの手帳がpk:feed:を書き換えたら描き直す
-  window.addEventListener('storage', function (e) {
-    if (e.key && e.key.indexOf('pk:feed:') === 0) render();
+  // ---- メニュー・設定 ----
+  var menuBtn = document.getElementById('menuBtn'), menuPanel = document.getElementById('menuPanel');
+  var settingsModal = document.getElementById('settingsModal');
+  menuBtn.addEventListener('click', function (ev) {
+    ev.stopPropagation();
+    menuPanel.style.display = menuPanel.style.display === 'none' ? 'flex' : 'none';
   });
-  // アプリを切り替えて戻ってきたときも描き直す（iPhoneはstorageイベントが飛ばない場面がある）
+  document.addEventListener('pointerdown', function (ev) {
+    if (menuPanel.style.display !== 'none' && !menuPanel.contains(ev.target) && ev.target !== menuBtn) {
+      menuPanel.style.display = 'none';
+    }
+  });
+  document.getElementById('menuSettings').addEventListener('click', function () {
+    menuPanel.style.display = 'none';
+    renderWordingChips(); renderWeekStartChips();
+    settingsModal.style.display = 'flex';
+  });
+  document.getElementById('menuTecho').addEventListener('click', function () {
+    // 同じオリジンの姉妹アプリへ。GitHub Pages（/paper-keikaku/→/paper-techo/）でもローカルでも効く相対パス
+    location.href = '../paper-techo/';
+  });
+  document.getElementById('settingsClose').addEventListener('click', function () { settingsModal.style.display = 'none'; });
+  settingsModal.addEventListener('click', function (e) { if (e.target === settingsModal) settingsModal.style.display = 'none'; });
+
+  // ことばづかいのチップ
+  function renderWordingChips() {
+    var wrap = document.getElementById('wordingChips');
+    wrap.innerHTML = '';
+    var cur = getWordMode();
+    [['adult', tx('wordingAdult')], ['kid', tx('wordingKid')]].forEach(function (opt) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'wide' + (cur === opt[0] ? ' active' : '');
+      b.textContent = opt[1];
+      b.addEventListener('click', function () {
+        localStorage.setItem('pk:wording', opt[0]);
+        applyWording();
+        renderWordingChips();
+        render();
+        flashSaved();
+      });
+      wrap.appendChild(b);
+    });
+  }
+  // 週の始まりのチップ（月火水木金土日の並び。手帳と同じ）
+  function renderWeekStartChips() {
+    var wrap = document.getElementById('weekStartChips');
+    wrap.innerHTML = '';
+    var ws = weekStartDow();
+    [1, 2, 3, 4, 5, 6, 0].forEach(function (i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = DOW[i];
+      b.className = i === ws ? 'active' : '';
+      b.addEventListener('click', function () {
+        localStorage.setItem('pk:weekStart', String(i));
+        currentWeek = weekStartOf(addDays(currentWeek, 3)); // 表示中の週の真ん中を基準に取り直す
+        renderWeekStartChips();
+        render();
+        flashSaved();
+      });
+      wrap.appendChild(b);
+    });
+  }
+
+  // ---- データのひかえ（バックアップ／復元。pk:キーのみ対象） ----
+  document.getElementById('backupExportBtn').addEventListener('click', function () {
+    var items = {};
+    forEachStoredKey('pk:', function (k) { items[k] = localStorage.getItem(k); });
+    var blob = new Blob([JSON.stringify({ app: 'tezawari-keikaku', v: 1, savedAt: new Date().toISOString(), items: items }, null, 0)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url;
+    a.download = '手ざわり計画表のひかえ-' + toISO(new Date()) + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    flashSaved();
+  });
+  document.getElementById('backupImportBtn').addEventListener('click', function () { document.getElementById('backupImportInput').click(); });
+  document.getElementById('backupImportInput').addEventListener('change', function (e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var data = JSON.parse(reader.result);
+        if (!data || data.app !== 'tezawari-keikaku' || !data.items || typeof data.items !== 'object') throw new Error('形式が違います');
+        if (!confirm(tx('restoreConfirm'))) return;
+        Object.keys(data.items).forEach(function (k) { if (k.indexOf('pk:') === 0) localStorage.setItem(k, data.items[k]); });
+        alert(tx('restoreDone'));
+        location.reload();
+      } catch (err) { alert(tx('restoreBad')); }
+    };
+    reader.readAsText(file);
+  });
+
+  // ---- 手ざわり手帳がつけた○を取りこむ ----
+  window.addEventListener('storage', function (e) { if (e.key && e.key.indexOf('pk:feed:') === 0) render(); });
   var lastForeground = 0;
   function foregroundRefresh() {
     if (Date.now() - lastForeground < 2000) return;
     lastForeground = Date.now();
+    currentWeek = weekStartOf(currentWeek); // 週の始まり設定が手帳側で変わっていることもある
     render();
   }
-  document.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'visible') foregroundRefresh();
-  });
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') foregroundRefresh(); });
   window.addEventListener('focus', foregroundRefresh);
   window.addEventListener('pageshow', foregroundRefresh);
 
+  applyWording();
   render();
 
   // テスト用フック（アプリ動作には不使用）
-  window._pk = { rebuildFeed: rebuildFeed, readFeed: readFeed, weekStartOf: weekStartOf };
+  window._pk = { rebuildFeed: rebuildFeed, readFeed: readFeed, weekStartOf: weekStartOf, getWordMode: getWordMode };
 
   // オフライン対応（Service Worker）。file://で開いたときは黙って諦める
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
