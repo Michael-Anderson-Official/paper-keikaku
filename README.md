@@ -52,14 +52,14 @@ pk:feed:YYYY-MM-DD = {
 
 ## 技術
 
-- 単一 `index.html`・vanilla JS・依存なし（フォントのみ Google Fonts。製品化時は手ざわり手帳と同じく同梱する）
+- 単一 `index.html`・vanilla JS・依存なし
+- フォント（Klee One / Shippori Mincho）は手ざわり手帳と同じく `fonts/` に自前ホスト（Google Fontsの実配信ファイルをそのまま取得・オフライン動作。ライセンスは `fonts/OFL*.txt`）
+- アイコン（`apple-touch-icon.png` / `icon-192.png` / `icon-512.png`）は紙・赤マージン線・計画グリッド・赤鉛筆の○（できたマーク）をモチーフにしたオリジナルデザイン。手帳の実写風アイコンとは絵柄が異なる（手描き風ではなく線画）
 - `manifest.webmanifest` ＋ `sw.js` でオフライン対応（PWA）
 - iPhone Safari 想定。スマホでは縁なし全画面
 
 ## 未実装（製品化するなら）
 
-- フォントの同梱（現状オンライン必須）
-- アイコン（apple-touch-icon / 192・512）
 - 手帳と同じテーマ（黒板・電光掲示板など）の共有
 - Capacitor ネイティブ化（手帳と同じ流儀）
 - 教材の並び替え、テンプレート（曜日ごとの定番）、繰り越し
