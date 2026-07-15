@@ -502,6 +502,117 @@
   .modal-btns button.primary { background: #5a7d5a; border-color: #4d6b4d; color: #fff; }
   .modal-btns button.danger { color: var(--sun); }
 
+  /* 教材モーダルの「バーコードで入れる」ボタン */
+  .scan-open {
+    display: block;
+    width: 100%;
+    margin-top: 12px;
+    padding: 10px;
+    font-family: inherit;
+    font-size: 14px;
+    color: #4a4030;
+    background: linear-gradient(180deg, #f3ecd9, #e7dfc8);
+    border: 1px solid rgba(120, 100, 60, 0.35);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .scan-open:active { transform: translateY(1px); }
+
+  /* ---- バーコードスキャナ（全画面カメラ） ---- */
+  .scan-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background: #0b0b0d;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: calc(env(safe-area-inset-top, 0px)) 0 calc(env(safe-area-inset-bottom, 0px));
+  }
+  .scan-stage {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #scanVideo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #000;
+  }
+  /* 読み取り枠（バーコードをこの中へ） */
+  .scan-reticle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(78vw, 340px);
+    height: 140px;
+    border: 2px solid rgba(255, 255, 255, 0.85);
+    border-radius: 12px;
+    box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.45);
+    pointer-events: none;
+  }
+  .scan-reticle span {
+    position: absolute;
+    left: 8px; right: 8px; top: 50%;
+    height: 2px;
+    background: rgba(230, 90, 80, 0.9);
+    box-shadow: 0 0 8px rgba(230, 90, 80, 0.8);
+  }
+  .scan-status {
+    position: absolute;
+    left: 0; right: 0;
+    bottom: 22px;
+    text-align: center;
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    padding: 0 20px;
+    pointer-events: none;
+  }
+  .scan-manual {
+    width: 100%;
+    max-width: 360px;
+    padding: 12px 20px 4px;
+    color: #e8e6df;
+  }
+  .scan-manual-label { font-size: 12px; color: #b7b4ac; margin-bottom: 6px; text-align: center; }
+  .scan-manual-row { display: flex; gap: 8px; align-items: center; }
+  .scan-manual-row .write-input {
+    flex: 1;
+    color: #f4f1e8;
+    border-bottom-color: rgba(255, 255, 255, 0.35);
+  }
+  .scan-manual-row .write-input::placeholder { color: rgba(255, 255, 255, 0.4); }
+  .scan-manual-row button.primary {
+    font-family: inherit;
+    font-size: 14px;
+    padding: 9px 16px;
+    border-radius: 8px;
+    border: 1px solid #4d6b4d;
+    background: #5a7d5a;
+    color: #fff;
+    cursor: pointer;
+  }
+  .scan-close {
+    width: min(88vw, 360px);
+    margin: 12px 0 16px;
+    padding: 12px;
+    font-family: inherit;
+    font-size: 15px;
+    color: #f4f1e8;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
   /* 保存の合図（手帳と同じ） */
   .save-note {
     position: fixed;
@@ -618,7 +729,8 @@
 <div id="subjectModal" class="settings-modal" style="display:none;">
   <div class="settings-card">
     <h2 id="subjectModalTitle">教材をふやす</h2>
-    <input type="text" id="subjectName" class="write-input" maxlength="20">
+    <input type="text" id="subjectName" class="write-input" maxlength="60">
+    <button type="button" id="scanOpenBtn" class="scan-open">📷 <span id="scanOpenLabel">本のバーコードで入れる</span></button>
     <div class="modal-btns">
       <button class="danger" id="subjectDelete" style="display:none">この列をけす</button>
       <span class="spacer"></span>
@@ -626,6 +738,23 @@
       <button class="primary" id="subjectSave">書きこむ</button>
     </div>
   </div>
+</div>
+
+<!-- バーコード読み取り（カメラ生スキャン） -->
+<div id="scanModal" class="scan-modal" style="display:none;">
+  <div class="scan-stage">
+    <video id="scanVideo" playsinline muted></video>
+    <div class="scan-reticle"><span></span></div>
+    <p id="scanStatus" class="scan-status"></p>
+  </div>
+  <div class="scan-manual">
+    <p id="scanManualLabel" class="scan-manual-label"></p>
+    <div class="scan-manual-row">
+      <input type="text" id="scanIsbnInput" class="write-input" inputmode="numeric" maxlength="13" placeholder="978…">
+      <button type="button" id="scanIsbnGo" class="primary">さがす</button>
+    </div>
+  </div>
+  <button type="button" id="scanClose" class="scan-close">とじる</button>
 </div>
 
 <script>
@@ -642,6 +771,20 @@
     subjectEdit:    { adult: '教材の名前をかえる',           kid: 'きょうざいのなまえをかえる' },
     subjectPlace:   { adult: '教材や科目の名前（例: 英語）',  kid: 'きょうざいのなまえ（れい: えいご）' },
     subjectDelete:  { adult: 'この列をけす',                 kid: 'このれつをけす' },
+    scanOpen:       { adult: '本のバーコードで入れる',       kid: '本のバーコードで入れる' },
+    scanManual:     { adult: 'うまく読めないときは、本の裏の番号（978…）を入力',
+                      kid:   'うまく読めないときは、本のうらの番号（978…）を入れてね' },
+    scanStarting:   { adult: 'カメラを準備しています…',       kid: 'カメラをじゅんびしているよ…' },
+    scanPoint:      { adult: '本の裏のバーコードを枠の中へ',  kid: '本のうらのバーコードをわくの中へ' },
+    scanLooking:    { adult: '書名をさがしています…',         kid: 'ほんの名前をさがしているよ…' },
+    scanNotFound:   { adult: 'この本は見つかりませんでした。名前は手で入れてね。',
+                      kid:   'この本は見つからなかったよ。名前は手で入れてね。' },
+    scanBadCode:    { adult: 'これは本のバーコードではないみたい。978で始まる方をかざしてね。',
+                      kid:   'これは本のバーコードじゃないみたい。978ではじまる方をかざしてね。' },
+    scanNoCamera:   { adult: 'カメラが使えませんでした。下に番号を入力してね。',
+                      kid:   'カメラがつかえなかったよ。下に番号を入れてね。' },
+    scanBadIsbn:    { adult: '本の番号は13桁（978…）で入れてね。', kid: 'ほんの番号は13けた（978…）で入れてね。' },
+    scanGo:         { adult: 'さがす',                       kid: 'さがす' },
     deleteConfirm:  { adult: '「{name}」の列と、書いた計画をぜんぶ消します。よろしいですか？',
                       kid:   '「{name}」のれつと、書いたことをぜんぶけします。いいですか？' },
     cellPlace:      { adult: 'やることを書く（例: 長文2ページ）', kid: 'やることを書く（れい: かん字ドリル2ページ）' },
@@ -729,6 +872,9 @@
     document.getElementById('cellText').placeholder = tx('cellPlace');
     document.getElementById('subjectName').placeholder = tx('subjectPlace');
     setText('subjectDelete', tx('subjectDelete'));
+    setText('scanOpenLabel', tx('scanOpen'));
+    setText('scanManualLabel', tx('scanManual'));
+    setText('scanIsbnGo', tx('scanGo'));
     document.title = '手ざわり計画表';
   }
 
@@ -974,6 +1120,114 @@
   });
   document.getElementById('subjectCancel').addEventListener('click', closeSubjectModal);
   subjectModal.addEventListener('click', function (e) { if (e.target === subjectModal) closeSubjectModal(); });
+
+  // ---- バーコードで教材を入れる（カメラ生スキャン → ISBNから書名を取得） ----
+  // 書名取得は openBD（和書に強い）→ 見つからなければ Google Books。ISBNのみを送る。
+  var scanModal = document.getElementById('scanModal');
+  var scanVideo = document.getElementById('scanVideo');
+  var scanStatusEl = document.getElementById('scanStatus');
+  var zxingReader = null, zxingLoading = null, scanBusy = false;
+
+  function setScanStatus(key) { scanStatusEl.textContent = tx(key); }
+  function isBookIsbn(code) { return /^97[89]\d{10}$/.test(code); }
+
+  // ZXingは大きいので、スキャンを始めるときに初めて読み込む（ふだんの起動は軽いまま）
+  function loadZxing() {
+    if (window.ZXing) return Promise.resolve();
+    if (zxingLoading) return zxingLoading;
+    zxingLoading = new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = 'vendor/zxing.min.js';
+      s.onload = function () { resolve(); };
+      s.onerror = function () { zxingLoading = null; reject(new Error('zxing load failed')); };
+      document.head.appendChild(s);
+    });
+    return zxingLoading;
+  }
+
+  function openScanner() {
+    scanBusy = false;
+    document.getElementById('scanIsbnInput').value = '';
+    scanModal.style.display = 'flex';
+    setScanStatus('scanStarting');
+    loadZxing().then(startCamera).catch(function () { setScanStatus('scanNoCamera'); });
+  }
+
+  function startCamera() {
+    try {
+      var hints = new Map();
+      hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.EAN_13]);
+      zxingReader = new ZXing.BrowserMultiFormatReader(hints);
+      setScanStatus('scanPoint');
+      var p = zxingReader.decodeFromConstraints(
+        { video: { facingMode: { ideal: 'environment' } } },
+        scanVideo,
+        function (result) {
+          if (scanBusy || !result) return;
+          var code = result.getText();
+          if (isBookIsbn(code)) { handleIsbn(code); }
+          else if (/^\d{13}$/.test(code)) { setScanStatus('scanBadCode'); } // 本の下の価格コード等
+        }
+      );
+      if (p && p.catch) p.catch(function () { setScanStatus('scanNoCamera'); });
+    } catch (e) {
+      setScanStatus('scanNoCamera');
+    }
+  }
+
+  function stopCamera() {
+    if (zxingReader) { try { zxingReader.reset(); } catch (e) {} zxingReader = null; }
+    if (scanVideo.srcObject) {
+      try { scanVideo.srcObject.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+      scanVideo.srcObject = null;
+    }
+  }
+  function closeScanner() { stopCamera(); scanModal.style.display = 'none'; }
+
+  // ISBN → 書名
+  function fetchOpenBD(isbn) {
+    return fetch('https://api.openbd.jp/v1/get?isbn=' + isbn).then(function (r) {
+      return r.ok ? r.json() : null;
+    }).then(function (data) {
+      if (!data || !data[0] || !data[0].summary) return null;
+      return (data[0].summary.title || '').trim() || null;
+    }).catch(function () { return null; });
+  }
+  function fetchGoogleBooks(isbn) {
+    return fetch('https://www.googleapis.com/books/v1/volumes?q=isbn:' + isbn).then(function (r) {
+      return r.ok ? r.json() : null;
+    }).then(function (data) {
+      if (!data || !data.items || !data.items[0] || !data.items[0].volumeInfo) return null;
+      return (data.items[0].volumeInfo.title || '').trim() || null;
+    }).catch(function () { return null; });
+  }
+  function lookupIsbn(isbn) {
+    return fetchOpenBD(isbn).then(function (title) { return title || fetchGoogleBooks(isbn); });
+  }
+
+  function handleIsbn(isbn) {
+    scanBusy = true;                 // 照会中は次のフレームを無視
+    setScanStatus('scanLooking');
+    lookupIsbn(isbn).then(function (title) {
+      if (title) {
+        stopCamera();
+        document.getElementById('subjectName').value = title.slice(0, 60);
+        scanModal.style.display = 'none';   // 教材モーダルへ戻る（名前が入った状態で確認・編集できる）
+        flashSaved();
+      } else {
+        setScanStatus('scanNotFound');
+        scanBusy = false;            // カメラは動いたまま。別の本を試せる
+      }
+    });
+  }
+
+  document.getElementById('scanOpenBtn').addEventListener('click', openScanner);
+  document.getElementById('scanClose').addEventListener('click', closeScanner);
+  document.getElementById('scanIsbnGo').addEventListener('click', function () {
+    var v = document.getElementById('scanIsbnInput').value.replace(/[^0-9]/g, '');
+    if (!isBookIsbn(v)) { setScanStatus('scanBadIsbn'); return; }
+    handleIsbn(v);
+  });
 
   // ---- 週送り（貼り替えの小さなスライド） ----
   function goWeek(delta) {
