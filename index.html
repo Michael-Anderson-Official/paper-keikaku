@@ -39,6 +39,78 @@
     --divider-label: #b08a84;
   }
 
+  /* ---- テーマ（かみ）。手ざわり手帳と共有する。data-paperで切り替え、既定=アイボリー（:root） ---- */
+  /* 白 */
+  body[data-paper="white"] {
+    --paper: #fcfcfb;
+    --paper-back-1: #f1f0ed;
+    --paper-back-2: #f8f7f5;
+    --paper-back-3: #e8e7e3;
+  }
+  /* 黒いノート（白ペンで書く） */
+  body[data-paper="black"] {
+    --paper: #23252a;
+    --paper-back-1: #1c1e22;
+    --paper-back-2: #26282e;
+    --paper-back-3: #17181c;
+    --ink-strong: #e8e6df;
+    --ink-text: #dfdcd2;
+    --ink-soft: #9a9890;
+    --placeholder: rgba(255, 255, 255, 0.28);
+    --rule: rgba(255, 255, 255, 0.14);
+    --rule-strong: rgba(255, 255, 255, 0.28);
+    --margin-line: rgba(235, 140, 130, 0.55);
+    --print: #9fb4d8;
+    --print-soft: #7f92b5;
+    --sun: #e08a80;
+    --sat: #8fa9d0;
+    --today-ring: rgba(235, 130, 120, 0.8);
+    --stitch: rgba(255, 255, 255, 0.22);
+    --divider-label: #c9a49e;
+  }
+  /* 黒板（チョークで書く） */
+  body[data-paper="board"] {
+    --paper: #33584a;
+    --paper-back-1: #2a4b3e;
+    --paper-back-2: #37604f;
+    --paper-back-3: #24413a;
+    --ink-strong: #f0ede2;
+    --ink-text: #e7e4d8;
+    --ink-soft: #a8b3a5;
+    --placeholder: rgba(255, 255, 255, 0.3);
+    --rule: rgba(255, 255, 255, 0.16);
+    --rule-strong: rgba(255, 255, 255, 0.3);
+    --margin-line: rgba(255, 190, 180, 0.5);
+    --print: #b8cfe4;
+    --print-soft: #93a9bd;
+    --sun: #f0a8a0;
+    --sat: #a8c4e8;
+    --today-ring: rgba(240, 168, 160, 0.85);
+    --stitch: rgba(255, 255, 255, 0.25);
+    --divider-label: #d8b8b2;
+  }
+  /* 電光掲示板（駅の発車標。アンバーLED＋緑LED） */
+  body[data-paper="led"] {
+    --paper: #0e1013;
+    --paper-back-1: #0a0c0e;
+    --paper-back-2: #14161a;
+    --paper-back-3: #07080a;
+    --ink-strong: #ffb02e;
+    --ink-text: #ffa41f;
+    --ink-soft: #9a7b45;
+    --placeholder: rgba(255, 164, 31, 0.3);
+    --rule: rgba(255, 176, 46, 0.12);
+    --rule-strong: rgba(255, 176, 46, 0.3);
+    --margin-line: rgba(255, 176, 46, 0.25);
+    --print: #58e07a;
+    --print-soft: #3da65a;
+    --sun: #ff6259;
+    --sat: #57c8ff;
+    --today-ring: rgba(255, 176, 46, 0.85);
+    --stitch: rgba(255, 255, 255, 0.14);
+    --divider-label: #c88f3a;
+  }
+
   /* 机（手ざわり手帳と同じ木目の暗色。紙を引き立てる） */
   body {
     background:
@@ -352,6 +424,16 @@
     color: #fff;
     font-weight: 600;
   }
+  /* テーマえらび（ボタン自体が紙見本。背景・文字色はJSが見本ごとに指定） */
+  .paper-chip {
+    width: auto !important;
+    padding: 0 14px;
+    border-radius: 20px !important;
+  }
+  .paper-chip.active {
+    border: 2.5px solid #5a7d5a !important;
+    font-weight: 600;
+  }
   .settings-close {
     margin-top: 14px;
     width: 100%;
@@ -435,6 +517,32 @@
   }
   .save-note.show { opacity: 1; }
   @media (max-width: 600px) { .save-note { bottom: calc(80px + env(safe-area-inset-bottom)); } }
+
+  /* ---- 黒板・電光掲示板の質感（手ざわり手帳と同じ流儀） ---- */
+  /* 黒板は全部チョークの手書き。ノイズのマスクで文字・線に細かい欠けを作る */
+  body[data-paper="board"] .book,
+  body[data-paper="board"] .toolbar {
+    font-family: 'Yomogi', 'Klee One', cursive;
+  }
+  body[data-paper="board"] .paper {
+    -webkit-mask-image: url('chalk-mask.png');
+    mask-image: url('chalk-mask.png');
+    -webkit-mask-size: 160px 160px;
+    mask-size: 160px 160px;
+  }
+  body[data-paper="board"] .book { text-shadow: 0 0 2px rgba(240, 238, 228, 0.28); }
+
+  /* 電光掲示板: 消灯LEDの格子＋ドットフォント＋発光のにじみ */
+  body[data-paper="led"] .paper {
+    background-image: radial-gradient(circle at 1.5px 1.5px, rgba(255, 255, 255, 0.05) 1px, transparent 1.4px);
+    background-size: 3px 3px;
+    background-position: 0 0;
+  }
+  body[data-paper="led"] .book,
+  body[data-paper="led"] .toolbar { font-family: 'DotGothic16', monospace; }
+  /* セルの手書き字もLEDではドット字に（手帳の予定と同じ約束）。td.cellで書き込み欄より詳細度を勝たせる */
+  body[data-paper="led"] td.cell .cell-text { font-family: 'DotGothic16', monospace; }
+  body[data-paper="led"] .book { text-shadow: 0 0 6px; }
 </style>
 </head>
 <body>
@@ -471,6 +579,9 @@
     <p class="settings-label">ことばづかい</p>
     <div id="wordingChips" class="week-chips"></div>
     <p class="settings-note" id="stWordingNote"></p>
+    <p class="settings-label" id="stThemeLabel" style="margin-top:16px;">かみ</p>
+    <div id="themeChips" class="week-chips"></div>
+    <p class="settings-note" id="stThemeNote"></p>
     <p class="settings-label" id="stWeekStartLabel" style="margin-top:16px;">週の始まり</p>
     <div id="weekStartChips" class="week-chips"></div>
     <p class="settings-note" id="stWeekStartNote"></p>
@@ -546,6 +657,14 @@
     stTitle:        { adult: '設定',                         kid: 'せってい' },
     stWordingNote:  { adult: '画面の文言を「大人向け（漢字）」か「やさしい（ひらがな多め）」に切り替えます。',
                       kid:   'がめんのことばを「大人向け（かん字）」か「やさしい（ひらがな）」にかえます。' },
+    stTheme:        { adult: 'かみ（テーマ）',               kid: 'かみ（いろ）' },
+    stThemeNote:    { adult: '紙の色やふんいきを変えます。手ざわり手帳と共通の設定です。',
+                      kid:   'かみのいろやふんいきをかえます。手ざわり手帳といっしょのせっていだよ。' },
+    themeIvory:     { adult: 'アイボリー',                   kid: 'アイボリー' },
+    themeWhite:     { adult: '白',                           kid: 'しろ' },
+    themeBlack:     { adult: '黒',                           kid: 'くろ' },
+    themeBoard:     { adult: '黒板',                         kid: 'こくばん' },
+    themeLed:       { adult: '電光掲示板',                   kid: 'でんこうけいじばん' },
     stWeekStart:    { adult: '週の始まり',                   kid: 'しゅうのはじまり' },
     stWeekStartNote:{ adult: '計画表の曜日の並びが変わります。手ざわり手帳と共通の設定です。',
                       kid:   'ようびのならびがかわります。手ざわり手帳といっしょのせっていだよ。' },
@@ -563,6 +682,23 @@
     wordingKid:     { adult: 'やさしい',                     kid: 'やさしい' }
   };
   function getWordMode() { return localStorage.getItem('pk:wording') === 'kid' ? 'kid' : 'adult'; }
+
+  // ---- テーマ（かみ）。手ざわり手帳と共有する。[id, 文言キー, 見本の背景色, 見本の文字色] ----
+  var THEMES = [
+    ['ivory', 'themeIvory', '#fdf8ea', '#4a4e5c'],
+    ['white', 'themeWhite', '#fcfcfb', '#4a4e5c'],
+    ['black', 'themeBlack', '#23252a', '#e8e6df'],
+    ['board', 'themeBoard', '#33584a', '#f0ede2'],
+    ['led',   'themeLed',   '#0e1013', '#ffb02e']
+  ];
+  // 計画表のテーマ = pk:theme。無ければ手帳の pt:paper に従う（同一オリジンで設定共有）
+  function getTheme() {
+    var v = localStorage.getItem('pk:theme');
+    if (v === null) v = localStorage.getItem('pt:paper'); // 手帳の紙の色（'ivory'廃止済みの'cream'等は下で弾く）
+    var hit = THEMES.filter(function (t) { return t[0] === v; })[0];
+    return hit ? hit[0] : 'ivory';
+  }
+  function applyTheme() { document.body.setAttribute('data-paper', getTheme()); }
   function tx(key, vars) {
     var w = WORDS[key];
     var s = w ? w[getWordMode()] : '';
@@ -580,6 +716,8 @@
     setText('menuTecho', tx('menuTecho'));
     setText('stTitle', tx('stTitle'));
     setText('stWordingNote', tx('stWordingNote'));
+    setText('stThemeLabel', tx('stTheme'));
+    setText('stThemeNote', tx('stThemeNote'));
     setText('stWeekStartLabel', tx('stWeekStart'));
     setText('stWeekStartNote', tx('stWeekStartNote'));
     setText('stBackupLabel', tx('stBackup'));
@@ -865,7 +1003,7 @@
   });
   document.getElementById('menuSettings').addEventListener('click', function () {
     menuPanel.style.display = 'none';
-    renderWordingChips(); renderWeekStartChips();
+    renderWordingChips(); renderThemeChips(); renderWeekStartChips();
     settingsModal.style.display = 'flex';
   });
   document.getElementById('menuTecho').addEventListener('click', function () {
@@ -889,7 +1027,29 @@
         localStorage.setItem('pk:wording', opt[0]);
         applyWording();
         renderWordingChips();
+        renderThemeChips();
         render();
+        flashSaved();
+      });
+      wrap.appendChild(b);
+    });
+  }
+  // テーマ（かみ）のチップ（ボタン自体が紙見本。手帳と共有の設定）
+  function renderThemeChips() {
+    var wrap = document.getElementById('themeChips');
+    wrap.innerHTML = '';
+    var cur = getTheme();
+    THEMES.forEach(function (t) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'paper-chip' + (t[0] === cur ? ' active' : '');
+      b.textContent = tx(t[1]);
+      b.style.background = t[2];
+      b.style.color = t[3];
+      b.addEventListener('click', function () {
+        localStorage.setItem('pk:theme', t[0]);
+        applyTheme();
+        renderThemeChips();
         flashSaved();
       });
       wrap.appendChild(b);
@@ -946,13 +1106,19 @@
     reader.readAsText(file);
   });
 
-  // ---- 手ざわり手帳がつけた○を取りこむ ----
-  window.addEventListener('storage', function (e) { if (e.key && e.key.indexOf('pk:feed:') === 0) render(); });
+  // ---- 手ざわり手帳がつけた○・テーマ変更を取りこむ ----
+  window.addEventListener('storage', function (e) {
+    if (!e.key) return;
+    if (e.key.indexOf('pk:feed:') === 0) render();
+    // 手帳でテーマを変えた（pt:paper）／別タブの計画表で変えた（pk:theme）ら追従
+    if (e.key === 'pt:paper' || e.key === 'pk:theme') applyTheme();
+  });
   var lastForeground = 0;
   function foregroundRefresh() {
     if (Date.now() - lastForeground < 2000) return;
     lastForeground = Date.now();
-    currentWeek = weekStartOf(currentWeek); // 週の始まり設定が手帳側で変わっていることもある
+    applyTheme();                            // 手帳でテーマを変えていたら追従
+    currentWeek = weekStartOf(currentWeek);  // 週の始まり設定が手帳側で変わっていることもある
     render();
   }
   document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') foregroundRefresh(); });
@@ -960,10 +1126,11 @@
   window.addEventListener('pageshow', foregroundRefresh);
 
   applyWording();
+  applyTheme();
   render();
 
   // テスト用フック（アプリ動作には不使用）
-  window._pk = { rebuildFeed: rebuildFeed, readFeed: readFeed, weekStartOf: weekStartOf, getWordMode: getWordMode };
+  window._pk = { rebuildFeed: rebuildFeed, readFeed: readFeed, weekStartOf: weekStartOf, getWordMode: getWordMode, getTheme: getTheme };
 
   // オフライン対応（Service Worker）。file://で開いたときは黙って諦める
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
