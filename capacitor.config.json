@@ -1,0 +1,9 @@
+{
+  "appId": "jp.tezawari.keikaku",
+  "appName": "手ざわり計画表",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#fdf8ea"
+  }
+}

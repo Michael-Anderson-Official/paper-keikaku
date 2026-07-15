@@ -65,7 +65,24 @@ pk:feed:YYYY-MM-DD = {
 - `manifest.webmanifest` ＋ `sw.js` でオフライン対応（PWA）
 - iPhone Safari 想定。スマホでは縁なし全画面
 
+## ネイティブ化（Capacitor・手帳と同じ流儀）
+
+App Store 配布用に Capacitor で iOS アプリとして包める（`appId: jp.tezawari.keikaku`）。中身の web 資産はそのまま `www/` にコピーするだけで、作り直しは不要。
+
+```
+npm install               # Capacitor CLI / core / ios を入れる（初回のみ）
+npm run build-www         # index.html などを www/ にコピー
+npx cap sync ios          # www/ を iOS プロジェクトへ反映（= npm run sync でまとめて実行）
+# 以降は Mac + Xcode で ios/App を開いてビルド・提出
+```
+
+- iOS プロジェクトは `ios/`（Capacitor 8 = Swift Package Manager 構成。CocoaPods 不要）。アプリアイコンは `ios/App/App/Assets.xcassets/AppIcon.appiconset/` に 1024×1024 を設置済み
+- `node_modules/`・`www/`・`ios/App/App/public/` は生成物のため git 管理外（`.gitignore`）
+- **ビルド・提出は Mac（Xcode）と Apple Developer Program（年 $99）が必要**。この作業は開発者の Mac 側で行う
+- **注意（連携の制約）**: 手帳との localStorage 共有は「同一オリジンのブラウザ」でのみ成立する。ネイティブアプリ同士は別サンドボックスになるため、Web 版どうしの連携はネイティブでは効かない。ネイティブで連携させるには App Group や共有ファイル等の別実装が必要（今後の課題）
+
 ## 未実装（製品化するなら）
 
-- Capacitor ネイティブ化（手帳と同じ流儀）
+- ネイティブ版での手帳連携（App Group 等）
 - 教材の並び替え、テンプレート（曜日ごとの定番）、繰り越し
+- スプラッシュ画面の作り込み（現状は Capacitor 既定）
