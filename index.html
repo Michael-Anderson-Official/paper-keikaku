@@ -502,6 +502,46 @@
   .modal-btns button.primary { background: #5a7d5a; border-color: #4d6b4d; color: #fff; }
   .modal-btns button.danger { color: var(--sun); }
 
+  /* セルの「翌日へ繰り越す」ボタン */
+  .cell-carry {
+    display: block;
+    width: 100%;
+    margin-top: 12px;
+    padding: 9px;
+    font-family: inherit;
+    font-size: 14px;
+    color: #4a4030;
+    background: linear-gradient(180deg, #f3ecd9, #e7dfc8);
+    border: 1px solid rgba(120, 100, 60, 0.35);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .cell-carry:active { transform: translateY(1px); }
+
+  /* 教材モーダルの並び替え行 */
+  .subject-reorder {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    font-size: 14px;
+    color: #6b6046;
+  }
+  .subject-reorder .reorder-spacer { flex: 1; }
+  .subject-reorder button {
+    width: 44px;
+    height: 40px;
+    font-family: inherit;
+    font-size: 16px;
+    color: #4a4030;
+    background: linear-gradient(180deg, #f3ecd9, #e7dfc8);
+    border: 1px solid rgba(120, 100, 60, 0.35);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .subject-reorder button:active { transform: translateY(1px); }
+  .subject-reorder button:disabled { opacity: 0.35; cursor: default; }
+
   /* 教材モーダルの「バーコードで入れる」ボタン */
   .scan-open {
     display: block;
@@ -716,6 +756,7 @@
       <span class="ring"></span>
       <span id="doneToggleLabel">できた（○をつける）</span>
     </div>
+    <button type="button" id="cellCarry" class="cell-carry" style="display:none;">▶ <span id="cellCarryLabel">翌日へ繰り越す</span></button>
     <div class="modal-btns">
       <button class="danger" id="cellClear">けす</button>
       <span class="spacer"></span>
@@ -731,6 +772,12 @@
     <h2 id="subjectModalTitle">教材をふやす</h2>
     <input type="text" id="subjectName" class="write-input" maxlength="60">
     <button type="button" id="scanOpenBtn" class="scan-open">📷 <span id="scanOpenLabel">本のバーコードで入れる</span></button>
+    <div id="subjectReorder" class="subject-reorder" style="display:none;">
+      <span id="reorderLabel">並び替え</span>
+      <span class="reorder-spacer"></span>
+      <button type="button" id="subjectMoveLeft" aria-label="左へ">◀</button>
+      <button type="button" id="subjectMoveRight" aria-label="右へ">▶</button>
+    </div>
     <div class="modal-btns">
       <button class="danger" id="subjectDelete" style="display:none">この列をけす</button>
       <span class="spacer"></span>
@@ -771,6 +818,9 @@
     subjectEdit:    { adult: '教材の名前をかえる',           kid: 'きょうざいのなまえをかえる' },
     subjectPlace:   { adult: '教材や科目の名前（例: 英語）',  kid: 'きょうざいのなまえ（れい: えいご）' },
     subjectDelete:  { adult: 'この列をけす',                 kid: 'このれつをけす' },
+    reorderLabel:   { adult: '列の並び替え',                 kid: 'れつのならびかえ' },
+    cellCarry:      { adult: '翌日へ繰り越す',               kid: 'あすへ送る' },
+    carryDone:      { adult: '翌日へ繰り越しました',         kid: 'あすへ送ったよ' },
     scanOpen:       { adult: '本のバーコードで入れる',       kid: '本のバーコードで入れる' },
     scanManual:     { adult: 'うまく読めないときは、本の裏の番号（978…）を入力',
                       kid:   'うまく読めないときは、本のうらの番号（978…）を入れてね' },
@@ -872,6 +922,8 @@
     document.getElementById('cellText').placeholder = tx('cellPlace');
     document.getElementById('subjectName').placeholder = tx('subjectPlace');
     setText('subjectDelete', tx('subjectDelete'));
+    setText('reorderLabel', tx('reorderLabel'));
+    setText('cellCarryLabel', tx('cellCarry'));
     setText('scanOpenLabel', tx('scanOpen'));
     setText('scanManualLabel', tx('scanManual'));
     setText('scanIsbnGo', tx('scanGo'));
@@ -973,8 +1025,9 @@
 
   // ---- 保存の合図 ----
   var saveNoteTimer = 0;
-  function flashSaved() {
+  function flashSaved(msg) {
     var el = document.getElementById('saveNote');
+    el.textContent = msg || 'とじました';
     el.classList.add('show');
     clearTimeout(saveNoteTimer);
     saveNoteTimer = setTimeout(function () { el.classList.remove('show'); }, 900);
@@ -1065,11 +1118,29 @@
     document.getElementById('cellText').value = readCell(iso, subject.id);
     doneOn = feedDone(iso, subject.id);
     doneToggle.classList.toggle('on', doneOn);
+    updateCarryVisibility();
     cellModal.style.display = 'flex';
     if (!readCell(iso, subject.id)) setTimeout(function () { document.getElementById('cellText').focus(); }, 50);
   }
   function closeCellModal() { cellModal.style.display = 'none'; editing = null; }
-  doneToggle.addEventListener('click', function () { doneOn = !doneOn; doneToggle.classList.toggle('on', doneOn); });
+  // 繰り越しボタンは「文字があって、まだ○が付いていない」ときだけ出す
+  function updateCarryVisibility() {
+    var hasText = !!editing && !!document.getElementById('cellText').value.trim();
+    document.getElementById('cellCarry').style.display = (hasText && !doneOn) ? 'block' : 'none';
+  }
+  doneToggle.addEventListener('click', function () { doneOn = !doneOn; doneToggle.classList.toggle('on', doneOn); updateCarryVisibility(); });
+  document.getElementById('cellText').addEventListener('input', updateCarryVisibility);
+  // 翌日へ繰り越す（＝移動）: いまのセルを空にして、翌日の同じ教材へ入れる
+  document.getElementById('cellCarry').addEventListener('click', function () {
+    if (!editing) return;
+    var text = document.getElementById('cellText').value.trim();
+    if (!text) return;
+    var sid = editing.subject.id, nextIso = addDays(editing.iso, 1);
+    var existing = readCell(nextIso, sid);
+    writeCell(nextIso, sid, existing ? (existing + '\n' + text) : text);
+    writeCell(editing.iso, sid, '');
+    closeCellModal(); render(); flashSaved(tx('carryDone'));
+  });
   document.getElementById('cellSave').addEventListener('click', function () {
     if (!editing) return;
     var text = document.getElementById('cellText').value.trim();
@@ -1088,14 +1159,41 @@
   // ---- 教材モーダル ----
   var editingSubject = null;
   var subjectModal = document.getElementById('subjectModal');
+  var reorderRow = document.getElementById('subjectReorder');
   function openSubjectModal(subject) {
     editingSubject = subject;
     document.getElementById('subjectModalTitle').textContent = subject ? tx('subjectEdit') : tx('subjectAdd');
     document.getElementById('subjectName').value = subject ? subject.name : '';
     document.getElementById('subjectDelete').style.display = subject ? '' : 'none';
+    // 並び替えは「既存の教材を編集」かつ「2つ以上あるとき」だけ出す
+    if (subject && readSubjects().length > 1) {
+      reorderRow.style.display = 'flex';
+      updateReorderButtons(subject.id);
+    } else {
+      reorderRow.style.display = 'none';
+    }
     subjectModal.style.display = 'flex';
     if (!subject) setTimeout(function () { document.getElementById('subjectName').focus(); }, 50);
   }
+  function updateReorderButtons(sid) {
+    var subjects = readSubjects();
+    var i = subjects.map(function (s) { return s.id; }).indexOf(sid);
+    document.getElementById('subjectMoveLeft').disabled = (i <= 0);
+    document.getElementById('subjectMoveRight').disabled = (i < 0 || i >= subjects.length - 1);
+  }
+  function moveSubject(sid, dir) {
+    var subjects = readSubjects();
+    var i = subjects.map(function (s) { return s.id; }).indexOf(sid);
+    var j = i + dir;
+    if (i < 0 || j < 0 || j >= subjects.length) return;
+    var tmp = subjects[i]; subjects[i] = subjects[j]; subjects[j] = tmp;
+    writeSubjects(subjects);
+    render();                    // 列が動くのが見える（モーダルは開いたまま）
+    updateReorderButtons(sid);
+    flashSaved();
+  }
+  document.getElementById('subjectMoveLeft').addEventListener('click', function () { if (editingSubject) moveSubject(editingSubject.id, -1); });
+  document.getElementById('subjectMoveRight').addEventListener('click', function () { if (editingSubject) moveSubject(editingSubject.id, 1); });
   function closeSubjectModal() { subjectModal.style.display = 'none'; editingSubject = null; }
   document.getElementById('subjectSave').addEventListener('click', function () {
     var name = document.getElementById('subjectName').value.trim();
