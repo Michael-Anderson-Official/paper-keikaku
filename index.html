@@ -653,6 +653,72 @@
     cursor: pointer;
   }
 
+  /* ---- 目次OCRの進み具合 ---- */
+  .ocr-progress { max-width: 320px; text-align: center; }
+  .ocr-status { font-size: 15px; color: var(--ink-text); margin-bottom: 14px; min-height: 1.4em; }
+  .ocr-bar {
+    height: 8px;
+    background: rgba(120, 100, 60, 0.18);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .ocr-bar span {
+    display: block;
+    height: 100%;
+    width: 0%;
+    background: #5a7d5a;
+    transition: width 0.25s ease;
+  }
+
+  /* ---- 目次の章えらび ---- */
+  .toc-list {
+    max-height: 46vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 8px 0 4px;
+    border-top: 1px solid var(--rule);
+  }
+  .toc-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 4px;
+    border-bottom: 1px solid var(--rule);
+    cursor: pointer;
+  }
+  .toc-toggle {
+    flex: 0 0 auto;
+    width: 44px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; border: none; padding: 0; cursor: pointer;
+  }
+  .toc-item .ring {
+    width: 20px; height: 20px;
+    border: 2px solid rgba(110, 130, 160, 0.5);
+    border-radius: 50%;
+    position: relative;
+  }
+  .toc-item.on .ring { border-color: transparent; }
+  .toc-item.on .ring::after {
+    content: '';
+    position: absolute; inset: -2px;
+    border: 2.5px solid var(--today-ring);
+    border-radius: 48% 52% 46% 54% / 54% 46% 52% 48%;
+    transform: rotate(-4deg);
+  }
+  .toc-item input.toc-text {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-family: 'Shippori Mincho', 'Klee One', serif;
+    font-size: 14.5px;
+    color: var(--ink-text);
+    padding: 2px 0;
+  }
+  .toc-item.off input.toc-text { color: var(--ink-soft); text-decoration: line-through; }
+
   /* 保存の合図（手帳と同じ） */
   .save-note {
     position: fixed;
@@ -772,6 +838,8 @@
     <h2 id="subjectModalTitle">教材をふやす</h2>
     <input type="text" id="subjectName" class="write-input" maxlength="60">
     <button type="button" id="scanOpenBtn" class="scan-open">📷 <span id="scanOpenLabel">本のバーコードで入れる</span></button>
+    <button type="button" id="tocOpenBtn" class="scan-open">📑 <span id="tocOpenLabel">目次を撮って章を入れる</span></button>
+    <input type="file" id="tocFileInput" accept="image/*" capture="environment" style="display:none;">
     <div id="subjectReorder" class="subject-reorder" style="display:none;">
       <span id="reorderLabel">並び替え</span>
       <span class="reorder-spacer"></span>
@@ -802,6 +870,29 @@
     </div>
   </div>
   <button type="button" id="scanClose" class="scan-close">とじる</button>
+</div>
+
+<!-- 目次OCRの進み具合 -->
+<div id="ocrModal" class="settings-modal" style="display:none;">
+  <div class="settings-card ocr-progress">
+    <p id="ocrStatus" class="ocr-status"></p>
+    <div class="ocr-bar"><span id="ocrBar"></span></div>
+    <button type="button" id="ocrCancel" class="settings-close">とじる</button>
+  </div>
+</div>
+
+<!-- 目次の章えらび -->
+<div id="tocModal" class="settings-modal" style="display:none;">
+  <div class="settings-card">
+    <h2 id="tocTitle">読み取った章</h2>
+    <p class="settings-note" id="tocNote" style="margin-top:0;"></p>
+    <div id="tocList" class="toc-list"></div>
+    <div class="modal-btns">
+      <button id="tocCancel">とじる</button>
+      <span class="spacer"></span>
+      <button class="primary" id="tocAdd">今日から入れる</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -835,6 +926,21 @@
                       kid:   'カメラがつかえなかったよ。下に番号を入れてね。' },
     scanBadIsbn:    { adult: '本の番号は13桁（978…）で入れてね。', kid: 'ほんの番号は13けた（978…）で入れてね。' },
     scanGo:         { adult: 'さがす',                       kid: 'さがす' },
+    tocOpen:        { adult: '目次を撮って章を入れる',       kid: 'もくじを撮って入れる' },
+    ocrPreparing:   { adult: '読み取りの準備をしています…（初回は少し時間がかかります）',
+                      kid:   'よみとりのじゅんびをしているよ…（はじめは少しかかるよ）' },
+    ocrReading:     { adult: '文字を読んでいます…',           kid: 'もじをよんでいるよ…' },
+    ocrFailed:      { adult: '読み取れませんでした。明るい所で、目次のページをまっすぐ撮ってみてね。',
+                      kid:   'よみとれなかったよ。あかるい所で、もくじのページをまっすぐ撮ってみてね。' },
+    ocrNoLines:     { adult: '章が見つかりませんでした。撮り直すか、手で入力してね。',
+                      kid:   'しょうが見つからなかったよ。撮りなおすか、手で入れてね。' },
+    tocTitle:       { adult: '読み取った章',                 kid: 'よみとった章' },
+    tocNote:        { adult: 'いる章だけ○にして「今日から入れる」を押すと、今日から1日ずつ計画に入ります。文字は直せます。',
+                      kid:   'いる章だけ○にして「今日から入れる」をおすと、今日から1日ずつ入るよ。もじはなおせるよ。' },
+    tocAdd:         { adult: '今日から入れる',               kid: '今日から入れる' },
+    tocAddedMsg:    { adult: '{n}個を計画に入れました',       kid: '{n}こ入れたよ' },
+    tocNonePicked:  { adult: '入れる章に○を付けてね。',       kid: '入れる章に○をつけてね。' },
+    subjectUntitled:{ adult: '教材',                         kid: 'きょうざい' },
     deleteConfirm:  { adult: '「{name}」の列と、書いた計画をぜんぶ消します。よろしいですか？',
                       kid:   '「{name}」のれつと、書いたことをぜんぶけします。いいですか？' },
     cellPlace:      { adult: 'やることを書く（例: 長文2ページ）', kid: 'やることを書く（れい: かん字ドリル2ページ）' },
@@ -925,6 +1031,12 @@
     setText('reorderLabel', tx('reorderLabel'));
     setText('cellCarryLabel', tx('cellCarry'));
     setText('scanOpenLabel', tx('scanOpen'));
+    setText('tocOpenLabel', tx('tocOpen'));
+    setText('tocTitle', tx('tocTitle'));
+    setText('tocNote', tx('tocNote'));
+    setText('tocAdd', tx('tocAdd'));
+    setText('tocCancel', tx('closeBtn'));
+    setText('ocrCancel', tx('closeBtn'));
     setText('scanManualLabel', tx('scanManual'));
     setText('scanIsbnGo', tx('scanGo'));
     document.title = '手ざわり計画表';
@@ -1325,6 +1437,143 @@
     var v = document.getElementById('scanIsbnInput').value.replace(/[^0-9]/g, '');
     if (!isBookIsbn(v)) { setScanStatus('scanBadIsbn'); return; }
     handleIsbn(v);
+  });
+
+  // ---- 目次OCR（本の目次ページを撮って、章をタスクに入れる） ----
+  // Tesseract.js（日本語）をvendor/にローカル同梱。バーコードと同じく、使うときだけ遅延読み込み。
+  var tocFileInput = document.getElementById('tocFileInput');
+  var ocrModal = document.getElementById('ocrModal');
+  var tocModal = document.getElementById('tocModal');
+  var tesseractLoading = null, ocrWorker = null, ocrCancelled = false;
+
+  function loadTesseract() {
+    if (window.Tesseract) return Promise.resolve();
+    if (tesseractLoading) return tesseractLoading;
+    tesseractLoading = new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = 'vendor/tesseract/tesseract.min.js';
+      s.onload = function () { resolve(); };
+      s.onerror = function () { tesseractLoading = null; reject(new Error('tesseract load failed')); };
+      document.head.appendChild(s);
+    });
+    return tesseractLoading;
+  }
+  function setOcr(statusKey, pct) {
+    document.getElementById('ocrStatus').textContent = tx(statusKey);
+    if (typeof pct === 'number') document.getElementById('ocrBar').style.width = Math.round(pct * 100) + '%';
+  }
+  // ワーカーは一度だけ作って使い回す（コア約3.7MB＋日本語データ1.5MBは初回だけ取得→SWがキャッシュ）
+  function getOcrWorker() {
+    if (ocrWorker) return Promise.resolve(ocrWorker);
+    return loadTesseract().then(function () {
+      return Tesseract.createWorker('jpn', 1, {
+        workerPath: 'vendor/tesseract/worker.min.js',
+        corePath: 'vendor/tesseract',
+        langPath: 'vendor/tesseract/lang',
+        gzip: true,
+        logger: function (m) {
+          if (ocrModal.style.display === 'none') return;
+          if (m.status === 'recognizing text') setOcr('ocrReading', m.progress);
+        }
+      });
+    }).then(function (w) { ocrWorker = w; return w; });
+  }
+  // 目次の行を、章の候補に整える（末尾のページ番号や点リーダを落とす）
+  function parseTocLines(text) {
+    var out = [];
+    String(text).split(/\r?\n/).forEach(function (raw) {
+      var s = raw.replace(/　/g, ' ').trim();
+      if (!s) return;
+      if (/^(目次|もくじ|contents|index)$/i.test(s)) return;
+      s = s.replace(/[\s.…・．\-–—_]*[0-9０-９]{1,4}\s*$/, '');
+      s = s.replace(/\s+/g, ' ').trim();
+      if (!s || s.length < 2) return;
+      if (/^[0-9０-９\s.…・]+$/.test(s)) return;
+      out.push(s);
+    });
+    return out.filter(function (v, i, a) { return a.indexOf(v) === i; }).slice(0, 60);
+  }
+
+  document.getElementById('tocOpenBtn').addEventListener('click', function () { tocFileInput.value = ''; tocFileInput.click(); });
+  tocFileInput.addEventListener('change', function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (!file) return;
+    ocrCancelled = false;
+    document.getElementById('ocrBar').style.width = '0%';
+    setOcr('ocrPreparing');
+    ocrModal.style.display = 'flex';
+    getOcrWorker().then(function (worker) {
+      if (ocrCancelled) return null;
+      setOcr('ocrReading', 0);
+      return worker.recognize(file);
+    }).then(function (res) {
+      if (ocrCancelled || !res) return;
+      ocrModal.style.display = 'none';
+      var lines = parseTocLines(res.data && res.data.text || '');
+      if (!lines.length) { alert(tx('ocrNoLines')); return; }
+      openTocModal(lines);
+    }).catch(function () {
+      if (ocrCancelled) return;
+      ocrModal.style.display = 'none';
+      alert(tx('ocrFailed'));
+    });
+  });
+  document.getElementById('ocrCancel').addEventListener('click', function () { ocrCancelled = true; ocrModal.style.display = 'none'; });
+
+  // 章の一覧（○の切り替え＋文字を直せる）
+  function openTocModal(lines) {
+    var list = document.getElementById('tocList');
+    list.innerHTML = '';
+    lines.forEach(function (line) {
+      var row = document.createElement('div');
+      row.className = 'toc-item on';
+      var toggle = document.createElement('button');
+      toggle.type = 'button'; toggle.className = 'toc-toggle';
+      var ring = document.createElement('span'); ring.className = 'ring';
+      toggle.appendChild(ring);
+      var input = document.createElement('input');
+      input.type = 'text'; input.className = 'toc-text'; input.value = line; input.maxLength = 60;
+      // ○の切り替えは左のボタンだけ（テキストは編集用に触れる）
+      toggle.addEventListener('click', function () {
+        row.classList.toggle('on'); row.classList.toggle('off');
+      });
+      row.appendChild(toggle); row.appendChild(input);
+      list.appendChild(row);
+    });
+    tocModal.style.display = 'flex';
+  }
+  document.getElementById('tocCancel').addEventListener('click', function () { tocModal.style.display = 'none'; });
+  tocModal.addEventListener('click', function (e) { if (e.target === tocModal) tocModal.style.display = 'none'; });
+  document.getElementById('tocAdd').addEventListener('click', function () {
+    var chapters = [];
+    document.querySelectorAll('#tocList .toc-item.on').forEach(function (r) {
+      var t = r.querySelector('.toc-text').value.trim();
+      if (t) chapters.push(t);
+    });
+    if (!chapters.length) { alert(tx('tocNonePicked')); return; }
+    // 入れる教材を確定（既存なら編集中の教材、新規なら名前欄から作る）
+    var sid;
+    if (editingSubject) {
+      sid = editingSubject.id;
+    } else {
+      var name = document.getElementById('subjectName').value.trim() || tx('subjectUntitled');
+      var subjects = readSubjects();
+      sid = 's' + Date.now().toString(36);
+      subjects.push({ id: sid, name: name });
+      writeSubjects(subjects);
+    }
+    // 今日から1日ずつ（既に書いてあれば改行で追記）
+    var startIso = toISO(new Date());
+    chapters.forEach(function (ch, i) {
+      var iso = addDays(startIso, i);
+      var existing = readCell(iso, sid);
+      writeCell(iso, sid, existing ? (existing + '\n' + ch) : ch);
+    });
+    tocModal.style.display = 'none';
+    closeSubjectModal();
+    currentWeek = weekStartOf(startIso);
+    render();
+    flashSaved(tx('tocAddedMsg', { n: chapters.length }));
   });
 
   // ---- 週送り（貼り替えの小さなスライド） ----
