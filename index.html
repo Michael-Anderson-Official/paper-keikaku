@@ -1553,9 +1553,37 @@
     return fetchOpenBD(isbn).then(function (title) { return title || fetchGoogleBooks(isbn); });
   }
 
+  // ---- 表紙のベストエフォート自動取得 ----
+  // openBD（CORS可なので縮小dataURL化＝オフライン保存）→ 無ければ Google Books（外部URLのまま。表示は可・オフライン不可）
+  function fetchOpenbdCover(isbn) {
+    return fetch('https://api.openbd.jp/v1/get?isbn=' + isbn).then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        var url = data && data[0] && data[0].summary && data[0].summary.cover;
+        if (!url) return null;
+        return fetch(url).then(function (r) { return r.ok ? r.blob() : null; })
+          .then(function (blob) { return blob && blob.size ? imageToCoverDataURL(blob) : null; })
+          .catch(function () { return null; });
+      }).catch(function () { return null; });
+  }
+  function fetchGoogleCover(isbn) {
+    return fetch('https://www.googleapis.com/books/v1/volumes?q=isbn:' + isbn).then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        var il = data && data.items && data.items[0] && data.items[0].volumeInfo && data.items[0].volumeInfo.imageLinks;
+        var u = il && (il.thumbnail || il.smallThumbnail);
+        return u ? u.replace(/^http:/, 'https:') : null;
+      }).catch(function () { return null; });
+  }
+  function lookupCover(isbn) {
+    return fetchOpenbdCover(isbn).then(function (c) { return c || fetchGoogleCover(isbn); });
+  }
+
   function handleIsbn(isbn) {
     scanBusy = true;                 // 照会中は次のフレームを無視
     setScanStatus('scanLooking');
+    // 表紙は裏で取りに行く（見つかれば教材モーダルのプレビューに自動で入る。手動で選んでいたら上書きしない）
+    lookupCover(isbn).then(function (cover) {
+      if (cover && !pendingCover) { pendingCover = cover; updateCoverPreview(); }
+    });
     lookupIsbn(isbn).then(function (title) {
       if (title) {
         stopCamera();
