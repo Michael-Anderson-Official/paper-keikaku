@@ -1198,10 +1198,16 @@
   }
   function writeSubjects(arr) { localStorage.setItem('pk:subjects', JSON.stringify(arr)); }
   function keyCell(iso, sid) { return 'pk:cell:' + iso + ':' + sid; }
+  function cuKey(iso, sid) { return 'pk:cu:' + iso + ':' + sid; }         // そのマスの最終更新ms（連携マージ用）
+  function cuOf(iso, sid) { return parseInt(localStorage.getItem(cuKey(iso, sid)) || '0', 10) || 0; }
+  function touchCell(iso, sid) { localStorage.setItem(cuKey(iso, sid), String(Date.now())); }
   function readCell(iso, sid) { return localStorage.getItem(keyCell(iso, sid)) || ''; }
   function writeCell(iso, sid, text) {
+    var old = readCell(iso, sid);
     if (text) localStorage.setItem(keyCell(iso, sid), text);
     else localStorage.removeItem(keyCell(iso, sid));
+    if (text !== old) touchCell(iso, sid);        // 変わったら更新時刻を刻む
+    if (!text) localStorage.removeItem(cuKey(iso, sid));
     rebuildFeed(iso);
   }
   function keyFeed(iso) { return 'pk:feed:' + iso; }
@@ -1215,15 +1221,16 @@
     for (var i = 0; i < f.items.length; i++) if (f.items[i].id === sid) return !!f.items[i].done;
     return false;
   }
-  // セルの中身からフィードを組み立て直す。○（done）は同じ教材のぶんを引き継ぐ
+  // セルの中身からフィードを組み立て直す。○（done）とu（更新時刻）は引き継ぐ
   function rebuildFeed(iso) {
-    var old = readFeed(iso), oldDone = {};
-    if (old) old.items.forEach(function (it) { oldDone[it.id] = !!it.done; });
+    var old = readFeed(iso), oldById = {};
+    if (old) old.items.forEach(function (it) { oldById[it.id] = it; });
     var items = [];
     readSubjects().forEach(function (s) {
       var t = readCell(iso, s.id);
       if (!t) return;
-      items.push({ id: s.id, subject: s.name, text: t, done: !!oldDone[s.id] });
+      var o = oldById[s.id];
+      items.push({ id: s.id, subject: s.name, text: t, done: o ? !!o.done : false, u: cuOf(iso, s.id) || (o && o.u) || Date.now() });
     });
     if (items.length) localStorage.setItem(keyFeed(iso), JSON.stringify({ v: 1, updated: new Date().toISOString(), items: items }));
     else localStorage.removeItem(keyFeed(iso));
@@ -1232,58 +1239,77 @@
   function setDone(iso, sid, done) {
     var f = readFeed(iso);
     if (!f) return;
-    f.items.forEach(function (it) { if (it.id === sid) it.done = !!done; });
+    touchCell(iso, sid);
+    var u = cuOf(iso, sid);
+    f.items.forEach(function (it) { if (it.id === sid) { it.done = !!done; it.u = u; } });
     f.updated = new Date().toISOString();
     localStorage.setItem(keyFeed(iso), JSON.stringify(f));
     syncPush(iso);
   }
 
-  // ---- 手帳との連携（中継サーバー経由の同期） ----
-  // 別々のiOSアプリはlocalStorageを共有できないため、共有コードで中継サーバーを経由して繋ぐ。
+  // ---- 手帳との連携（即時同期。中継サーバー=Durable ObjectへHTTPでpush・WebSocketで受信） ----
+  // 別々のiOSアプリはlocalStorageを共有できないため、共有コードで中継する。
   var LINK_BASE = window.__linkBase || 'https://keikakuchou-notify.keikakuchou-app.workers.dev';
+  var LINK_WS = LINK_BASE.replace(/^http/, 'ws');
   function linkCode() { return localStorage.getItem('pk:linkCode') || ''; }
-  var pushTimers = {};
+  var applyingRemote = false, pushTimers = {};
   function syncPush(iso) {
+    if (applyingRemote) return;                 // リモート適用中は押し返さない
     var code = linkCode();
     if (!code) return;
     clearTimeout(pushTimers[iso]);
     pushTimers[iso] = setTimeout(function () {
       var feed = readFeed(iso) || { v: 1, items: [] };
-      fetch(LINK_BASE + '/link/push', {
+      fetch(LINK_BASE + '/link/push?code=' + encodeURIComponent(code), {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: code, date: iso, role: 'plan', feed: feed })
-      }).catch(function () { /* オフライン時は次の機会に */ });
-    }, 600);
+        body: JSON.stringify({ date: iso, role: 'plan', feed: feed })
+      }).catch(function () {});
+    }, 250);
   }
-  // 連携をはじめた/再開したとき、手元の計画をぜんぶサーバーへ上げる（手帳に履歴が届く）
   function syncPushAll() {
     if (!linkCode()) return;
     forEachStoredKey('pk:feed:', function (k) { syncPush(k.slice('pk:feed:'.length)); });
   }
-  // 表示中の週ぶんをサーバーから取り、手帳が付けた○を取り込む（本文は計画表が持ち主なので触らない）
-  function syncPullWeek() {
-    var code = linkCode();
-    if (!code) return;
-    var dates = [];
-    for (var i = 0; i < 7; i++) dates.push(addDays(currentWeek, i));
-    fetch(LINK_BASE + '/link/pullmany', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: code, dates: dates })
-    }).then(function (r) { return r.ok ? r.json() : null; }).then(function (data) {
-      if (!data || !data.feeds) return;
-      var changed = false;
-      Object.keys(data.feeds).forEach(function (iso) {
-        var server = data.feeds[iso], local = readFeed(iso);
-        if (!local || !server || !Array.isArray(server.items)) return;
-        var srvDone = {};
-        server.items.forEach(function (it) { srvDone[it.id] = !!it.done; });
-        var hit = false;
-        local.items.forEach(function (it) { if (it.id in srvDone && it.done !== srvDone[it.id]) { it.done = srvDone[it.id]; hit = true; } });
-        if (hit) { localStorage.setItem(keyFeed(iso), JSON.stringify(local)); changed = true; }
+  // サーバーから届いたフィードをローカルへ適用（セルへ書き戻す・pushはしない）
+  function applyRemoteFeed(iso, feed) {
+    applyingRemote = true;
+    try {
+      var subjects = readSubjects(), byId = {}; subjects.forEach(function (s) { byId[s.id] = s; });
+      var serverItems = (feed && feed.items) || [], seen = {};
+      serverItems.forEach(function (it) {
+        if (!byId[it.id]) return;               // 知らない教材は無視（集合の持ち主は計画表）
+        seen[it.id] = true;
+        if (it.text) localStorage.setItem(keyCell(iso, it.id), it.text);
+        else localStorage.removeItem(keyCell(iso, it.id));
+        localStorage.setItem(cuKey(iso, it.id), String(it.u || Date.now()));
       });
-      if (changed) render();
-    }).catch(function () {});
+      subjects.forEach(function (s) {            // サーバーから消えたぶんはローカルも消す
+        if (!seen[s.id] && readCell(iso, s.id)) { localStorage.removeItem(keyCell(iso, s.id)); localStorage.removeItem(cuKey(iso, s.id)); }
+      });
+      if (serverItems.length) localStorage.setItem(keyFeed(iso), JSON.stringify(feed));
+      else localStorage.removeItem(keyFeed(iso));
+    } finally { applyingRemote = false; }
+    render();
   }
+  // WebSocket（開いている間つなぎ、変更を即受信）
+  var ws = null, wsRetry = 0, wsWant = false;
+  function wsConnect() {
+    var code = linkCode();
+    if (!code) { wsDisconnect(); return; }
+    wsWant = true;
+    if (ws && (ws.readyState === 0 || ws.readyState === 1)) return;
+    try { ws = new WebSocket(LINK_WS + '/link/ws?code=' + encodeURIComponent(code)); }
+    catch (e) { wsSchedule(); return; }
+    ws.onmessage = function (ev) {
+      var msg; try { msg = JSON.parse(ev.data); } catch (e) { return; }
+      if (msg.type === 'snapshot') { Object.keys(msg.feeds).forEach(function (iso) { applyRemoteFeed(iso, msg.feeds[iso]); }); }
+      else if (msg.type === 'update') { applyRemoteFeed(msg.date, msg.feed); }
+    };
+    ws.onclose = function () { ws = null; if (wsWant) wsSchedule(); };
+    ws.onerror = function () { try { ws.close(); } catch (e) {} };
+  }
+  function wsSchedule() { clearTimeout(wsRetry); wsRetry = setTimeout(wsConnect, 3000); }
+  function wsDisconnect() { wsWant = false; clearTimeout(wsRetry); if (ws) { try { ws.close(); } catch (e) {} ws = null; } }
   function forEachStoredKey(prefix, fn) {
     var keys = [];
     for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && k.indexOf(prefix) === 0) keys.push(k); }
@@ -1929,7 +1955,6 @@
     setTimeout(function () {
       currentWeek = delta === 0 ? weekStartOf(toISO(new Date())) : addDays(currentWeek, delta * 7);
       render();
-      syncPullWeek();
       sheet.classList.remove('slide-out-left', 'slide-out-right');
     }, 180);
   }
@@ -2043,6 +2068,7 @@
   document.getElementById('linkStartBtn').addEventListener('click', function () {
     localStorage.setItem('pk:linkCode', makeLinkCode());
     renderLinkSection();
+    wsConnect();
     syncPushAll();   // 手元の計画をぜんぶ手帳へ
     flashSaved(tx('linkJoined'));
   });
@@ -2052,13 +2078,14 @@
     localStorage.setItem('pk:linkCode', v);
     document.getElementById('linkCodeInput').value = '';
     renderLinkSection();
+    wsConnect();
     syncPushAll();
-    syncPullWeek();
     flashSaved(tx('linkJoined'));
   });
   document.getElementById('linkStopBtn').addEventListener('click', function () {
     if (!confirm(tx('linkStopConfirm'))) return;
     localStorage.removeItem('pk:linkCode');
+    wsDisconnect();
     renderLinkSection();
     flashSaved();
   });
@@ -2112,16 +2139,20 @@
     applyTheme();                            // 手帳でテーマを変えていたら追従
     currentWeek = weekStartOf(currentWeek);  // 週の始まり設定が手帳側で変わっていることもある
     render();
-    syncPullWeek();                          // 手帳が付けた○を取り込む
+    wsConnect();                             // 復帰したら即時同期をつなぎ直す
   }
-  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') foregroundRefresh(); });
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') foregroundRefresh();
+    else wsDisconnect();                     // 背面では切る（復帰時につなぎ直す）
+  });
   window.addEventListener('focus', foregroundRefresh);
   window.addEventListener('pageshow', foregroundRefresh);
 
   applyWording();
   applyTheme();
   render();
-  syncPullWeek();
+  wsConnect();       // 連携中なら即時同期を開始（接続時に最新スナップショットを受信）
+  syncPushAll();     // 手元の計画も上げておく（マージはu基準なので新しい方が残る）
 
   // テスト用フック（アプリ動作には不使用）
   window._pk = { rebuildFeed: rebuildFeed, readFeed: readFeed, weekStartOf: weekStartOf, getWordMode: getWordMode, getTheme: getTheme };
