@@ -218,6 +218,17 @@
     cursor: pointer;
     padding: 3px 4px;
   }
+  /* 教材の表紙（列見出しの上に小さく。本棚のように） */
+  th.subject .subject-cover {
+    display: block;
+    width: 34px;
+    height: 46px;
+    margin: 0 auto 3px;
+    object-fit: cover;
+    border-radius: 3px;
+    box-shadow: 1px 1px 2px rgba(60, 45, 25, 0.35);
+  }
+  th.subject.has-cover { height: 90px; padding-top: 5px; }
   /* 教材名は2行まで表示（はみ出したら…）。thは表セルのまま、内側spananだけをクランプ */
   th.subject .subject-name {
     display: -webkit-box;
@@ -566,6 +577,35 @@
   }
   .scan-open:active { transform: translateY(1px); }
 
+  /* 教材モーダルの表紙えらび */
+  .cover-row { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+  .cover-preview {
+    flex: 0 0 auto;
+    width: 48px; height: 64px;
+    display: flex; align-items: center; justify-content: center;
+    background: #efe7d3;
+    border: 1px solid rgba(120, 100, 60, 0.35);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 1px 1px 3px rgba(60, 45, 25, 0.25);
+    font-size: 22px;
+    color: var(--ink-soft);
+  }
+  .cover-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .cover-actions { display: flex; flex-direction: column; gap: 6px; }
+  .cover-pick, .cover-remove {
+    font-family: inherit;
+    font-size: 13px;
+    padding: 7px 12px;
+    border-radius: 7px;
+    border: 1px solid rgba(120, 100, 60, 0.35);
+    background: linear-gradient(180deg, #f3ecd9, #e7dfc8);
+    color: #4a4030;
+    cursor: pointer;
+    width: fit-content;
+  }
+  .cover-remove { background: transparent; color: var(--sun); border-color: transparent; padding-left: 2px; }
+
   /* ---- バーコードスキャナ（全画面カメラ） ---- */
   .scan-modal {
     position: fixed;
@@ -859,6 +899,14 @@
   <div class="settings-card">
     <h2 id="subjectModalTitle">教材をふやす</h2>
     <input type="text" id="subjectName" class="write-input" maxlength="60">
+    <div class="cover-row">
+      <div id="coverPreview" class="cover-preview"><span id="coverPreviewEmpty">📖</span></div>
+      <div class="cover-actions">
+        <button type="button" id="coverPickBtn" class="cover-pick">表紙を選ぶ</button>
+        <button type="button" id="coverRemoveBtn" class="cover-remove" style="display:none;">はずす</button>
+      </div>
+    </div>
+    <input type="file" id="coverFileInput" accept="image/*" style="display:none;">
     <button type="button" id="scanOpenBtn" class="scan-open">📷 <span id="scanOpenLabel">本のバーコードで入れる</span></button>
     <button type="button" id="tocOpenBtn" class="scan-open">📑 <span id="tocOpenLabel">目次の写真から章を入れる</span></button>
     <input type="file" id="tocFileInput" accept="image/*" style="display:none;">
@@ -965,6 +1013,8 @@
     tocAddedMsg:    { adult: '{n}個を計画に入れました',       kid: '{n}こ入れたよ' },
     tocNonePicked:  { adult: '入れる章に○を付けてね。',       kid: '入れる章に○をつけてね。' },
     subjectUntitled:{ adult: '教材',                         kid: 'きょうざい' },
+    coverPick:      { adult: '表紙を選ぶ／撮る',             kid: 'ひょうしをえらぶ／撮る' },
+    coverRemove:    { adult: 'はずす',                       kid: 'はずす' },
     deleteConfirm:  { adult: '「{name}」の列と、書いた計画をぜんぶ消します。よろしいですか？',
                       kid:   '「{name}」のれつと、書いたことをぜんぶけします。いいですか？' },
     cellPlace:      { adult: 'やることを書く（例: 長文2ページ）', kid: 'やることを書く（れい: かん字ドリル2ページ）' },
@@ -1052,6 +1102,8 @@
     document.getElementById('cellText').placeholder = tx('cellPlace');
     document.getElementById('subjectName').placeholder = tx('subjectPlace');
     setText('subjectDelete', tx('subjectDelete'));
+    setText('coverPickBtn', tx('coverPick'));
+    setText('coverRemoveBtn', tx('coverRemove'));
     setText('reorderLabel', tx('reorderLabel'));
     setText('cellCarryLabel', tx('cellCarry'));
     setText('scanOpenLabel', tx('scanOpen'));
@@ -1202,6 +1254,14 @@
     subjects.forEach(function (s) {
       var th = document.createElement('th');
       th.className = 'subject';
+      if (s.cover) {
+        th.classList.add('has-cover');
+        var cimg = document.createElement('img');
+        cimg.className = 'subject-cover';
+        cimg.src = s.cover;
+        cimg.alt = '';
+        th.appendChild(cimg);
+      }
       var nameSpan = document.createElement('span');
       nameSpan.className = 'subject-name';
       nameSpan.textContent = s.name;
@@ -1300,8 +1360,54 @@
   var editingSubject = null;
   var subjectModal = document.getElementById('subjectModal');
   var reorderRow = document.getElementById('subjectReorder');
+  var pendingCover = null; // このモーダルで設定中の表紙（dataURL）
+
+  // 選んだ画像を小さく縮めてJPEGのdataURLに（端末内保存・オフライン表示のため）
+  function imageToCoverDataURL(file) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      img.onload = function () {
+        var maxW = 180, scale = Math.min(1, maxW / img.width);
+        var w = Math.max(1, Math.round(img.width * scale)), h = Math.max(1, Math.round(img.height * scale));
+        var c = document.createElement('canvas'); c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(img.src);
+        try { resolve(c.toDataURL('image/jpeg', 0.72)); } catch (e) { reject(e); }
+      };
+      img.onerror = function () { URL.revokeObjectURL(img.src); reject(new Error('img')); };
+      img.src = URL.createObjectURL(file);
+    });
+  }
+  function updateCoverPreview() {
+    var box = document.getElementById('coverPreview');
+    var empty = document.getElementById('coverPreviewEmpty');
+    var existing = box.querySelector('img');
+    if (existing) box.removeChild(existing);
+    if (pendingCover) {
+      empty.style.display = 'none';
+      var img = document.createElement('img'); img.src = pendingCover; img.alt = '';
+      box.appendChild(img);
+      document.getElementById('coverRemoveBtn').style.display = '';
+    } else {
+      empty.style.display = '';
+      document.getElementById('coverRemoveBtn').style.display = 'none';
+    }
+  }
+  document.getElementById('coverPickBtn').addEventListener('click', function () {
+    document.getElementById('coverFileInput').value = '';
+    document.getElementById('coverFileInput').click();
+  });
+  document.getElementById('coverFileInput').addEventListener('change', function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (!file) return;
+    imageToCoverDataURL(file).then(function (url) { pendingCover = url; updateCoverPreview(); }).catch(function () {});
+  });
+  document.getElementById('coverRemoveBtn').addEventListener('click', function () { pendingCover = null; updateCoverPreview(); });
+
   function openSubjectModal(subject) {
     editingSubject = subject;
+    pendingCover = subject && subject.cover || null;
+    updateCoverPreview();
     document.getElementById('subjectModalTitle').textContent = subject ? tx('subjectEdit') : tx('subjectAdd');
     document.getElementById('subjectName').value = subject ? subject.name : '';
     document.getElementById('subjectDelete').style.display = subject ? '' : 'none';
@@ -1340,11 +1446,15 @@
     if (!name) { closeSubjectModal(); return; }
     var subjects = readSubjects();
     if (editingSubject) {
-      subjects.forEach(function (s) { if (s.id === editingSubject.id) s.name = name; });
+      subjects.forEach(function (s) {
+        if (s.id === editingSubject.id) { s.name = name; if (pendingCover) s.cover = pendingCover; else delete s.cover; }
+      });
       writeSubjects(subjects);
       renameSubjectEverywhere(editingSubject.id, name);
     } else {
-      subjects.push({ id: 's' + Date.now().toString(36), name: name });
+      var obj = { id: 's' + Date.now().toString(36), name: name };
+      if (pendingCover) obj.cover = pendingCover;
+      subjects.push(obj);
       writeSubjects(subjects);
     }
     closeSubjectModal(); render(); flashSaved();
@@ -1670,7 +1780,9 @@
       var name = document.getElementById('subjectName').value.trim() || tx('subjectUntitled');
       var subjects = readSubjects();
       sid = 's' + Date.now().toString(36);
-      subjects.push({ id: sid, name: name });
+      var obj = { id: sid, name: name };
+      if (pendingCover) obj.cover = pendingCover;
+      subjects.push(obj);
       writeSubjects(subjects);
     }
     // 今日から1日ずつ（既に書いてあれば改行で追記）
