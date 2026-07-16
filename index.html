@@ -210,16 +210,24 @@
   table.plan tr:last-child td { border-bottom: none; }
 
   th.subject {
-    height: 36px;
-    font-size: 15px;
+    height: 44px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--ink-strong);
     vertical-align: middle;
     cursor: pointer;
+    padding: 3px 4px;
+  }
+  /* 教材名は2行まで表示（はみ出したら…）。thは表セルのまま、内側spananだけをクランプ */
+  th.subject .subject-name {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    padding: 0 4px;
+    line-height: 1.2;
+    white-space: normal;
+    word-break: break-word;
   }
   th.corner { width: 42px; }
   th.add-col {
@@ -1194,7 +1202,10 @@
     subjects.forEach(function (s) {
       var th = document.createElement('th');
       th.className = 'subject';
-      th.textContent = s.name;
+      var nameSpan = document.createElement('span');
+      nameSpan.className = 'subject-name';
+      nameSpan.textContent = s.name;
+      th.appendChild(nameSpan);
       th.addEventListener('click', function () { openSubjectModal(s); });
       thead.appendChild(th);
     });
