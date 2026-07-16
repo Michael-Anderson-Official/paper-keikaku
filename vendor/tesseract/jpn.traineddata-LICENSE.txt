@@ -1,3 +1,9 @@
-jpn.traineddata (tessdata_fast) — Apache License 2.0
-Source: https://github.com/tesseract-ocr/tessdata_fast
-Trained models for Tesseract OCR, distributed by Google under Apache-2.0.
+Tesseract trained models — Apache License 2.0
+Source: https://github.com/tesseract-ocr/tessdata (and tessdata_fast)
+
+Bundled in lang/:
+- jpn.traineddata.gz       … Japanese, horizontal (tessdata / standard)
+- jpn_vert.traineddata.gz  … Japanese, vertical  (tessdata / standard)
+- eng.traineddata.gz       … English (tessdata_fast)
+
+Trained models for Tesseract OCR, distributed by Google/community under Apache-2.0.

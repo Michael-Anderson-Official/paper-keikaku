@@ -718,6 +718,20 @@
     padding: 2px 0;
   }
   .toc-item.off input.toc-text { color: var(--ink-soft); text-decoration: line-through; }
+  .toc-reread {
+    display: block;
+    width: 100%;
+    margin: 10px 0 2px;
+    padding: 8px;
+    font-family: inherit;
+    font-size: 13px;
+    color: #5a6b5a;
+    background: transparent;
+    border: 1px dashed rgba(120, 100, 60, 0.4);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .toc-reread:active { background: rgba(120, 100, 60, 0.08); }
 
   /* 保存の合図（手帳と同じ） */
   .save-note {
@@ -887,6 +901,7 @@
     <h2 id="tocTitle">読み取った章</h2>
     <p class="settings-note" id="tocNote" style="margin-top:0;"></p>
     <div id="tocList" class="toc-list"></div>
+    <button type="button" id="tocReread" class="toc-reread">↕ <span id="tocRereadLabel">縦書きの本？ 縦書きで読み直す</span></button>
     <div class="modal-btns">
       <button id="tocCancel">とじる</button>
       <span class="spacer"></span>
@@ -938,6 +953,7 @@
     tocNote:        { adult: 'いる章だけ○にして「今日から入れる」を押すと、今日から1日ずつ計画に入ります。文字は直せます。',
                       kid:   'いる章だけ○にして「今日から入れる」をおすと、今日から1日ずつ入るよ。もじはなおせるよ。' },
     tocAdd:         { adult: '今日から入れる',               kid: '今日から入れる' },
+    tocReread:      { adult: '縦書きの本？ 縦書きで読み直す', kid: 'たて書きの本？ たて書きで読みなおす' },
     tocAddedMsg:    { adult: '{n}個を計画に入れました',       kid: '{n}こ入れたよ' },
     tocNonePicked:  { adult: '入れる章に○を付けてね。',       kid: '入れる章に○をつけてね。' },
     subjectUntitled:{ adult: '教材',                         kid: 'きょうざい' },
@@ -1035,6 +1051,7 @@
     setText('tocTitle', tx('tocTitle'));
     setText('tocNote', tx('tocNote'));
     setText('tocAdd', tx('tocAdd'));
+    setText('tocRereadLabel', tx('tocReread'));
     setText('tocCancel', tx('closeBtn'));
     setText('ocrCancel', tx('closeBtn'));
     setText('scanManualLabel', tx('scanManual'));
@@ -1444,7 +1461,8 @@
   var tocFileInput = document.getElementById('tocFileInput');
   var ocrModal = document.getElementById('ocrModal');
   var tocModal = document.getElementById('tocModal');
-  var tesseractLoading = null, ocrWorker = null, ocrCancelled = false;
+  var tesseractLoading = null, ocrWorker = null, ocrWorkerVert = null, ocrCancelled = false;
+  var lastOcrCanvas = null; // 直近の前処理済み画像（縦書きで読み直すため保持）
 
   function loadTesseract() {
     if (window.Tesseract) return Promise.resolve();
@@ -1462,27 +1480,89 @@
     document.getElementById('ocrStatus').textContent = tx(statusKey);
     if (typeof pct === 'number') document.getElementById('ocrBar').style.width = Math.round(pct * 100) + '%';
   }
-  // ワーカーは一度だけ作って使い回す（コア約3.7MB＋日本語データ1.5MBは初回だけ取得→SWがキャッシュ）
+  function ocrLogger(m) {
+    if (ocrModal.style.display === 'none') return;
+    if (m.status === 'recognizing text') setOcr('ocrReading', m.progress);
+  }
+  // 前処理: スマホ写真の精度を上げる（グレースケール＋コントラスト最大化＋適正サイズへ拡縮）
+  function preprocessImage(file) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      img.onload = function () {
+        var minW = 1200, maxW = 2200, scale = 1;
+        if (img.width < minW) scale = minW / img.width;
+        else if (img.width > maxW) scale = maxW / img.width;
+        var w = Math.max(1, Math.round(img.width * scale)), h = Math.max(1, Math.round(img.height * scale));
+        var c = document.createElement('canvas'); c.width = w; c.height = h;
+        var ctx = c.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        try {
+          var id = ctx.getImageData(0, 0, w, h), d = id.data, i, g, min = 255, max = 0;
+          for (i = 0; i < d.length; i += 4) {
+            g = (d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114) | 0;
+            d[i] = d[i + 1] = d[i + 2] = g;
+            if (g < min) min = g; if (g > max) max = g;
+          }
+          var range = Math.max(1, max - min);
+          for (i = 0; i < d.length; i += 4) {
+            var v = (d[i] - min) * 255 / range;
+            v = v < 0 ? 0 : v > 255 ? 255 : v;
+            d[i] = d[i + 1] = d[i + 2] = v;
+          }
+          ctx.putImageData(id, 0, 0);
+        } catch (e) { /* CORS等でピクセルを触れない場合は素の描画のまま */ }
+        URL.revokeObjectURL(img.src);
+        resolve(c);
+      };
+      img.onerror = function () { URL.revokeObjectURL(img.src); reject(new Error('image load failed')); };
+      img.src = URL.createObjectURL(file);
+    });
+  }
+  // 横書きワーカー（jpn+eng・標準モデル）。一度だけ作って使い回す
   function getOcrWorker() {
     if (ocrWorker) return Promise.resolve(ocrWorker);
     return loadTesseract().then(function () {
-      return Tesseract.createWorker('jpn', 1, {
+      return Tesseract.createWorker('jpn+eng', 1, {
         workerPath: 'vendor/tesseract/worker.min.js',
         corePath: 'vendor/tesseract',
         langPath: 'vendor/tesseract/lang',
         gzip: true,
-        logger: function (m) {
-          if (ocrModal.style.display === 'none') return;
-          if (m.status === 'recognizing text') setOcr('ocrReading', m.progress);
-        }
+        logger: ocrLogger
       });
-    }).then(function (w) { ocrWorker = w; return w; });
+    }).then(function (w) {
+      // PSM 6 = 一様な行の集まりとして読む（目次向け）
+      return w.setParameters({ tessedit_pageseg_mode: '6', preserve_interword_spaces: '1', user_defined_dpi: '300' }).then(function () { ocrWorker = w; return w; });
+    });
+  }
+  // 縦書きワーカー（jpn_vert）。「縦書きで読み直す」を押したときだけ作る
+  function getOcrWorkerVert() {
+    if (ocrWorkerVert) return Promise.resolve(ocrWorkerVert);
+    return loadTesseract().then(function () {
+      return Tesseract.createWorker('jpn_vert', 1, {
+        workerPath: 'vendor/tesseract/worker.min.js',
+        corePath: 'vendor/tesseract',
+        langPath: 'vendor/tesseract/lang',
+        gzip: true,
+        logger: ocrLogger
+      });
+    }).then(function (w) {
+      // PSM 5 = 縦組みの一様な行として読む
+      return w.setParameters({ tessedit_pageseg_mode: '5', preserve_interword_spaces: '1', user_defined_dpi: '300' }).then(function () { ocrWorkerVert = w; return w; });
+    });
+  }
+  // 丸囲み・囲み数字（①⑴⒈など）をふつうの数字へ。標準モデルは数字を丸囲みで読むことがある
+  function normDigits(s) {
+    return s
+      .replace(/[①-⑳]/g, function (c) { return String(c.charCodeAt(0) - 0x2460 + 1); }) // ①-⑳
+      .replace(/[⑴-⒇]/g, function (c) { return String(c.charCodeAt(0) - 0x2474 + 1); }) // ⑴-⒇
+      .replace(/[⒈-⒛]/g, function (c) { return String(c.charCodeAt(0) - 0x2488 + 1); }) // ⒈-⒛
+      .replace(/⓪/g, '0');
   }
   // 目次の行を、章の候補に整える（末尾のページ番号や点リーダを落とす）
   function parseTocLines(text) {
     var out = [];
     String(text).split(/\r?\n/).forEach(function (raw) {
-      var s = raw.replace(/　/g, ' ').trim();
+      var s = normDigits(raw.replace(/　/g, ' ')).trim();
       if (!s) return;
       if (/^(目次|もくじ|contents|index)$/i.test(s)) return;
       s = s.replace(/[\s.…・．\-–—_]*[0-9０-９]{1,4}\s*$/, '');
@@ -1494,18 +1574,17 @@
     return out.filter(function (v, i, a) { return a.indexOf(v) === i; }).slice(0, 60);
   }
 
-  document.getElementById('tocOpenBtn').addEventListener('click', function () { tocFileInput.value = ''; tocFileInput.click(); });
-  tocFileInput.addEventListener('change', function (e) {
-    var file = e.target.files && e.target.files[0];
-    if (!file) return;
+  // 前処理済みcanvasをOCRして章一覧を出す。vert=trueなら縦書きワーカー
+  function runOcr(canvas, vert) {
     ocrCancelled = false;
     document.getElementById('ocrBar').style.width = '0%';
     setOcr('ocrPreparing');
     ocrModal.style.display = 'flex';
-    getOcrWorker().then(function (worker) {
+    var getW = vert ? getOcrWorkerVert() : getOcrWorker();
+    return getW.then(function (worker) {
       if (ocrCancelled) return null;
       setOcr('ocrReading', 0);
-      return worker.recognize(file);
+      return worker.recognize(canvas);
     }).then(function (res) {
       if (ocrCancelled || !res) return;
       ocrModal.style.display = 'none';
@@ -1517,8 +1596,29 @@
       ocrModal.style.display = 'none';
       alert(tx('ocrFailed'));
     });
+  }
+
+  document.getElementById('tocOpenBtn').addEventListener('click', function () { tocFileInput.value = ''; tocFileInput.click(); });
+  tocFileInput.addEventListener('change', function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (!file) return;
+    ocrModal.style.display = 'flex';
+    setOcr('ocrPreparing');
+    preprocessImage(file).then(function (canvas) {
+      lastOcrCanvas = canvas;       // 縦書きで読み直せるよう保持
+      return runOcr(canvas, false);
+    }).catch(function () {
+      ocrModal.style.display = 'none';
+      alert(tx('ocrFailed'));
+    });
   });
   document.getElementById('ocrCancel').addEventListener('click', function () { ocrCancelled = true; ocrModal.style.display = 'none'; });
+  // 縦書きで読み直す（同じ写真を縦書きワーカーで）
+  document.getElementById('tocReread').addEventListener('click', function () {
+    if (!lastOcrCanvas) return;
+    tocModal.style.display = 'none';
+    runOcr(lastOcrCanvas, true);
+  });
 
   // 章の一覧（○の切り替え＋文字を直せる）
   function openTocModal(lines) {
