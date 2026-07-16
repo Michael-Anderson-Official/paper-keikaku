@@ -852,8 +852,8 @@
     <h2 id="subjectModalTitle">教材をふやす</h2>
     <input type="text" id="subjectName" class="write-input" maxlength="60">
     <button type="button" id="scanOpenBtn" class="scan-open">📷 <span id="scanOpenLabel">本のバーコードで入れる</span></button>
-    <button type="button" id="tocOpenBtn" class="scan-open">📑 <span id="tocOpenLabel">目次を撮って章を入れる</span></button>
-    <input type="file" id="tocFileInput" accept="image/*" capture="environment" style="display:none;">
+    <button type="button" id="tocOpenBtn" class="scan-open">📑 <span id="tocOpenLabel">目次の写真から章を入れる</span></button>
+    <input type="file" id="tocFileInput" accept="image/*" style="display:none;">
     <div id="subjectReorder" class="subject-reorder" style="display:none;">
       <span id="reorderLabel">並び替え</span>
       <span class="reorder-spacer"></span>
@@ -941,14 +941,14 @@
                       kid:   'カメラがつかえなかったよ。下に番号を入れてね。' },
     scanBadIsbn:    { adult: '本の番号は13桁（978…）で入れてね。', kid: 'ほんの番号は13けた（978…）で入れてね。' },
     scanGo:         { adult: 'さがす',                       kid: 'さがす' },
-    tocOpen:        { adult: '目次を撮って章を入れる',       kid: 'もくじを撮って入れる' },
+    tocOpen:        { adult: '目次の写真から章を入れる',     kid: 'もくじの写真から入れる' },
     ocrPreparing:   { adult: '読み取りの準備をしています…（初回は少し時間がかかります）',
                       kid:   'よみとりのじゅんびをしているよ…（はじめは少しかかるよ）' },
     ocrReading:     { adult: '文字を読んでいます…',           kid: 'もじをよんでいるよ…' },
-    ocrFailed:      { adult: '読み取れませんでした。明るい所で、目次のページをまっすぐ撮ってみてね。',
-                      kid:   'よみとれなかったよ。あかるい所で、もくじのページをまっすぐ撮ってみてね。' },
-    ocrNoLines:     { adult: '章が見つかりませんでした。撮り直すか、手で入力してね。',
-                      kid:   'しょうが見つからなかったよ。撮りなおすか、手で入れてね。' },
+    ocrFailed:      { adult: '読み取れませんでした。目次がはっきり写った写真を、まっすぐ撮る／選ぶと読みやすいです。',
+                      kid:   'よみとれなかったよ。もくじがはっきり写った写真を、まっすぐ撮る／えらぶと読みやすいよ。' },
+    ocrNoLines:     { adult: '章が見つかりませんでした。別の写真を選ぶ／撮り直すか、手で入力してね。',
+                      kid:   'しょうが見つからなかったよ。べつの写真をえらぶ／撮りなおすか、手で入れてね。' },
     tocTitle:       { adult: '読み取った章',                 kid: 'よみとった章' },
     tocNote:        { adult: 'いる章だけ○にして「今日から入れる」を押すと、今日から1日ずつ計画に入ります。文字は直せます。',
                       kid:   'いる章だけ○にして「今日から入れる」をおすと、今日から1日ずつ入るよ。もじはなおせるよ。' },
