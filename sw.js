@@ -1,7 +1,7 @@
 // 手ざわり計画表 Service Worker
 // - アプリ本体（シェル）は事前キャッシュ。ページはネット優先→落ちたらキャッシュ（更新がすぐ届く）
 // - フォント（自前ホスト）・チャコマスク等の同一オリジン資産はキャッシュ優先で使い回し（表示した字からオフライン化）
-var CACHE = 'tezawari-keikaku-v11';
+var CACHE = 'tezawari-keikaku-v12';
 var SHELL = [
   './',
   './manifest.webmanifest'
@@ -29,7 +29,7 @@ self.addEventListener('fetch', function (ev) {
 
   if (req.mode === 'navigate') {
     ev.respondWith(
-      fetch(req).then(function (res) {
+      fetch(req, { cache: 'reload' }).then(function (res) {   // HTTPキャッシュも飛ばして常に最新HTML
         var copy = res.clone();
         caches.open(CACHE).then(function (cache) { cache.put('./', copy); });
         return res;
