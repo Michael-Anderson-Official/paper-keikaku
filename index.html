@@ -443,6 +443,28 @@
     color: #fff;
     font-weight: 600;
   }
+  /* 連携（手帳とつなぐ） */
+  .link-code-row { display: flex; align-items: center; gap: 8px; }
+  .link-code {
+    flex: 1;
+    font-family: 'Courier New', monospace;
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: var(--ink-strong);
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(120, 100, 60, 0.3);
+    border-radius: 8px;
+    padding: 8px 10px;
+    text-align: center;
+    user-select: all;
+  }
+  .link-enter-row { display: flex; gap: 8px; align-items: center; }
+  .link-enter-row .write-input { flex: 1; }
+  .link-enter-row button.primary {
+    font-family: inherit; font-size: 14px; padding: 9px 14px;
+    border-radius: 8px; border: 1px solid #4d6b4d; background: #5a7d5a; color: #fff; cursor: pointer;
+  }
+
   /* テーマえらび（ボタン自体が紙見本。背景・文字色はJSが見本ごとに指定） */
   .paper-chip {
     width: auto !important;
@@ -864,6 +886,19 @@
     <p class="settings-label" id="stWeekStartLabel" style="margin-top:16px;">週の始まり</p>
     <div id="weekStartChips" class="week-chips"></div>
     <p class="settings-note" id="stWeekStartNote"></p>
+    <p class="settings-label" id="stLinkLabel" style="margin-top:16px;">手帳と連携</p>
+    <p class="settings-note" id="stLinkNote" style="margin-top:0;"></p>
+    <div id="linkOn" style="display:none;">
+      <div class="link-code-row"><span id="linkCodeShow" class="link-code"></span><button id="linkCopyBtn" type="button" class="settings-close" style="margin-top:0; width:auto; padding:8px 12px;">コピー</button></div>
+      <button id="linkStopBtn" type="button" class="settings-close" style="margin-top:8px; color:#c4645c;">連携をやめる</button>
+    </div>
+    <div id="linkOff">
+      <button id="linkStartBtn" type="button" class="settings-close" style="margin-top:0;">連携をはじめる（コードを作る）</button>
+      <div class="link-enter-row" style="margin-top:8px;">
+        <input id="linkCodeInput" type="text" class="write-input" placeholder="手帳のコードを入れる" autocapitalize="off" autocorrect="off" spellcheck="false">
+        <button id="linkJoinBtn" type="button" class="primary">つなぐ</button>
+      </div>
+    </div>
     <p class="settings-label" id="stBackupLabel" style="margin-top:16px;">データのひかえ</p>
     <p class="settings-note" id="stBackupNote" style="margin-top:0;"></p>
     <div style="display:flex; gap:8px;">
@@ -1041,6 +1076,16 @@
     stWeekStart:    { adult: '週の始まり',                   kid: 'しゅうのはじまり' },
     stWeekStartNote:{ adult: '計画表の曜日の並びが変わります。手ざわり手帳と共通の設定です。',
                       kid:   'ようびのならびがかわります。手ざわり手帳といっしょのせっていだよ。' },
+    stLink:         { adult: '手帳と連携',                   kid: '手帳とつなぐ' },
+    stLinkNoteOff:  { adult: '別々のアプリとして使うときは、この連携コードで手ざわり手帳とつなぎます。「はじめる」でコードを作り、手帳の設定に同じコードを入れてください（計画がサーバー経由で手帳に届きます）。',
+                      kid:   'べつべつのアプリのときは、この連携コードで手帳とつなぐよ。「はじめる」でコードを作って、手帳のせっていに同じコードを入れてね。' },
+    stLinkNoteOn:   { adult: 'このコードを手ざわり手帳の設定に入れると、書いた計画が手帳の今日のページに出ます。同じコードなら別の端末ともつながります。',
+                      kid:   'このコードを手帳のせっていに入れると、書いた計画が手帳に出るよ。' },
+    linkCopied:     { adult: 'コピーしました',               kid: 'コピーしたよ' },
+    linkBadCode:    { adult: 'コードは8〜40文字の英数字で入れてね。', kid: 'コードは8〜40文字の英数字で入れてね。' },
+    linkStopConfirm:{ adult: '連携をやめますか？（手帳への同期が止まります。計画そのものは消えません）',
+                      kid:   'れんけいをやめる？（手帳へのどうきが止まるよ。計画は消えないよ）' },
+    linkJoined:     { adult: 'つなぎました',                 kid: 'つないだよ' },
     stBackup:       { adult: 'データのひかえ',               kid: 'データのひかえ' },
     stBackupNote:   { adult: '計画表の中身をファイルに保存できます。機種変や、アイコンを消す前のお守りに。',
                       kid:   'けいかくの中みをファイルにほぞんできるよ。スマホをかえるときのおまもりに。' },
@@ -1093,6 +1138,7 @@
     setText('stThemeNote', tx('stThemeNote'));
     setText('stWeekStartLabel', tx('stWeekStart'));
     setText('stWeekStartNote', tx('stWeekStartNote'));
+    setText('stLinkLabel', tx('stLink'));
     setText('stBackupLabel', tx('stBackup'));
     setText('stBackupNote', tx('stBackupNote'));
     setText('backupExportBtn', tx('backupExport'));
@@ -1181,6 +1227,7 @@
     });
     if (items.length) localStorage.setItem(keyFeed(iso), JSON.stringify({ v: 1, updated: new Date().toISOString(), items: items }));
     else localStorage.removeItem(keyFeed(iso));
+    syncPush(iso);
   }
   function setDone(iso, sid, done) {
     var f = readFeed(iso);
@@ -1188,6 +1235,54 @@
     f.items.forEach(function (it) { if (it.id === sid) it.done = !!done; });
     f.updated = new Date().toISOString();
     localStorage.setItem(keyFeed(iso), JSON.stringify(f));
+    syncPush(iso);
+  }
+
+  // ---- 手帳との連携（中継サーバー経由の同期） ----
+  // 別々のiOSアプリはlocalStorageを共有できないため、共有コードで中継サーバーを経由して繋ぐ。
+  var LINK_BASE = window.__linkBase || 'https://keikakuchou-notify.keikakuchou-app.workers.dev';
+  function linkCode() { return localStorage.getItem('pk:linkCode') || ''; }
+  var pushTimers = {};
+  function syncPush(iso) {
+    var code = linkCode();
+    if (!code) return;
+    clearTimeout(pushTimers[iso]);
+    pushTimers[iso] = setTimeout(function () {
+      var feed = readFeed(iso) || { v: 1, items: [] };
+      fetch(LINK_BASE + '/link/push', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code, date: iso, role: 'plan', feed: feed })
+      }).catch(function () { /* オフライン時は次の機会に */ });
+    }, 600);
+  }
+  // 連携をはじめた/再開したとき、手元の計画をぜんぶサーバーへ上げる（手帳に履歴が届く）
+  function syncPushAll() {
+    if (!linkCode()) return;
+    forEachStoredKey('pk:feed:', function (k) { syncPush(k.slice('pk:feed:'.length)); });
+  }
+  // 表示中の週ぶんをサーバーから取り、手帳が付けた○を取り込む（本文は計画表が持ち主なので触らない）
+  function syncPullWeek() {
+    var code = linkCode();
+    if (!code) return;
+    var dates = [];
+    for (var i = 0; i < 7; i++) dates.push(addDays(currentWeek, i));
+    fetch(LINK_BASE + '/link/pullmany', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: code, dates: dates })
+    }).then(function (r) { return r.ok ? r.json() : null; }).then(function (data) {
+      if (!data || !data.feeds) return;
+      var changed = false;
+      Object.keys(data.feeds).forEach(function (iso) {
+        var server = data.feeds[iso], local = readFeed(iso);
+        if (!local || !server || !Array.isArray(server.items)) return;
+        var srvDone = {};
+        server.items.forEach(function (it) { srvDone[it.id] = !!it.done; });
+        var hit = false;
+        local.items.forEach(function (it) { if (it.id in srvDone && it.done !== srvDone[it.id]) { it.done = srvDone[it.id]; hit = true; } });
+        if (hit) { localStorage.setItem(keyFeed(iso), JSON.stringify(local)); changed = true; }
+      });
+      if (changed) render();
+    }).catch(function () {});
   }
   function forEachStoredKey(prefix, fn) {
     var keys = [];
@@ -1834,6 +1929,7 @@
     setTimeout(function () {
       currentWeek = delta === 0 ? weekStartOf(toISO(new Date())) : addDays(currentWeek, delta * 7);
       render();
+      syncPullWeek();
       sheet.classList.remove('slide-out-left', 'slide-out-right');
     }, 180);
   }
@@ -1855,7 +1951,7 @@
   });
   document.getElementById('menuSettings').addEventListener('click', function () {
     menuPanel.style.display = 'none';
-    renderWordingChips(); renderThemeChips(); renderWeekStartChips();
+    renderWordingChips(); renderThemeChips(); renderWeekStartChips(); renderLinkSection();
     settingsModal.style.display = 'flex';
   });
   document.getElementById('menuTecho').addEventListener('click', function () {
@@ -1928,6 +2024,50 @@
     });
   }
 
+  // ---- 手帳と連携（ペアリング） ----
+  function makeLinkCode() {
+    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 紛らわしい 0/O/1/I を除く
+    var s = '';
+    var arr = new Uint8Array(12);
+    (window.crypto || {}).getRandomValues ? window.crypto.getRandomValues(arr) : arr.forEach(function (_, i) { arr[i] = Math.floor(Math.random() * 256); });
+    for (var i = 0; i < 12; i++) s += chars[arr[i] % chars.length];
+    return s;
+  }
+  function renderLinkSection() {
+    var code = linkCode();
+    document.getElementById('linkOn').style.display = code ? '' : 'none';
+    document.getElementById('linkOff').style.display = code ? 'none' : '';
+    document.getElementById('linkCodeShow').textContent = code;
+    document.getElementById('stLinkNote').textContent = tx(code ? 'stLinkNoteOn' : 'stLinkNoteOff');
+  }
+  document.getElementById('linkStartBtn').addEventListener('click', function () {
+    localStorage.setItem('pk:linkCode', makeLinkCode());
+    renderLinkSection();
+    syncPushAll();   // 手元の計画をぜんぶ手帳へ
+    flashSaved(tx('linkJoined'));
+  });
+  document.getElementById('linkJoinBtn').addEventListener('click', function () {
+    var v = (document.getElementById('linkCodeInput').value || '').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+    if (v.length < 8 || v.length > 40) { alert(tx('linkBadCode')); return; }
+    localStorage.setItem('pk:linkCode', v);
+    document.getElementById('linkCodeInput').value = '';
+    renderLinkSection();
+    syncPushAll();
+    syncPullWeek();
+    flashSaved(tx('linkJoined'));
+  });
+  document.getElementById('linkStopBtn').addEventListener('click', function () {
+    if (!confirm(tx('linkStopConfirm'))) return;
+    localStorage.removeItem('pk:linkCode');
+    renderLinkSection();
+    flashSaved();
+  });
+  document.getElementById('linkCopyBtn').addEventListener('click', function () {
+    var code = linkCode();
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).catch(function () {});
+    flashSaved(tx('linkCopied'));
+  });
+
   // ---- データのひかえ（バックアップ／復元。pk:キーのみ対象） ----
   document.getElementById('backupExportBtn').addEventListener('click', function () {
     var items = {};
@@ -1972,6 +2112,7 @@
     applyTheme();                            // 手帳でテーマを変えていたら追従
     currentWeek = weekStartOf(currentWeek);  // 週の始まり設定が手帳側で変わっていることもある
     render();
+    syncPullWeek();                          // 手帳が付けた○を取り込む
   }
   document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') foregroundRefresh(); });
   window.addEventListener('focus', foregroundRefresh);
@@ -1980,6 +2121,7 @@
   applyWording();
   applyTheme();
   render();
+  syncPullWeek();
 
   // テスト用フック（アプリ動作には不使用）
   window._pk = { rebuildFeed: rebuildFeed, readFeed: readFeed, weekStartOf: weekStartOf, getWordMode: getWordMode, getTheme: getTheme };
