@@ -844,6 +844,26 @@
   /* セルの手書き字もLEDではドット字に（手帳の予定と同じ約束）。td.cellで書き込み欄より詳細度を勝たせる */
   body[data-paper="led"] td.cell .cell-text { font-family: 'DotGothic16', monospace; }
   body[data-paper="led"] .book { text-shadow: 0 0 6px; }
+
+  /* すべての紙色で、☰メニュー・下の道具ボタンをその紙の盤面に溶け込ませる（手帳と同じ流儀） */
+  body[data-paper="ivory"] .menu-btn,
+  body[data-paper="white"] .menu-btn,
+  body[data-paper="black"] .menu-btn,
+  body[data-paper="board"] .menu-btn,
+  body[data-paper="led"] .menu-btn,
+  body[data-paper="ivory"] .toolbar button,
+  body[data-paper="white"] .toolbar button,
+  body[data-paper="black"] .toolbar button,
+  body[data-paper="board"] .toolbar button,
+  body[data-paper="led"] .toolbar button {
+    background: var(--paper-back-2);
+    border-color: var(--rule-strong);
+    color: var(--ink-text);
+    box-shadow: none;
+  }
+  /* 電光掲示板はボタン文字もほのかに発光させて盤面と一体に */
+  body[data-paper="led"] .menu-btn,
+  body[data-paper="led"] .toolbar button { text-shadow: 0 0 5px; }
 </style>
 </head>
 <body>
