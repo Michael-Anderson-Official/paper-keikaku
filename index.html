@@ -897,10 +897,7 @@
 <div id="settingsModal" class="settings-modal" style="display:none;">
   <div class="settings-card">
     <h2 id="stTitle">設定</h2>
-    <p class="settings-label">ことばづかい</p>
-    <div id="wordingChips" class="week-chips"></div>
-    <p class="settings-note" id="stWordingNote"></p>
-    <p class="settings-label" id="stThemeLabel" style="margin-top:16px;">かみ</p>
+    <p class="settings-label" id="stThemeLabel">かみ</p>
     <div id="themeChips" class="week-chips"></div>
     <p class="settings-note" id="stThemeNote"></p>
     <p class="settings-label" id="stWeekStartLabel" style="margin-top:16px;">週の始まり</p>
@@ -1025,101 +1022,77 @@
 (function () {
   'use strict';
 
-  // ---- ことばづかい（手ざわり手帳と同じしくみ。'adult'=大人向け・漢字 / 'kid'=やさしい・ひらがな。既定は大人向け） ----
+  // ---- ことばづかい（大人向け・漢字。対象は中学生〜社会人のため固定） ----
   var WORDS = {
-    planSub:        { adult: '勉強の計画表　—　書いた計画は、手ざわり手帳の今日のページに印刷されます',
-                      kid:   'べんきょうの計画ひょう　—　書いたことは、手ざわり手帳のきょうのページに出るよ' },
-    emptyNote:      { adult: 'まだ何もありません。<br>右上の「＋」から教材や科目をふやして、<br>1週間の計画を書きこもう。<br><br>書いた計画は<b>手ざわり手帳</b>の<br>その日のタスク欄に印刷されます。',
-                      kid:   'まだ何もないよ。<br>右上の「＋」からきょうざいをふやして、<br>1しゅうかんのけいかくを書こう。<br><br>書いたことは<b>手ざわり手帳</b>の<br>その日のやること欄に出るよ。' },
-    subjectAdd:     { adult: '教材をふやす',                 kid: 'きょうざいをふやす' },
-    subjectEdit:    { adult: '教材の名前をかえる',           kid: 'きょうざいのなまえをかえる' },
-    subjectPlace:   { adult: '教材や科目の名前（例: 英語）',  kid: 'きょうざいのなまえ（れい: えいご）' },
-    subjectDelete:  { adult: 'この列をけす',                 kid: 'このれつをけす' },
-    reorderLabel:   { adult: '列の並び替え',                 kid: 'れつのならびかえ' },
-    cellCarry:      { adult: '翌日へ繰り越す',               kid: 'あすへ送る' },
-    carryDone:      { adult: '翌日へ繰り越しました',         kid: 'あすへ送ったよ' },
-    scanOpen:       { adult: '本のバーコードで入れる',       kid: '本のバーコードで入れる' },
-    scanManual:     { adult: 'うまく読めないときは、本の裏の番号（978…）を入力',
-                      kid:   'うまく読めないときは、本のうらの番号（978…）を入れてね' },
-    scanStarting:   { adult: 'カメラを準備しています…',       kid: 'カメラをじゅんびしているよ…' },
-    scanPoint:      { adult: '本の裏のバーコードを枠の中へ',  kid: '本のうらのバーコードをわくの中へ' },
-    scanLooking:    { adult: '書名をさがしています…',         kid: 'ほんの名前をさがしているよ…' },
-    scanNotFound:   { adult: 'この本は見つかりませんでした。名前は手で入れてね。',
-                      kid:   'この本は見つからなかったよ。名前は手で入れてね。' },
-    scanBadCode:    { adult: 'これは本のバーコードではないみたい。978で始まる方をかざしてね。',
-                      kid:   'これは本のバーコードじゃないみたい。978ではじまる方をかざしてね。' },
-    scanNoCamera:   { adult: 'カメラが使えませんでした。下に番号を入力してね。',
-                      kid:   'カメラがつかえなかったよ。下に番号を入れてね。' },
-    scanBadIsbn:    { adult: '本の番号は13桁（978…）で入れてね。', kid: 'ほんの番号は13けた（978…）で入れてね。' },
-    scanGo:         { adult: 'さがす',                       kid: 'さがす' },
-    tocOpen:        { adult: '目次の写真から章を入れる',     kid: 'もくじの写真から入れる' },
-    ocrPreparing:   { adult: '読み取りの準備をしています…（初回は少し時間がかかります）',
-                      kid:   'よみとりのじゅんびをしているよ…（はじめは少しかかるよ）' },
-    ocrReading:     { adult: '文字を読んでいます…',           kid: 'もじをよんでいるよ…' },
-    ocrFailed:      { adult: '読み取れませんでした。目次がはっきり写った写真を、まっすぐ撮る／選ぶと読みやすいです。',
-                      kid:   'よみとれなかったよ。もくじがはっきり写った写真を、まっすぐ撮る／えらぶと読みやすいよ。' },
-    ocrNoLines:     { adult: '章が見つかりませんでした。別の写真を選ぶ／撮り直すか、手で入力してね。',
-                      kid:   'しょうが見つからなかったよ。べつの写真をえらぶ／撮りなおすか、手で入れてね。' },
-    tocTitle:       { adult: '読み取った章',                 kid: 'よみとった章' },
-    tocNote:        { adult: 'いる章だけ○にして「今日から入れる」を押すと、今日から1日ずつ計画に入ります。文字は直せます。',
-                      kid:   'いる章だけ○にして「今日から入れる」をおすと、今日から1日ずつ入るよ。もじはなおせるよ。' },
-    tocAdd:         { adult: '今日から入れる',               kid: '今日から入れる' },
-    tocReread:      { adult: '縦書きの本？ 縦書きで読み直す', kid: 'たて書きの本？ たて書きで読みなおす' },
-    tocAddedMsg:    { adult: '{n}個を計画に入れました',       kid: '{n}こ入れたよ' },
-    tocNonePicked:  { adult: '入れる章に○を付けてね。',       kid: '入れる章に○をつけてね。' },
-    subjectUntitled:{ adult: '教材',                         kid: 'きょうざい' },
-    coverPick:      { adult: '表紙を選ぶ／撮る',             kid: 'ひょうしをえらぶ／撮る' },
-    coverRemove:    { adult: 'はずす',                       kid: 'はずす' },
-    deleteConfirm:  { adult: '「{name}」の列と、書いた計画をぜんぶ消します。よろしいですか？',
-                      kid:   '「{name}」のれつと、書いたことをぜんぶけします。いいですか？' },
-    cellPlace:      { adult: 'やることを書く（例: 長文2ページ）', kid: 'やることを書く（れい: かん字ドリル2ページ）' },
-    doneLabel:      { adult: 'できた（○をつける）',          kid: 'できた（○をつける）' },
-    clearBtn:       { adult: 'けす',                         kid: 'けす' },
-    closeBtn:       { adult: 'とじる',                       kid: 'とじる' },
-    saveBtn:        { adult: '書きこむ',                     kid: '書きこむ' },
-    prevBtn:        { adult: '◀ 前へ',                       kid: '◀ まえ' },
-    nextBtn:        { adult: '次へ ▶',                       kid: 'つぎ ▶' },
-    todayBtn:       { adult: '今週',                         kid: 'こんしゅう' },
-    menuSettings:   { adult: '⚙ 設定',                      kid: '⚙ せってい' },
-    menuTecho:      { adult: '📖 手ざわり手帳をひらく',      kid: '📖 手ざわり手帳をひらく' },
-    stTitle:        { adult: '設定',                         kid: 'せってい' },
-    stWordingNote:  { adult: '画面の文言を「大人向け（漢字）」か「やさしい（ひらがな多め）」に切り替えます。',
-                      kid:   'がめんのことばを「大人向け（かん字）」か「やさしい（ひらがな）」にかえます。' },
-    stTheme:        { adult: 'かみ（テーマ）',               kid: 'かみ（いろ）' },
-    stThemeNote:    { adult: '紙の色やふんいきを変えます。手ざわり手帳と共通の設定です。',
-                      kid:   'かみのいろやふんいきをかえます。手ざわり手帳といっしょのせっていだよ。' },
-    themeIvory:     { adult: 'アイボリー',                   kid: 'アイボリー' },
-    themeWhite:     { adult: '白',                           kid: 'しろ' },
-    themeBlack:     { adult: '黒',                           kid: 'くろ' },
-    themeBoard:     { adult: '黒板',                         kid: 'こくばん' },
-    themeLed:       { adult: '電光掲示板',                   kid: 'でんこうけいじばん' },
-    stWeekStart:    { adult: '週の始まり',                   kid: 'しゅうのはじまり' },
-    stWeekStartNote:{ adult: '計画表の曜日の並びが変わります。手ざわり手帳と共通の設定です。',
-                      kid:   'ようびのならびがかわります。手ざわり手帳といっしょのせっていだよ。' },
-    stLink:         { adult: '手帳と連携',                   kid: '手帳とつなぐ' },
-    stLinkNoteOff:  { adult: '別々のアプリとして使うときは、この連携コードで手ざわり手帳とつなぎます。「はじめる」でコードを作り、手帳の設定に同じコードを入れてください（計画がサーバー経由で手帳に届きます）。',
-                      kid:   'べつべつのアプリのときは、この連携コードで手帳とつなぐよ。「はじめる」でコードを作って、手帳のせっていに同じコードを入れてね。' },
-    stLinkNoteOn:   { adult: 'このコードを手ざわり手帳の設定に入れると、書いた計画が手帳の今日のページに出ます。同じコードなら別の端末ともつながります。',
-                      kid:   'このコードを手帳のせっていに入れると、書いた計画が手帳に出るよ。' },
-    linkCopied:     { adult: 'コピーしました',               kid: 'コピーしたよ' },
-    linkBadCode:    { adult: 'コードは8〜40文字の英数字で入れてね。', kid: 'コードは8〜40文字の英数字で入れてね。' },
-    linkStopConfirm:{ adult: '連携をやめますか？（手帳への同期が止まります。計画そのものは消えません）',
-                      kid:   'れんけいをやめる？（手帳へのどうきが止まるよ。計画は消えないよ）' },
-    linkJoined:     { adult: 'つなぎました',                 kid: 'つないだよ' },
-    stBackup:       { adult: 'データのひかえ',               kid: 'データのひかえ' },
-    stBackupNote:   { adult: '計画表の中身をファイルに保存できます。機種変や、アイコンを消す前のお守りに。',
-                      kid:   'けいかくの中みをファイルにほぞんできるよ。スマホをかえるときのおまもりに。' },
-    backupExport:   { adult: 'ファイルに保存',               kid: 'ファイルにほぞん' },
-    backupImport:   { adult: '復元',                         kid: 'もどす' },
-    restoreConfirm: { adult: 'このファイルの中身で計画表を復元します。いま書いてある同じ日の計画は上書きされます。よろしいですか？',
-                      kid:   'このファイルで計画表をもどします。いま書いてある同じ日のけいかくは上書きされます。いいですか？' },
-    restoreDone:    { adult: '復元しました。開き直します。',  kid: 'もどしました。ひらきなおすね。' },
-    restoreBad:     { adult: '復元できませんでした。「手ざわり計画表のひかえ」ファイルか確認してください。',
-                      kid:   'もどせなかったよ。「手ざわり計画表のひかえ」ファイルかたしかめてね。' },
-    wordingAdult:   { adult: '大人向け',                     kid: '大人向け' },
-    wordingKid:     { adult: 'やさしい',                     kid: 'やさしい' }
+    planSub:        '勉強の計画表　—　書いた計画は、手ざわり手帳の今日のページに印刷されます',
+    emptyNote:      'まだ何もありません。<br>右上の「＋」から教材や科目をふやして、<br>1週間の計画を書きこもう。<br><br>書いた計画は<b>手ざわり手帳</b>の<br>その日のタスク欄に印刷されます。',
+    subjectAdd:     '教材をふやす',
+    subjectEdit:    '教材の名前をかえる',
+    subjectPlace:   '教材や科目の名前（例: 英語）',
+    subjectDelete:  'この列をけす',
+    reorderLabel:   '列の並び替え',
+    cellCarry:      '翌日へ繰り越す',
+    carryDone:      '翌日へ繰り越しました',
+    scanOpen:       '本のバーコードで入れる',
+    scanManual:     'うまく読めないときは、本の裏の番号（978…）を入力',
+    scanStarting:   'カメラを準備しています…',
+    scanPoint:      '本の裏のバーコードを枠の中へ',
+    scanLooking:    '書名をさがしています…',
+    scanNotFound:   'この本は見つかりませんでした。名前は手で入れてね。',
+    scanBadCode:    'これは本のバーコードではないみたい。978で始まる方をかざしてね。',
+    scanNoCamera:   'カメラが使えませんでした。下に番号を入力してね。',
+    scanBadIsbn:    '本の番号は13桁（978…）で入れてね。',
+    scanGo:         'さがす',
+    tocOpen:        '目次の写真から章を入れる',
+    ocrPreparing:   '読み取りの準備をしています…（初回は少し時間がかかります）',
+    ocrReading:     '文字を読んでいます…',
+    ocrFailed:      '読み取れませんでした。目次がはっきり写った写真を、まっすぐ撮る／選ぶと読みやすいです。',
+    ocrNoLines:     '章が見つかりませんでした。別の写真を選ぶ／撮り直すか、手で入力してね。',
+    tocTitle:       '読み取った章',
+    tocNote:        'いる章だけ○にして「今日から入れる」を押すと、今日から1日ずつ計画に入ります。文字は直せます。',
+    tocAdd:         '今日から入れる',
+    tocReread:      '縦書きの本？ 縦書きで読み直す',
+    tocAddedMsg:    '{n}個を計画に入れました',
+    tocNonePicked:  '入れる章に○を付けてね。',
+    subjectUntitled:'教材',
+    coverPick:      '表紙を選ぶ／撮る',
+    coverRemove:    'はずす',
+    deleteConfirm:  '「{name}」の列と、書いた計画をぜんぶ消します。よろしいですか？',
+    cellPlace:      'やることを書く（例: 長文2ページ）',
+    doneLabel:      'できた（○をつける）',
+    clearBtn:       'けす',
+    closeBtn:       'とじる',
+    saveBtn:        '書きこむ',
+    prevBtn:        '◀ 前へ',
+    nextBtn:        '次へ ▶',
+    todayBtn:       '今週',
+    menuSettings:   '⚙ 設定',
+    menuTecho:      '📖 手ざわり手帳をひらく',
+    stTitle:        '設定',
+    stTheme:        'かみ（テーマ）',
+    stThemeNote:    '紙の色やふんいきを変えます。手ざわり手帳と共通の設定です。',
+    themeIvory:     'アイボリー',
+    themeWhite:     '白',
+    themeBlack:     '黒',
+    themeBoard:     '黒板',
+    themeLed:       '電光掲示板',
+    stWeekStart:    '週の始まり',
+    stWeekStartNote:'計画表の曜日の並びが変わります。手ざわり手帳と共通の設定です。',
+    stLink:         '手帳と連携',
+    stLinkNoteOff:  '別々のアプリとして使うときは、この連携コードで手ざわり手帳とつなぎます。「はじめる」でコードを作り、手帳の設定に同じコードを入れてください（計画がサーバー経由で手帳に届きます）。',
+    stLinkNoteOn:   'このコードを手ざわり手帳の設定に入れると、書いた計画が手帳の今日のページに出ます。同じコードなら別の端末ともつながります。',
+    linkCopied:     'コピーしました',
+    linkBadCode:    'コードは8〜40文字の英数字で入れてね。',
+    linkStopConfirm:'連携をやめますか？（手帳への同期が止まります。計画そのものは消えません）',
+    linkJoined:     'つなぎました',
+    stBackup:       'データのひかえ',
+    stBackupNote:   '計画表の中身をファイルに保存できます。機種変や、アイコンを消す前のお守りに。',
+    backupExport:   'ファイルに保存',
+    backupImport:   '復元',
+    restoreConfirm: 'このファイルの中身で計画表を復元します。いま書いてある同じ日の計画は上書きされます。よろしいですか？',
+    restoreDone:    '復元しました。開き直します。',
+    restoreBad:     '復元できませんでした。「手ざわり計画表のひかえ」ファイルか確認してください。'
   };
-  function getWordMode() { return localStorage.getItem('pk:wording') === 'kid' ? 'kid' : 'adult'; }
 
   // ---- テーマ（かみ）。手ざわり手帳と共有する。[id, 文言キー, 見本の背景色, 見本の文字色] ----
   var THEMES = [
@@ -1138,8 +1111,7 @@
   }
   function applyTheme() { document.body.setAttribute('data-paper', getTheme()); }
   function tx(key, vars) {
-    var w = WORDS[key];
-    var s = w ? w[getWordMode()] : '';
+    var s = WORDS[key] || '';
     if (vars) { for (var k in vars) s = s.replace('{' + k + '}', vars[k]); }
     return s;
   }
@@ -1153,7 +1125,6 @@
     setText('menuSettings', tx('menuSettings'));
     setText('menuTecho', tx('menuTecho'));
     setText('stTitle', tx('stTitle'));
-    setText('stWordingNote', tx('stWordingNote'));
     setText('stThemeLabel', tx('stTheme'));
     setText('stThemeNote', tx('stThemeNote'));
     setText('stWeekStartLabel', tx('stWeekStart'));
@@ -1996,7 +1967,7 @@
   });
   document.getElementById('menuSettings').addEventListener('click', function () {
     menuPanel.style.display = 'none';
-    renderWordingChips(); renderThemeChips(); renderWeekStartChips(); renderLinkSection();
+    renderThemeChips(); renderWeekStartChips(); renderLinkSection();
     settingsModal.style.display = 'flex';
   });
   document.getElementById('menuTecho').addEventListener('click', function () {
@@ -2006,27 +1977,6 @@
   document.getElementById('settingsClose').addEventListener('click', function () { settingsModal.style.display = 'none'; });
   settingsModal.addEventListener('click', function (e) { if (e.target === settingsModal) settingsModal.style.display = 'none'; });
 
-  // ことばづかいのチップ
-  function renderWordingChips() {
-    var wrap = document.getElementById('wordingChips');
-    wrap.innerHTML = '';
-    var cur = getWordMode();
-    [['adult', tx('wordingAdult')], ['kid', tx('wordingKid')]].forEach(function (opt) {
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'wide' + (cur === opt[0] ? ' active' : '');
-      b.textContent = opt[1];
-      b.addEventListener('click', function () {
-        localStorage.setItem('pk:wording', opt[0]);
-        applyWording();
-        renderWordingChips();
-        renderThemeChips();
-        render();
-        flashSaved();
-      });
-      wrap.appendChild(b);
-    });
-  }
   // テーマ（かみ）のチップ（ボタン自体が紙見本。手帳と共有の設定）
   function renderThemeChips() {
     var wrap = document.getElementById('themeChips');
@@ -2175,7 +2125,7 @@
   syncPushAll();     // 手元の計画も上げておく（マージはu基準なので新しい方が残る）
 
   // テスト用フック（アプリ動作には不使用）
-  window._pk = { rebuildFeed: rebuildFeed, readFeed: readFeed, weekStartOf: weekStartOf, getWordMode: getWordMode, getTheme: getTheme };
+  window._pk = { rebuildFeed: rebuildFeed, readFeed: readFeed, weekStartOf: weekStartOf, getTheme: getTheme };
 
   // オフライン対応（Service Worker）。file://で開いたときは黙って諦める
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
