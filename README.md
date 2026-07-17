@@ -19,7 +19,9 @@
 
 手ざわり手帳と同じく、画面の文言を **「大人向け（漢字）」／「やさしい（ひらがな多め）」** で切り替えられる（設定の「ことばづかい」、キーは `pk:wording`）。**既定は大人向け**。全文言を両モードで用意している（子供向け固定にはしない）。
 
-## 連携のしくみ（手帳と同一オリジンで localStorage 共有）
+## 連携のしくみ（2方式）
+
+### 方式A: 同一オリジンで localStorage 共有（同じブラウザ内で使う場合）
 
 2つのアプリは同じ GitHub Pages ドメイン（`michael-anderson-official.github.io`）配下なので localStorage を共有できる。計画表は保存のたびに**連携フィード**を書き出す:
 
@@ -34,12 +36,22 @@ pk:feed:YYYY-MM-DD = {
 - 本文（`text` / `subject`）の**持ち主は計画表**。手帳からは書き換えない（＝手帳では計画は「印刷されたもの」で編集不可）
 - ○（`done`）は手帳からも計画表からも付け外しでき、どちらが書いても相手に反映される
 - 反映のトリガー: 別タブの `storage` イベント＋アプリ復帰時（`visibilitychange` / `focus` / `pageshow`）の再描画
+- **この方式はブラウザの同一オリジンが前提**。ネイティブアプリ同士（別サンドボックス）では成立しない
+
+### 方式B: 連携コード＋即時同期（別々のアプリとして使う場合。ネイティブでも有効）
+
+設定の「手帳と連携」で連携コードを発行/入力すると、Cloudflare Workers上の `keikakuchou-notify`（`LinkRoom` Durable Object）を介して計画データを中継する。コードを合言葉にした**サーバー経由のWebSocket同期**（`https://keikakuchou-notify.keikakuchou-app.workers.dev`への絶対URLで通信、code=query）で、押した瞬間に相手へ反映される（実測 ~1秒）。
+
+- **ブラウザの同一オリジンに依存しない**ため、Web版どうし・ネイティブ版どうし・Web版とネイティブ版の組み合わせ、いずれでも同じしくみで繋がる。ネイティブはCapacitorのWKWebViewから直接HTTPS/WSSで通信するだけで、App Group等の追加実装は不要（見込み。実機での往路検証はMacでのビルド後に行う）
+- マージは per-item の最終更新時刻によるlast-write-wins。存在集合（教材・やることの持ち主）は計画表、○は手帳・計画表どちらの変更も反映
+- 連携をオフにすれば同期は止まる。保管データは400日で自動削除
 
 ### キー一覧
 
 - `pk:subjects` = `[{id, name}]` … 教材（列）
 - `pk:cell:YYYY-MM-DD:教材id` = 計画テキスト（計画表が持ち主）
-- `pk:feed:YYYY-MM-DD` = 手帳へ渡す連携フィード（上記）
+- `pk:feed:YYYY-MM-DD` = 手帳へ渡す連携フィード（方式Aで使用）
+- `pk:linkCode` = 方式Bの連携コード
 - 週の始まりは `pk:weekStart`。無ければ手帳の `pt:weekStart` に従う（設定を共有）
 
 ## 教材をバーコードで入れる
@@ -127,11 +139,10 @@ npx cap sync ios          # www/ を iOS プロジェクトへ反映（= npm run
 - iOS プロジェクトは `ios/`（Capacitor 8 = Swift Package Manager 構成。CocoaPods 不要）。アプリアイコンは `ios/App/App/Assets.xcassets/AppIcon.appiconset/` に 1024×1024 を設置済み
 - `node_modules/`・`www/`・`ios/App/App/public/` は生成物のため git 管理外（`.gitignore`）
 - **ビルド・提出は Mac（Xcode）と Apple Developer Program（年 $99）が必要**。この作業は開発者の Mac 側で行う
-- **注意（連携の制約）**: 手帳との localStorage 共有は「同一オリジンのブラウザ」でのみ成立する。ネイティブアプリ同士は別サンドボックスになるため、Web 版どうしの連携はネイティブでは効かない。ネイティブで連携させるには App Group や共有ファイル等の別実装が必要（今後の課題）
+- **連携について**: 方式A（localStorage共有）は同一オリジンのブラウザでのみ成立するためネイティブアプリ同士では効かないが、方式B（連携コード＋Cloudflare Workers中継）はHTTPS/WSSの絶対URL通信のみでApp Group等に依存しないため、ネイティブ版どうしでも同じ連携コードで繋がる見込み。実機での動作確認はMacでの両アプリビルド後に行う
 
 ## 未実装（製品化するなら）
 
-- ネイティブ版での手帳連携（App Group 等）
 - テンプレート（曜日ごとの定番タスク）
 - まとめて繰り越し（先週の未完了を今週へ一括で持ってくる。現状は1マスずつ手動）
 - 洋書向け Google Books API キー
