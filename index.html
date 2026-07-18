@@ -543,6 +543,19 @@
   .modal-btns button.primary { background: #5a7d5a; border-color: #4d6b4d; color: #fff; }
   .modal-btns button.danger { color: var(--sun); }
 
+  /* 試験日カウントダウン */
+  .exam-countdown {
+    margin: 2px 0 6px;
+    font-family: inherit;
+    color: var(--ink-text);
+    text-align: center;
+    line-height: 1.5;
+  }
+  .exam-countdown .ec-main { font-size: 15px; font-weight: 700; }
+  .exam-countdown .ec-days { color: var(--sun); font-size: 19px; padding: 0 2px; }
+  .exam-countdown .ec-norm { font-size: 12px; opacity: .78; }
+  .exam-countdown .ec-passed { color: var(--sun); font-size: 14px; font-weight: 700; }
+
   /* セルの「翌日へ繰り越す」ボタン */
   .cell-carry {
     display: block;
@@ -874,6 +887,7 @@
       <span class="big" id="weekRange"></span>
       <span class="small" id="weekYear"></span>
     </div>
+    <div class="exam-countdown" id="examCountdown" style="display:none;"></div>
     <div class="plan-sub" id="planSub"></div>
     <div class="grid-scroll" id="gridScroll"></div>
   </div>
@@ -903,6 +917,18 @@
     <p class="settings-label" id="stWeekStartLabel" style="margin-top:16px;">週の始まり</p>
     <div id="weekStartChips" class="week-chips"></div>
     <p class="settings-note" id="stWeekStartNote"></p>
+    <p class="settings-label" id="stExamLabel" style="margin-top:16px;">試験日カウントダウン</p>
+    <p class="settings-note" id="stExamNote" style="margin-top:0;">目標の試験日を入れると、あと何日か・1日あたりの目安を表示します。</p>
+    <div class="link-enter-row" style="margin-top:4px;">
+      <input id="examNameInput" type="text" class="write-input" placeholder="試験の名前（例: 予備試験 短答）" autocapitalize="off" spellcheck="false">
+    </div>
+    <div class="link-enter-row" style="margin-top:8px; align-items:center;">
+      <input id="examDateInput" type="date" class="write-input">
+      <button id="examClearBtn" type="button" class="settings-close" style="margin-top:0; width:auto; padding:8px 12px; color:#c4645c;">消す</button>
+    </div>
+    <p class="settings-label" id="stReviewLabel" style="margin-top:16px;">自動で復習を入れる</p>
+    <p class="settings-note" id="stReviewNote" style="margin-top:0;">「できた○」を付けると、1日後・3日後・1週間後・2週間後の同じ教材に🔁復習を自動で書き込みます。</p>
+    <div id="reviewChips" class="week-chips"></div>
     <p class="settings-label" id="stLinkLabel" style="margin-top:16px;">手帳と連携</p>
     <p class="settings-note" id="stLinkNote" style="margin-top:0;"></p>
     <div id="linkOn" style="display:none;">
@@ -1238,6 +1264,42 @@
     syncPush(iso);
   }
 
+  // ---- 自動復習（間隔反復）：できた○を付けると未来の同じ教材に🔁復習を書き込む ----
+  var REVIEW_INTERVALS = [1, 3, 7, 14];   // 何日後に復習を入れるか
+  var REVIEW_MARK = '🔁';
+  function reviewOn() { return localStorage.getItem('pk:reviewOn') !== '0'; }   // 既定オン
+  function keyRev(iso, sid) { return 'pk:rev:' + iso + ':' + sid; }            // 予約した復習の記録（取り消し用）
+  function stripReviewMark(text) {
+    return text.split('\n').filter(function (ln) { return ln.indexOf(REVIEW_MARK) !== 0; }).join('\n').trim();
+  }
+  function scheduleReviews(srcIso, sid, srcText) {
+    if (!reviewOn()) return;
+    if (localStorage.getItem(keyRev(srcIso, sid))) return;   // 二重予約しない
+    var base = stripReviewMark(srcText);
+    if (!base) return;
+    var line = REVIEW_MARK + base.split('\n')[0].slice(0, 40);   // 復習行は1行・短めに
+    var added = [];
+    REVIEW_INTERVALS.forEach(function (d) {
+      var tIso = addDays(srcIso, d), cur = readCell(tIso, sid);
+      if (cur.split('\n').indexOf(line) !== -1) return;       // すでに同じ行があれば足さない
+      writeCell(tIso, sid, cur ? (cur + '\n' + line) : line);  // writeCellがfeed再構築＋手帳へ同期
+      added.push({ iso: tIso, line: line });
+    });
+    if (added.length) localStorage.setItem(keyRev(srcIso, sid), JSON.stringify(added));
+  }
+  function unscheduleReviews(srcIso, sid) {
+    var raw = localStorage.getItem(keyRev(srcIso, sid));
+    if (!raw) return;
+    var list; try { list = JSON.parse(raw); } catch (e) { list = []; }
+    list.forEach(function (r) {
+      var cur = readCell(r.iso, sid);
+      if (!cur) return;
+      var kept = cur.split('\n').filter(function (ln) { return ln !== r.line; }).join('\n');
+      if (kept !== cur) writeCell(r.iso, sid, kept);
+    });
+    localStorage.removeItem(keyRev(srcIso, sid));
+  }
+
   // ---- 手帳との連携（即時同期。中継サーバー=Durable ObjectへHTTPでpush・WebSocketで受信） ----
   // 別々のiOSアプリはlocalStorageを共有できないため、共有コードで中継する。
   var LINK_BASE = window.__linkBase || 'https://keikakuchou-notify.keikakuchou-app.workers.dev';
@@ -1337,7 +1399,48 @@
   // ---- 描画 ----
   var currentWeek = weekStartOf(toISO(new Date()));
 
+  // 試験日カウントダウン＋逆算ノルマ
+  function examDate() { return localStorage.getItem('pk:examDate') || ''; }
+  function examName() { return localStorage.getItem('pk:examName') || '試験'; }
+  function daysBetween(fromIso, toIsoStr) {
+    return Math.round((fromISO(toIsoStr).getTime() - fromISO(fromIso).getTime()) / 86400000);
+  }
+  // 今日〜試験日で「文字あり・未○」のマスを数える（1日あたりの目安に使う）
+  function countUndonePlanned(fromIso, toIsoStr) {
+    var n = 0;
+    forEachStoredKey('pk:cell:', function (k) {
+      var rest = k.slice('pk:cell:'.length), iso = rest.slice(0, 10), sid = rest.slice(11);
+      if (iso < fromIso || iso > toIsoStr) return;
+      if (!localStorage.getItem(k)) return;
+      if (!feedDone(iso, sid)) n++;
+    });
+    return n;
+  }
+  function renderCountdown() {
+    var box = document.getElementById('examCountdown');
+    var ed = examDate();
+    if (!ed) { box.style.display = 'none'; box.innerHTML = ''; return; }
+    var todayIso = toISO(new Date());
+    var left = daysBetween(todayIso, ed);
+    box.style.display = 'block';
+    if (left < 0) { box.innerHTML = '<span class="ec-passed">🎯 ' + esc(examName()) + ' おつかれさまでした</span>'; return; }
+    var head = left === 0
+      ? '<span class="ec-main">🎯 ' + esc(examName()) + ' は<span class="ec-days">今日</span>です</span>'
+      : '<span class="ec-main">🎯 ' + esc(examName()) + ' まで あと<span class="ec-days">' + left + '</span>日</span>';
+    var html = head;
+    if (left > 0) {
+      var undone = countUndonePlanned(todayIso, ed);
+      if (undone > 0) {
+        var per = Math.ceil(undone / left);
+        html += '<div class="ec-norm">未完了 ' + undone + ' 項目 ・ 1日あたり およそ ' + per + ' 項目</div>';
+      }
+    }
+    box.innerHTML = html;
+  }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
   function render() {
+    renderCountdown();
     var start = fromISO(currentWeek), endIso = addDays(currentWeek, 6), end = fromISO(endIso);
     document.getElementById('weekRange').textContent =
       (start.getMonth() + 1) + '/' + start.getDate() + '〜' +
@@ -1455,13 +1558,18 @@
   });
   document.getElementById('cellSave').addEventListener('click', function () {
     if (!editing) return;
+    var iso = editing.iso, sid = editing.subject.id;
     var text = document.getElementById('cellText').value.trim();
-    writeCell(editing.iso, editing.subject.id, text);
-    if (text) setDone(editing.iso, editing.subject.id, doneOn);
+    writeCell(iso, sid, text);
+    if (text) setDone(iso, sid, doneOn);
+    // 自動復習：○が付いたら未来へ復習を予約、外したら取り消す
+    if (text && doneOn) scheduleReviews(iso, sid, text);
+    else unscheduleReviews(iso, sid);
     closeCellModal(); render(); flashSaved();
   });
   document.getElementById('cellClear').addEventListener('click', function () {
     if (!editing) return;
+    unscheduleReviews(editing.iso, editing.subject.id);
     writeCell(editing.iso, editing.subject.id, '');
     closeCellModal(); render(); flashSaved();
   });
@@ -1968,8 +2076,44 @@
   document.getElementById('menuSettings').addEventListener('click', function () {
     menuPanel.style.display = 'none';
     renderThemeChips(); renderWeekStartChips(); renderLinkSection();
+    document.getElementById('examNameInput').value = localStorage.getItem('pk:examName') || '';
+    document.getElementById('examDateInput').value = examDate();
+    renderReviewChips();
     settingsModal.style.display = 'flex';
   });
+  // 試験日・試験名の入力
+  document.getElementById('examDateInput').addEventListener('change', function () {
+    var v = this.value;
+    if (v) localStorage.setItem('pk:examDate', v); else localStorage.removeItem('pk:examDate');
+    renderCountdown(); flashSaved();
+  });
+  document.getElementById('examNameInput').addEventListener('change', function () {
+    var v = this.value.trim();
+    if (v) localStorage.setItem('pk:examName', v); else localStorage.removeItem('pk:examName');
+    renderCountdown();
+  });
+  document.getElementById('examClearBtn').addEventListener('click', function () {
+    localStorage.removeItem('pk:examDate'); localStorage.removeItem('pk:examName');
+    document.getElementById('examDateInput').value = '';
+    document.getElementById('examNameInput').value = '';
+    renderCountdown(); flashSaved();
+  });
+  // 自動復習のオン/オフ
+  function renderReviewChips() {
+    var wrap = document.getElementById('reviewChips');
+    wrap.innerHTML = '';
+    [['1', 'つかう'], ['0', 'つかわない']].forEach(function (opt) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = opt[1];
+      b.className = (reviewOn() ? '1' : '0') === opt[0] ? 'active' : '';
+      b.addEventListener('click', function () {
+        localStorage.setItem('pk:reviewOn', opt[0]);
+        renderReviewChips(); flashSaved();
+      });
+      wrap.appendChild(b);
+    });
+  }
   document.getElementById('menuTecho').addEventListener('click', function () {
     // 同じオリジンの姉妹アプリへ。GitHub Pages（/paper-keikaku/→/paper-techo/）でもローカルでも効く相対パス
     location.href = '../paper-techo/';
