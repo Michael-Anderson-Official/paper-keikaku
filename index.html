@@ -411,6 +411,7 @@
     padding: calc(24px + env(safe-area-inset-top, 0px)) 24px calc(24px + env(safe-area-inset-bottom, 0px));
   }
   .settings-card {
+    position: relative;
     margin: auto;
     width: 100%;
     max-width: 340px;
@@ -475,6 +476,26 @@
     border: 2.5px solid #5a7d5a !important;
     font-weight: 600;
   }
+  /* カード右上の×（とじる） */
+  .card-close-x {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    font-size: 22px;
+    line-height: 1;
+    color: #8a8d99;
+    cursor: pointer;
+  }
+  .card-close-x:active { background: rgba(120, 100, 60, 0.12); }
+
   .settings-close {
     margin-top: 14px;
     width: 100%;
@@ -960,6 +981,7 @@
 
 <div id="settingsModal" class="settings-modal" style="display:none;">
   <div class="settings-card">
+    <button id="settingsCloseX" type="button" class="card-close-x" aria-label="とじる">×</button>
     <h2 id="stTitle">設定</h2>
     <p class="settings-label" id="stThemeLabel">かみ</p>
     <div id="themeChips" class="week-chips"></div>
@@ -2229,6 +2251,7 @@
     location.href = '../paper-techo/';
   });
   document.getElementById('settingsClose').addEventListener('click', function () { settingsModal.style.display = 'none'; });
+  document.getElementById('settingsCloseX').addEventListener('click', function () { settingsModal.style.display = 'none'; });
   settingsModal.addEventListener('click', function (e) { if (e.target === settingsModal) settingsModal.style.display = 'none'; });
 
   // テーマ（かみ）のチップ（ボタン自体が紙見本。手帳と共有の設定）
