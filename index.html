@@ -932,6 +932,25 @@
     mask-composite: exclude;
   }
   body[data-paper="board"] .book { text-shadow: 0 0 2px rgba(240, 238, 228, 0.28); }
+  /* 黒板の一番下に添える、チョークの木の挿し絵。#sheetの静的な子（renderMobile...等で
+     書き換わるのはgridScrollの中身だけなのでここは消えない）。z-index:-1で本文
+     （.page-date等はposition:absoluteでz-index:auto）より奥へ。上の地のムラ用::afterは
+     すでにz-index:-1で使用中なのでここは実DOM要素にする */
+  .board-decoration { display: none; }
+  body[data-paper="board"] .board-decoration {
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 130px;
+    z-index: -1;
+    pointer-events: none;
+    background-image: url('img/board-tree.webp');
+    background-repeat: no-repeat;
+    background-position: bottom center;
+    background-size: contain;
+  }
 
   /* 電光掲示板: 消灯LEDの格子＋ドットフォント＋発光のにじみ */
   body[data-paper="led"] .paper {
@@ -980,6 +999,7 @@
 
 <div class="book" id="book">
   <div class="paper" id="sheet">
+    <div class="board-decoration" aria-hidden="true"></div>
     <div class="page-date">
       <span class="big" id="weekRange"></span>
       <span class="small" id="weekYear"></span>
