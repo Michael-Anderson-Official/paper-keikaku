@@ -877,6 +877,16 @@
   /* 電光掲示板はボタン文字もほのかに発光させて盤面と一体に */
   body[data-paper="led"] .menu-btn,
   body[data-paper="led"] .toolbar button { text-shadow: 0 0 5px; }
+  /* ---- きろく（教材ごとの達成率） ---- */
+  .stats-list { display: flex; flex-direction: column; gap: 13px; margin: 10px 0 4px; }
+  .stats-head { display: flex; align-items: baseline; gap: 8px; }
+  .stats-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-strong); font-weight: 600; }
+  .stats-pct { font-weight: 700; color: var(--sun); font-size: 15px; }
+  .stats-bar { height: 8px; border: 1px solid var(--rule-strong); border-radius: 5px; margin-top: 5px; overflow: hidden; }
+  .stats-bar > span { display: block; height: 100%; background: var(--sun); opacity: 0.72; border-radius: 4px 0 0 4px; }
+  .stats-sub { font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
+  .stats-total { border-top: 1px dashed var(--rule-strong); padding-top: 12px; }
+  .stats-empty { color: var(--ink-soft); font-size: 13px; margin: 6px 0; }
 </style>
 </head>
 <body>
@@ -905,7 +915,18 @@
 <button id="menuBtn" type="button" class="menu-btn" aria-label="メニュー">☰</button>
 <div id="menuPanel" class="menu-panel" style="display:none;">
   <button id="menuSettings" type="button">⚙ 設定</button>
+  <button id="menuStats" type="button">📊 きろく</button>
   <button id="menuTecho" type="button">📖 手ざわり手帳をひらく</button>
+</div>
+
+<!-- きろく（教材ごとの達成率） -->
+<div id="statsModal" class="settings-modal" style="display:none;">
+  <div class="settings-card">
+    <h2>きろく</h2>
+    <p class="settings-note" style="margin-top:0;">今日までに書きこんだマスが対象です（先の予定は数えません）。</p>
+    <div id="statsList" class="stats-list"></div>
+    <button id="statsClose" type="button" class="settings-close">とじる</button>
+  </div>
 </div>
 
 <div id="settingsModal" class="settings-modal" style="display:none;">
@@ -1438,6 +1459,57 @@
     box.innerHTML = html;
   }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  // ---- きろく：教材ごとの「書いた・できた○・達成率・うち復習」 ----
+  // 今日までのマスだけを数える（未来の予定を入れても達成率が下がらないように）
+  function computeStats() {
+    var todayIso = toISO(new Date());
+    var by = {};
+    forEachStoredKey('pk:cell:', function (k) {
+      var rest = k.slice('pk:cell:'.length), iso = rest.slice(0, 10), sid = rest.slice(11);
+      if (iso > todayIso) return;
+      var text = localStorage.getItem(k);
+      if (!text) return;
+      var st = by[sid] || (by[sid] = { planned: 0, done: 0, rev: 0 });
+      st.planned++;
+      if (feedDone(iso, sid)) {
+        st.done++;
+        if (text.indexOf(REVIEW_MARK) !== -1) st.rev++;
+      }
+    });
+    return by;
+  }
+  function buildStatsRow(name, st, isTotal) {
+    var row = document.createElement('div');
+    row.className = 'stats-row' + (isTotal ? ' stats-total' : '');
+    var pct = st.planned ? Math.round(st.done / st.planned * 100) : 0;
+    var sub = 'できた○ ' + st.done + ' ／ 書いた ' + st.planned +
+      (st.rev ? '（うち' + REVIEW_MARK + '復習 ' + st.rev + '）' : '');
+    row.innerHTML =
+      '<div class="stats-head"><span class="stats-name">' + esc(name) + '</span>' +
+      '<span class="stats-pct">' + pct + '%</span></div>' +
+      '<div class="stats-bar"><span style="width:' + pct + '%"></span></div>' +
+      '<div class="stats-sub">' + sub + '</div>';
+    return row;
+  }
+  function renderStats() {
+    var list = document.getElementById('statsList');
+    list.innerHTML = '';
+    var by = computeStats();
+    var total = { planned: 0, done: 0, rev: 0 }, shown = 0;
+    readSubjects().forEach(function (s) {
+      var st = by[s.id];
+      if (!st) return;                       // まだ何も書いていない教材は出さない
+      total.planned += st.planned; total.done += st.done; total.rev += st.rev;
+      list.appendChild(buildStatsRow(s.name, st, false));
+      shown++;
+    });
+    if (!shown) {
+      list.innerHTML = '<p class="stats-empty">まだ記録がありません。マスに書いて「できた○」を付けると、ここに育っていきます。</p>';
+      return;
+    }
+    if (shown > 1) list.appendChild(buildStatsRow('ぜんぶ', total, true));
+  }
 
   function render() {
     renderCountdown();
@@ -2114,6 +2186,15 @@
       wrap.appendChild(b);
     });
   }
+  // きろく（達成率）
+  document.getElementById('menuStats').addEventListener('click', function () {
+    menuPanel.style.display = 'none';
+    renderStats();
+    document.getElementById('statsModal').style.display = 'flex';
+  });
+  document.getElementById('statsClose').addEventListener('click', function () {
+    document.getElementById('statsModal').style.display = 'none';
+  });
   document.getElementById('menuTecho').addEventListener('click', function () {
     // 同じオリジンの姉妹アプリへ。GitHub Pages（/paper-keikaku/→/paper-techo/）でもローカルでも効く相対パス
     location.href = '../paper-techo/';
