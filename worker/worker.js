@@ -61,6 +61,14 @@ export default {
       return handleLink(request, env, url);
     }
 
+    // 自動バックアップ（じぶんのひかえ）。復元コードごとにアプリ全データのスナップショットをKVへ
+    if (url.pathname === '/vault/push' && request.method === 'POST') {
+      return handleVaultPush(request, env, url);
+    }
+    if (url.pathname === '/vault/pull' && request.method === 'GET') {
+      return handleVaultPull(request, env, url);
+    }
+
     return new Response('not found', { status: 404, headers: CORS_HEADERS });
   },
 
@@ -330,6 +338,46 @@ function mergeFeed(existing, incoming, role) {
     });
   }
   return { v: 1, updated: new Date().toISOString(), items: items };
+}
+
+// ---- 自動バックアップ（じぶんのひかえ） ----
+// アイコン削除・端末故障などでlocalStorageが全損しても、復元コードで戻せるように、
+// アプリが書き込みのたびに全データのスナップショットを預けてくる。
+// コードが唯一の鍵（連携コードと同じ思想）。pushのたびにTTLを延長し、400日使われなければ自動削除。
+const VAULT_CODE_RE = /^[A-Za-z0-9_-]{8,40}$/;
+const VAULT_APPS = { techo: true, keikaku: true };
+const VAULT_MAX_BYTES = 4 * 1024 * 1024;            // スナップショット上限4MB（KV値上限25MBに余裕）
+const VAULT_TTL_SECONDS = 60 * 60 * 24 * 400;
+
+function vaultParams(url) {
+  const code = url.searchParams.get('code') || '';
+  const app = url.searchParams.get('app') || '';
+  if (!VAULT_CODE_RE.test(code)) return { error: 'bad code' };
+  if (!VAULT_APPS[app]) return { error: 'bad app' };
+  return { key: 'vault:' + code + ':' + app };
+}
+
+async function handleVaultPush(request, env, url) {
+  const p = vaultParams(url);
+  if (p.error) return jsonResponse({ error: p.error }, 400);
+  const raw = await request.text();
+  if (raw.length > VAULT_MAX_BYTES) return jsonResponse({ error: 'too large' }, 413);
+  let body;
+  try { body = JSON.parse(raw); } catch (e) { return jsonResponse({ error: 'invalid json' }, 400); }
+  if (!body || typeof body.items !== 'object' || Array.isArray(body.items) || body.items === null) {
+    return jsonResponse({ error: 'invalid body' }, 400);
+  }
+  const savedAt = new Date().toISOString();
+  await env.NOTIFY_KV.put(p.key, JSON.stringify({ v: 1, savedAt: savedAt, items: body.items }), { expirationTtl: VAULT_TTL_SECONDS });
+  return jsonResponse({ ok: true, savedAt: savedAt });
+}
+
+async function handleVaultPull(request, env, url) {
+  const p = vaultParams(url);
+  if (p.error) return jsonResponse({ error: p.error }, 400);
+  const raw = await env.NOTIFY_KV.get(p.key);
+  if (!raw) return jsonResponse({ error: 'not found' }, 404);
+  return new Response(raw, { headers: Object.assign({ 'Content-Type': 'application/json' }, CORS_HEADERS) });
 }
 
 // Workerは code から Durable Object を引いて、そのまま転送する（WSのUpgradeも本文もそのまま）
