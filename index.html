@@ -833,16 +833,45 @@
   @media (max-width: 600px) { .save-note { bottom: calc(80px + env(safe-area-inset-bottom)); } }
 
   /* ---- 黒板・電光掲示板の質感（手ざわり手帳と同じ流儀） ---- */
-  /* 黒板は全部チョークの手書き。ノイズのマスクで文字・線に細かい欠けを作る */
+  /* 黒板は全部チョークの手書き。ノイズのマスクで文字・線に細かい欠けを作る。
+     ただしマスクは盤面（.paper）全体ではなく「チョークで描いた物」単位に掛ける。
+     盤面ごと欠けさせると、貼った本の表紙写真までかすれて汚れて見えるため（2026-07-20修正）。 */
   body[data-paper="board"] .book,
   body[data-paper="board"] .toolbar {
     font-family: 'Yomogi', 'Klee One', cursive;
   }
-  body[data-paper="board"] .paper {
+  body[data-paper="board"] .page-date,
+  body[data-paper="board"] .exam-countdown,
+  body[data-paper="board"] .plan-sub,
+  body[data-paper="board"] .empty-note,
+  body[data-paper="board"] table.plan td,
+  body[data-paper="board"] table.plan th.corner,
+  body[data-paper="board"] table.plan th.add-col,
+  body[data-paper="board"] th.subject:not(.has-cover),
+  body[data-paper="board"] th.subject.has-cover .subject-name,
+  body[data-paper="board"] .paper::before {
     -webkit-mask-image: url('chalk-mask.png');
     mask-image: url('chalk-mask.png');
     -webkit-mask-size: 160px 160px;
     mask-size: 160px 160px;
+  }
+  /* 黒板の地のムラ: 以前は盤面マスクの欠け穴から下の紙束（--paper-back-2）が覗いて出ていた。
+     同じ見た目を、チョークマスクの「逆」で紙束色を薄く置く専用レイヤーで再現する
+     （isolation+z-index:-1で地と文字の間に挟む。mask-composite非対応でも色味が僅かに変わるだけ） */
+  body[data-paper="board"] .paper { isolation: isolate; }
+  body[data-paper="board"] .paper::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: var(--paper-back-2);
+    -webkit-mask-image: url('chalk-mask.png'), linear-gradient(#fff, #fff);
+    -webkit-mask-size: 160px 160px, 100% 100%;
+    -webkit-mask-composite: xor;
+    mask-image: url('chalk-mask.png'), linear-gradient(#fff, #fff);
+    mask-size: 160px 160px, 100% 100%;
+    mask-composite: exclude;
   }
   body[data-paper="board"] .book { text-shadow: 0 0 2px rgba(240, 238, 228, 0.28); }
 
