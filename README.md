@@ -146,7 +146,12 @@ npx cap sync ios          # www/ を iOS プロジェクトへ反映（= npm run
 方式Bの中継サーバー（Cloudflare Workers `keikakuchou-notify`・`LinkRoom` Durable Object）のソースは `worker/` にある。元は旧アプリ study-plan-app のリポジトリにあったが、**旧アプリの廃止（リポジトリ削除）に伴いこちらへ移設した**。デプロイ済みWorkerはリポジトリと独立して動き続けるので、移設自体で再デプロイは不要。
 
 - 再デプロイするときは `worker/` で `npx wrangler deploy`（Cloudflareアカウントの認証が必要）
-- `worker.js` には旧アプリ由来のエンドポイント（push通知cron・`/book`・`/toc`・Google OAuth中継）も残っている。計画表⇄手帳が使うのは `LinkRoom`（`/link/*`）と `/techo/stat` だけなので、次に手を入れるときに旧アプリ分は削ってよい
+- `worker.js` には旧アプリ由来のエンドポイント（push通知cron・`/book`・`/toc`・Google OAuth中継）も残っている。計画表⇄手帳が使うのは `LinkRoom`（`/link/*`）・`/techo/stat`・`/vault/*` だけなので、次に手を入れるときに旧アプリ分は削ってよい
+- **`/vault/push`・`/vault/pull`（2026-07-20追加）**: 自動バックアップ「じぶんのひかえ」の保存先。復元コード（12桁）ごとに手帳/計画表の全データスナップショットをKV（`vault:<code>:<app>`、上限4MB、TTL400日でpushごと延長）へ保存する。友達のホーム画面PWAでアイコン入れ直しによりメモが全損した事故（2026-07-20）を受けて追加
+
+## 自動バックアップ「じぶんのひかえ」（2026-07-20）
+
+書き込みのたびに（4秒debounce）`pk:`全データがWorkerの`/vault`へ自動で預けられる（既定オン）。アプリを消しても機種変しても、設定に表示される**復元コード**を入れれば全部戻る。コードは同一オリジンの手帳と共用。初回の預け入れ成功時に一度だけ「コードをひかえてね」と案内する。設定からオフにもできる（`pk:vaultOff`）。認証系キーは預けない。手動の「データのひかえ」（ファイル保存）はお守りとして残っている。
 - KV（`NOTIFY_KV`）とSecrets（VAPID鍵・Google OAuth secret）はCloudflareダッシュボード側の設定で、リポジトリには含まれない
 
 ## 未実装（製品化するなら）
