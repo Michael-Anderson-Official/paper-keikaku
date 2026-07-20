@@ -141,6 +141,14 @@ npx cap sync ios          # www/ を iOS プロジェクトへ反映（= npm run
 - **ビルド・提出は Mac（Xcode）と Apple Developer Program（年 $99）が必要**。この作業は開発者の Mac 側で行う
 - **連携について**: 方式A（localStorage共有）は同一オリジンのブラウザでのみ成立するためネイティブアプリ同士では効かないが、方式B（連携コード＋Cloudflare Workers中継）はHTTPS/WSSの絶対URL通信のみでApp Group等に依存しないため、ネイティブ版どうしでも同じ連携コードで繋がる見込み。実機での動作確認はMacでの両アプリビルド後に行う
 
+## worker/ — 連携中継サーバーのソース（2026-07-20移設）
+
+方式Bの中継サーバー（Cloudflare Workers `keikakuchou-notify`・`LinkRoom` Durable Object）のソースは `worker/` にある。元は旧アプリ study-plan-app のリポジトリにあったが、**旧アプリの廃止（リポジトリ削除）に伴いこちらへ移設した**。デプロイ済みWorkerはリポジトリと独立して動き続けるので、移設自体で再デプロイは不要。
+
+- 再デプロイするときは `worker/` で `npx wrangler deploy`（Cloudflareアカウントの認証が必要）
+- `worker.js` には旧アプリ由来のエンドポイント（push通知cron・`/book`・`/toc`・Google OAuth中継）も残っている。計画表⇄手帳が使うのは `LinkRoom`（`/link/*`）と `/techo/stat` だけなので、次に手を入れるときに旧アプリ分は削ってよい
+- KV（`NOTIFY_KV`）とSecrets（VAPID鍵・Google OAuth secret）はCloudflareダッシュボード側の設定で、リポジトリには含まれない
+
 ## 未実装（製品化するなら）
 
 - テンプレート（曜日ごとの定番タスク）
