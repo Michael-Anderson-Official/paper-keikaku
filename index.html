@@ -999,6 +999,26 @@
   .stats-sub { font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
   .stats-total { border-top: 1px dashed var(--rule-strong); padding-top: 12px; }
   .stats-empty { color: var(--ink-soft); font-size: 13px; margin: 6px 0; }
+  /* 書き出しテキスト（AIに貼る用）。プレビュー兼コピー元 */
+  .export-text {
+    width: 100%;
+    height: 260px;
+    margin-top: 10px;
+    padding: 10px;
+    box-sizing: border-box;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #3a3f4c;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(120, 100, 60, 0.3);
+    border-radius: 8px;
+    resize: none;
+    white-space: pre;
+    overflow: auto;
+    -webkit-user-select: text;
+    user-select: text;
+  }
 </style>
 </head>
 <body>
@@ -1029,7 +1049,23 @@
 <div id="menuPanel" class="menu-panel" style="display:none;">
   <button id="menuSettings" type="button">⚙ 設定</button>
   <button id="menuStats" type="button">📊 きろく</button>
+  <button id="menuExport" type="button">📤 書き出す（AIに貼る）</button>
   <button id="menuTecho" type="button">📖 手ざわり手帳をひらく</button>
+</div>
+
+<!-- 計画と○✕記録の書き出し（AIに貼って合格確率を計算させる用） -->
+<div id="exportModal" class="settings-modal" style="display:none;">
+  <div class="settings-card">
+    <button id="exportCloseX" type="button" class="card-close-x" aria-label="とじる">×</button>
+    <h2>書き出す</h2>
+    <p class="settings-note" style="margin-top:0;">計画と○✕の記録を全部テキストにします。「コピー」してAI（ChatGPTなど）に貼り、「この記録で試験に受かりそうか、確率を出して」と聞けます。</p>
+    <textarea id="exportText" class="export-text" readonly spellcheck="false"></textarea>
+    <div style="display:flex; gap:8px; margin-top:8px;">
+      <button id="exportCopyBtn" type="button" class="primary" style="flex:1;">コピー</button>
+      <button id="exportSaveBtn" type="button" class="settings-close" style="margin-top:0; flex:1;">ファイルに保存</button>
+    </div>
+    <button id="exportClose" type="button" class="settings-close">とじる</button>
+  </div>
 </div>
 
 <!-- きろく（教材ごとの達成率） -->
@@ -1647,6 +1683,88 @@
       return;
     }
     if (shown > 1) list.appendChild(buildStatsRow('ぜんぶ', total, true));
+  }
+
+  // ---- 計画と○✕記録の全書き出し（AIに貼って合格確率を計算させる用） ----
+  // 復習行の「🔁」プレフィックスはそのまま残す（復習だと分かる方がAIの判断材料になる）
+  function buildExportText() {
+    var todayIso = toISO(new Date());
+    var subjects = readSubjects();
+    var nameById = {};
+    subjects.forEach(function (s) { nameById[s.id] = s.name; });
+
+    var lines = [];
+    lines.push('# 手ざわり計画表 — 学習記録の書き出し');
+    lines.push('書き出し日: ' + todayIso + '（' + DOW[fromISO(todayIso).getDay()] + '）');
+    lines.push('記号: [○]=できた  [✕]=まだ（予定日を過ぎた）  [ ]=これからの予定');
+    lines.push('');
+
+    // 試験情報
+    var ed = examDate();
+    lines.push('## 試験');
+    if (ed) {
+      var left = daysBetween(todayIso, ed);
+      lines.push(examName() + '：' + ed + (left >= 0 ? '（あと' + left + '日）' : '（終了）'));
+    } else {
+      lines.push('（試験日は未設定）');
+    }
+    lines.push('');
+
+    // 教材ごとの達成率（今日まで）
+    lines.push('## 教材ごとの達成率（今日までに予定していた分）');
+    var by = computeStats();
+    var totalP = 0, totalD = 0, anyStat = false;
+    subjects.forEach(function (s) {
+      var st = by[s.id];
+      if (!st) return;
+      anyStat = true;
+      totalP += st.planned; totalD += st.done;
+      var pct = st.planned ? Math.round(st.done / st.planned * 100) : 0;
+      lines.push('- ' + s.name + '：' + pct + '%（できた ' + st.done + ' / 予定 ' + st.planned +
+        (st.rev ? '、うち復習 ' + st.rev : '') + '）');
+    });
+    if (anyStat) {
+      var totalPct = totalP ? Math.round(totalD / totalP * 100) : 0;
+      lines.push('- ぜんぶ：' + totalPct + '%（できた ' + totalD + ' / 予定 ' + totalP + '）');
+    } else {
+      lines.push('（まだ記録がありません）');
+    }
+    lines.push('');
+
+    // 日別の計画と実績（全期間、日付昇順）
+    lines.push('## 日別の計画と実績');
+    var byDate = {};
+    forEachStoredKey('pk:cell:', function (k) {
+      var rest = k.slice('pk:cell:'.length), iso = rest.slice(0, 10), sid = rest.slice(11);
+      var text = localStorage.getItem(k);
+      if (!text) return;
+      (byDate[iso] || (byDate[iso] = [])).push({ sid: sid, text: text });
+    });
+    var dates = Object.keys(byDate).sort();
+    if (!dates.length) {
+      lines.push('（計画がありません）');
+    } else {
+      dates.forEach(function (iso) {
+        var d = fromISO(iso);
+        lines.push('');
+        lines.push('### ' + iso + '（' + DOW[d.getDay()] + '）' + (iso === todayIso ? ' ←今日' : ''));
+        // 教材の並び順（pk:subjects順）を保ちつつ、定義が消えた教材も拾う
+        byDate[iso].sort(function (a, b) {
+          var ia = subjects.findIndex(function (s) { return s.id === a.sid; });
+          var ib = subjects.findIndex(function (s) { return s.id === b.sid; });
+          return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
+        });
+        byDate[iso].forEach(function (c) {
+          var mark = feedDone(iso, c.sid) ? '○' : (iso <= todayIso ? '✕' : ' ');
+          var name = nameById[c.sid] || '（削除された教材）';
+          // セル内の改行は「 / 」でつないで1行に
+          var oneLine = c.text.split('\n').map(function (t) { return t.trim(); }).filter(Boolean).join(' / ');
+          lines.push('- [' + mark + '] ' + name + '：' + oneLine);
+        });
+      });
+    }
+    lines.push('');
+    return lines.join('\n');
   }
 
   function render() {
@@ -2332,6 +2450,34 @@
   });
   document.getElementById('statsClose').addEventListener('click', function () {
     document.getElementById('statsModal').style.display = 'none';
+  });
+  // 書き出す（AIに貼る）
+  var exportModal = document.getElementById('exportModal');
+  document.getElementById('menuExport').addEventListener('click', function () {
+    menuPanel.style.display = 'none';
+    document.getElementById('exportText').value = buildExportText();
+    exportModal.style.display = 'flex';
+  });
+  function closeExport() { exportModal.style.display = 'none'; }
+  document.getElementById('exportClose').addEventListener('click', closeExport);
+  document.getElementById('exportCloseX').addEventListener('click', closeExport);
+  exportModal.addEventListener('click', function (ev) { if (ev.target === exportModal) closeExport(); });
+  document.getElementById('exportCopyBtn').addEventListener('click', function () {
+    var ta = document.getElementById('exportText');
+    var text = ta.value;
+    function fallback() { ta.focus(); ta.select(); try { document.execCommand('copy'); } catch (e) {} }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { flashSaved('コピーしました'); }).catch(fallback);
+    } else { fallback(); flashSaved('コピーしました'); }
+  });
+  document.getElementById('exportSaveBtn').addEventListener('click', function () {
+    var blob = new Blob([document.getElementById('exportText').value], { type: 'text/plain;charset=utf-8' });
+    var url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url;
+    a.download = '手ざわり計画表の記録-' + toISO(new Date()) + '.txt';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    flashSaved();
   });
   document.getElementById('menuTecho').addEventListener('click', function () {
     // 同じオリジンの姉妹アプリへ。GitHub Pages（/paper-keikaku/→/paper-techo/）でもローカルでも効く相対パス
