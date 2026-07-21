@@ -936,20 +936,17 @@
      書き換わるのはgridScrollの中身だけなのでここは消えない）。z-index:-1で本文
      （.page-date等はposition:absoluteでz-index:auto）より奥へ。上の地のムラ用::afterは
      すでにz-index:-1で使用中なのでここは実DOM要素にする */
-  /* 2026-07-21、現状の絵は縦横比が正方形寄り（900x507）で本文と被るため、横長版を
-     ChatGPTで作り直してもらう間いったん非表示（display:none）。画像ファイルと四季切り替え
-     ロジック（--board-tree-img）は残す。横長画像を受け取ったらdisplay:blockに戻す＋
-     aspect-ratioを新しい比率に直すだけで復活する */
+  /* 黒板の一番下に添える、チョークの木の挿し絵（四季で自動切替）。横長の帯
+     （1600x300＝縦横比16:3）。幅いっぱいに広げても高さは幅の3/16で収まり本文と被らない
+     （2026-07-21、ユーザー作の横長版） */
   .board-decoration { display: none; }
   body[data-paper="board"] .board-decoration {
-    display: none;   /* 横長版が用意できるまで一旦非表示。復活時は block に戻す */
+    display: block;
     position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
-    /* 帯状の横長画像に差し替えたら、その画像のwidth/heightでaspect-ratioを更新する */
-    aspect-ratio: 900 / 507;
-    max-height: 45%;
+    aspect-ratio: 1600 / 300;
     z-index: -1;
     pointer-events: none;
     background-image: var(--board-tree-img, url('img/board-tree-summer.webp'));

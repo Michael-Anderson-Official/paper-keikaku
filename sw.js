@@ -1,7 +1,7 @@
 // 手ざわり計画表 Service Worker
 // - アプリ本体（シェル）は事前キャッシュ。ページはネット優先→落ちたらキャッシュ（更新がすぐ届く）
 // - フォント（自前ホスト）・チャコマスク等の同一オリジン資産はキャッシュ優先で使い回し（表示した字からオフライン化）
-var CACHE = 'tezawari-keikaku-v25';
+var CACHE = 'tezawari-keikaku-v26';
 var SHELL = [
   './',
   './manifest.webmanifest',
