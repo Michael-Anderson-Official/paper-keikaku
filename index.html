@@ -1652,15 +1652,20 @@
     try {
       var subjects = readSubjects(), byId = {}; subjects.forEach(function (s) { byId[s.id] = s; });
       var serverItems = (feed && feed.items) || [];
-      var bySubject = {};                        // sid -> [{id, text, done, u}]（feed idの"sid#itemId"を分解）
+      var bySubject = {}, touched = {};          // sid -> [{id, text, done, u}]（feed idの"sid#itemId"を分解）
       serverItems.forEach(function (it) {
         var hash = it.id.indexOf('#');
-        if (hash < 0) return;
+        if (hash < 0) return;                    // 項目分割前（旧形式）のidはここでは扱わない＝下で無視してローカルを守る
         var sid = it.id.slice(0, hash), itemId = it.id.slice(hash + 1);
         if (!byId[sid]) return;                  // 知らない教材は無視（集合の持ち主は計画表）
+        touched[sid] = true;
         (bySubject[sid] || (bySubject[sid] = [])).push({ id: itemId, text: it.text || '', done: !!it.done, u: it.u || Date.now() });
       });
-      subjects.forEach(function (s) {            // サーバー側の内容でこのマスを丸ごと置き換える（集合の持ち主は計画表）
+      // 新形式（"sid#itemId"）の項目が1つでも届いた教材だけ、サーバー側の内容でこのマスを置き換える。
+      // 旧形式のまま（サーバーがまだ更新前のフィードを持っている等）の教材はローカルを一切触らない
+      // ＝移行済みのローカルデータを「サーバーに無い」と誤認して消してしまう事故を防ぐ
+      subjects.forEach(function (s) {
+        if (!touched[s.id]) return;
         var its = bySubject[s.id];
         if (its && its.length) localStorage.setItem(keyCell(iso, s.id), JSON.stringify(its));
         else localStorage.removeItem(keyCell(iso, s.id));
