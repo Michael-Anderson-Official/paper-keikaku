@@ -369,6 +369,16 @@
     pointer-events: none;
   }
   td.cell.done .cell-text { color: var(--ink-soft); }
+  /* 一部だけできた＝角に小さな赤丸（全部できた＝周りの○と区別） */
+  td.cell.partial::after {
+    content: '';
+    position: absolute;
+    top: 4px; right: 6px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--today-ring);
+    pointer-events: none;
+  }
 
   .empty-note {
     padding: 34px 20px 0 14px;
@@ -655,6 +665,53 @@
     border-radius: 48% 52% 46% 54% / 54% 46% 52% 48%;
     transform: rotate(-4deg);
   }
+  /* セルの書き込み：1マスに複数行（計画ごとに○） */
+  .cell-items { display: flex; flex-direction: column; gap: 8px; }
+  .cell-item-row { display: flex; align-items: center; gap: 8px; }
+  .cell-item-row .ring {
+    flex: none;
+    width: 22px; height: 22px;
+    border: 2px solid rgba(110, 130, 160, 0.4);
+    border-radius: 50%;
+    position: relative;
+    cursor: pointer;
+  }
+  .cell-item-row.done .ring { border-color: transparent; }
+  .cell-item-row.done .ring::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border: 2.5px solid var(--today-ring);
+    border-radius: 48% 52% 46% 54% / 54% 46% 52% 48%;
+    transform: rotate(-4deg);
+  }
+  .cell-item-row .item-text { flex: 1; min-width: 0; }
+  .cell-item-row.done .item-text { color: var(--ink-soft); }
+  .cell-item-row .item-carry, .cell-item-row .item-del {
+    flex: none;
+    width: 30px; height: 30px;
+    font-family: inherit;
+    font-size: 14px;
+    color: #8a7d5a;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+  .cell-item-row .item-del { color: var(--sun); }
+  .cell-add-item {
+    display: block;
+    width: 100%;
+    margin-top: 12px;
+    padding: 9px;
+    font-family: inherit;
+    font-size: 14px;
+    color: #4a4030;
+    background: linear-gradient(180deg, #f3ecd9, #e7dfc8);
+    border: 1px solid rgba(120, 100, 60, 0.35);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .cell-add-item:active { transform: translateY(1px); }
   .modal-btns { display: flex; gap: 8px; margin-top: 14px; align-items: center; }
   .modal-btns .spacer { flex: 1; }
   .modal-btns button {
@@ -1211,16 +1268,12 @@
   </div>
 </div>
 
-<!-- セルの書き込み（手帳の予定エディタと同じ紙カード） -->
+<!-- セルの書き込み（手帳の予定エディタと同じ紙カード）。1マスに複数の計画を書け、○は計画ごと -->
 <div id="cellModal" class="settings-modal" style="display:none;">
   <div class="settings-card">
     <h2 id="cellModalTitle"></h2>
-    <textarea id="cellText" class="write-textarea" maxlength="200"></textarea>
-    <div class="done-toggle" id="doneToggle">
-      <span class="ring"></span>
-      <span id="doneToggleLabel">できた（○をつける）</span>
-    </div>
-    <button type="button" id="cellCarry" class="cell-carry" style="display:none;">▶ <span id="cellCarryLabel">翌日へ繰り越す</span></button>
+    <div id="cellItemsList" class="cell-items"></div>
+    <button type="button" id="cellAddItem" class="cell-add-item">＋ <span id="cellAddItemLabel">もう1つ書く</span></button>
     <div class="modal-btns">
       <button class="danger" id="cellClear">けす</button>
       <span class="spacer"></span>
@@ -1343,6 +1396,8 @@
     coverRemove:    'はずす',
     deleteConfirm:  '「{name}」の列と、書いた計画をぜんぶ消します。よろしいですか？',
     cellPlace:      'やることを書く（例: 長文2ページ）',
+    cellAddItem:    'もう1つ書く',
+    itemDelete:     'この行をけす',
     doneLabel:      'できた（○をつける）',
     clearBtn:       'けす',
     closeBtn:       'とじる',
@@ -1437,14 +1492,12 @@
     setText('backupExportBtn', tx('backupExport'));
     setText('backupImportBtn', tx('backupImport'));
     setText('settingsClose', tx('closeBtn'));
-    setText('doneToggleLabel', tx('doneLabel'));
-    document.getElementById('cellText').placeholder = tx('cellPlace');
+    setText('cellAddItemLabel', tx('cellAddItem'));
     document.getElementById('subjectName').placeholder = tx('subjectPlace');
     setText('subjectDelete', tx('subjectDelete'));
     setText('coverPickBtn', tx('coverPick'));
     setText('coverRemoveBtn', tx('coverRemove'));
     setText('reorderLabel', tx('reorderLabel'));
-    setText('cellCarryLabel', tx('cellCarry'));
     setText('scanOpenLabel', tx('scanOpen'));
     setText('tocOpenLabel', tx('tocOpen'));
     setText('tocTitle', tx('tocTitle'));
@@ -1483,24 +1536,38 @@
 
   // ---- ストレージ ----
   // pk:subjects           = [{id, name}]
-  // pk:cell:ISO:subjectId = 計画テキスト（持ち主はこのアプリ）
-  // pk:feed:ISO           = {v:1, updated, items:[...]}（手ざわり手帳への「印刷」フィード。doneの持ち主はフィード側）
+  // pk:cell:ISO:subjectId = [{id, text, done, u}, ...]（1マスに複数の計画。持ち主はこのアプリ）
+  // pk:feed:ISO           = {v:1, updated, items:[{id:"subjectId#itemId", subject, text, done, u}...]}（手ざわり手帳への「印刷」フィード）
   function readSubjects() {
     try { var a = JSON.parse(localStorage.getItem('pk:subjects') || '[]'); return Array.isArray(a) ? a : []; }
     catch (e) { return []; }
   }
   function writeSubjects(arr) { localStorage.setItem('pk:subjects', JSON.stringify(arr)); }
   function keyCell(iso, sid) { return 'pk:cell:' + iso + ':' + sid; }
-  function cuKey(iso, sid) { return 'pk:cu:' + iso + ':' + sid; }         // そのマスの最終更新ms（連携マージ用）
-  function cuOf(iso, sid) { return parseInt(localStorage.getItem(cuKey(iso, sid)) || '0', 10) || 0; }
-  function touchCell(iso, sid) { localStorage.setItem(cuKey(iso, sid), String(Date.now())); }
-  function readCell(iso, sid) { return localStorage.getItem(keyCell(iso, sid)) || ''; }
-  function writeCell(iso, sid, text) {
-    var old = readCell(iso, sid);
-    if (text) localStorage.setItem(keyCell(iso, sid), text);
+  function genItemId() { return 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  // 旧形式（1マス1本の文字列）を新形式（配列）へ、初回だけ変換する。○は旧フィードから引き継ぐ
+  function migrateCellsToItems() {
+    if (localStorage.getItem('pk:migratedItems') === '1') return;
+    forEachStoredKey('pk:cell:', function (k) {
+      var raw = localStorage.getItem(k);
+      if (!raw) return;
+      var parsed; try { parsed = JSON.parse(raw); } catch (e) { parsed = null; }
+      if (Array.isArray(parsed)) return;   // すでに新形式
+      var rest = k.slice('pk:cell:'.length), iso = rest.slice(0, 10), sid = rest.slice(11);
+      var wasDone = false;
+      var f = readFeed(iso);
+      if (f) for (var i = 0; i < f.items.length; i++) if (f.items[i].id === sid) wasDone = !!f.items[i].done;
+      localStorage.setItem(k, JSON.stringify([{ id: genItemId(), text: raw, done: wasDone, u: Date.now() }]));
+    });
+    localStorage.setItem('pk:migratedItems', '1');
+  }
+  function cellItems(iso, sid) {
+    try { var a = JSON.parse(localStorage.getItem(keyCell(iso, sid)) || '[]'); return Array.isArray(a) ? a : []; }
+    catch (e) { return []; }
+  }
+  function writeCellItems(iso, sid, items) {
+    if (items.length) localStorage.setItem(keyCell(iso, sid), JSON.stringify(items));
     else localStorage.removeItem(keyCell(iso, sid));
-    if (text !== old) touchCell(iso, sid);        // 変わったら更新時刻を刻む
-    if (!text) localStorage.removeItem(cuKey(iso, sid));
     rebuildFeed(iso);
   }
   function keyFeed(iso) { return 'pk:feed:' + iso; }
@@ -1508,72 +1575,52 @@
     try { var f = JSON.parse(localStorage.getItem(keyFeed(iso)) || 'null'); return (f && f.v === 1 && Array.isArray(f.items)) ? f : null; }
     catch (e) { return null; }
   }
-  function feedDone(iso, sid) {
-    var f = readFeed(iso);
-    if (!f) return false;
-    for (var i = 0; i < f.items.length; i++) if (f.items[i].id === sid) return !!f.items[i].done;
-    return false;
-  }
-  // セルの中身からフィードを組み立て直す。○（done）とu（更新時刻）は引き継ぐ
+  // セルの中身（各項目のtext/done/u）からフィードを組み立て直す。項目ごとに手帳へ渡す
   function rebuildFeed(iso) {
-    var old = readFeed(iso), oldById = {};
-    if (old) old.items.forEach(function (it) { oldById[it.id] = it; });
     var items = [];
     readSubjects().forEach(function (s) {
-      var t = readCell(iso, s.id);
-      if (!t) return;
-      var o = oldById[s.id];
-      items.push({ id: s.id, subject: s.name, text: t, done: o ? !!o.done : false, u: cuOf(iso, s.id) || (o && o.u) || Date.now() });
+      cellItems(iso, s.id).forEach(function (it) {
+        items.push({ id: s.id + '#' + it.id, subject: s.name, text: it.text, done: !!it.done, u: it.u || Date.now() });
+      });
     });
     if (items.length) localStorage.setItem(keyFeed(iso), JSON.stringify({ v: 1, updated: new Date().toISOString(), items: items }));
     else localStorage.removeItem(keyFeed(iso));
     syncPush(iso);
   }
-  function setDone(iso, sid, done) {
-    var f = readFeed(iso);
-    if (!f) return;
-    touchCell(iso, sid);
-    var u = cuOf(iso, sid);
-    f.items.forEach(function (it) { if (it.id === sid) { it.done = !!done; it.u = u; } });
-    f.updated = new Date().toISOString();
-    localStorage.setItem(keyFeed(iso), JSON.stringify(f));
-    syncPush(iso);
-  }
 
-  // ---- 自動復習（間隔反復）：できた○を付けると未来の同じ教材に🔁復習を書き込む ----
+  // ---- 自動復習（間隔反復）：計画に○を付けると未来の同じ教材へ🔁復習という別項目を書き込む ----
   var REVIEW_INTERVALS = [1, 3, 7, 14];   // 何日後に復習を入れるか
   var REVIEW_MARK = '🔁';
   function reviewOn() { return localStorage.getItem('pk:reviewOn') !== '0'; }   // 既定オン
-  function keyRev(iso, sid) { return 'pk:rev:' + iso + ':' + sid; }            // 予約した復習の記録（取り消し用）
-  function stripReviewMark(text) {
-    return text.split('\n').filter(function (ln) { return ln.indexOf(REVIEW_MARK) !== 0; }).join('\n').trim();
-  }
-  function scheduleReviews(srcIso, sid, srcText) {
+  function keyRev(iso, sid, itemId) { return 'pk:rev:' + iso + ':' + sid + ':' + itemId; }   // 予約した復習の記録（取り消し用）
+  function scheduleReviews(srcIso, sid, itemId, srcText) {
     if (!reviewOn()) return;
-    if (localStorage.getItem(keyRev(srcIso, sid))) return;   // 二重予約しない
-    var base = stripReviewMark(srcText);
+    if (localStorage.getItem(keyRev(srcIso, sid, itemId))) return;   // 二重予約しない
+    var base = srcText.split('\n')[0].slice(0, 40);
     if (!base) return;
-    var line = REVIEW_MARK + base.split('\n')[0].slice(0, 40);   // 復習行は1行・短めに
+    var line = REVIEW_MARK + base;
     var added = [];
     REVIEW_INTERVALS.forEach(function (d) {
-      var tIso = addDays(srcIso, d), cur = readCell(tIso, sid);
-      if (cur.split('\n').indexOf(line) !== -1) return;       // すでに同じ行があれば足さない
-      writeCell(tIso, sid, cur ? (cur + '\n' + line) : line);  // writeCellがfeed再構築＋手帳へ同期
-      added.push({ iso: tIso, line: line });
+      var tIso = addDays(srcIso, d);
+      var items = cellItems(tIso, sid);
+      if (items.some(function (it) { return it.text === line; })) return;   // すでに同じ復習項目があれば足さない
+      var nid = genItemId();
+      items.push({ id: nid, text: line, done: false, u: Date.now() });
+      writeCellItems(tIso, sid, items);
+      added.push({ iso: tIso, id: nid });
     });
-    if (added.length) localStorage.setItem(keyRev(srcIso, sid), JSON.stringify(added));
+    if (added.length) localStorage.setItem(keyRev(srcIso, sid, itemId), JSON.stringify(added));
   }
-  function unscheduleReviews(srcIso, sid) {
-    var raw = localStorage.getItem(keyRev(srcIso, sid));
+  function unscheduleReviews(srcIso, sid, itemId) {
+    var raw = localStorage.getItem(keyRev(srcIso, sid, itemId));
     if (!raw) return;
     var list; try { list = JSON.parse(raw); } catch (e) { list = []; }
     list.forEach(function (r) {
-      var cur = readCell(r.iso, sid);
-      if (!cur) return;
-      var kept = cur.split('\n').filter(function (ln) { return ln !== r.line; }).join('\n');
-      if (kept !== cur) writeCell(r.iso, sid, kept);
+      var items = cellItems(r.iso, sid);
+      var kept = items.filter(function (it) { return it.id !== r.id; });
+      if (kept.length !== items.length) writeCellItems(r.iso, sid, kept);
     });
-    localStorage.removeItem(keyRev(srcIso, sid));
+    localStorage.removeItem(keyRev(srcIso, sid, itemId));
   }
 
   // ---- 手帳との連携（即時同期。中継サーバー=Durable ObjectへHTTPでpush・WebSocketで受信） ----
@@ -1604,16 +1651,19 @@
     applyingRemote = true;
     try {
       var subjects = readSubjects(), byId = {}; subjects.forEach(function (s) { byId[s.id] = s; });
-      var serverItems = (feed && feed.items) || [], seen = {};
+      var serverItems = (feed && feed.items) || [];
+      var bySubject = {};                        // sid -> [{id, text, done, u}]（feed idの"sid#itemId"を分解）
       serverItems.forEach(function (it) {
-        if (!byId[it.id]) return;               // 知らない教材は無視（集合の持ち主は計画表）
-        seen[it.id] = true;
-        if (it.text) localStorage.setItem(keyCell(iso, it.id), it.text);
-        else localStorage.removeItem(keyCell(iso, it.id));
-        localStorage.setItem(cuKey(iso, it.id), String(it.u || Date.now()));
+        var hash = it.id.indexOf('#');
+        if (hash < 0) return;
+        var sid = it.id.slice(0, hash), itemId = it.id.slice(hash + 1);
+        if (!byId[sid]) return;                  // 知らない教材は無視（集合の持ち主は計画表）
+        (bySubject[sid] || (bySubject[sid] = [])).push({ id: itemId, text: it.text || '', done: !!it.done, u: it.u || Date.now() });
       });
-      subjects.forEach(function (s) {            // サーバーから消えたぶんはローカルも消す
-        if (!seen[s.id] && readCell(iso, s.id)) { localStorage.removeItem(keyCell(iso, s.id)); localStorage.removeItem(cuKey(iso, s.id)); }
+      subjects.forEach(function (s) {            // サーバー側の内容でこのマスを丸ごと置き換える（集合の持ち主は計画表）
+        var its = bySubject[s.id];
+        if (its && its.length) localStorage.setItem(keyCell(iso, s.id), JSON.stringify(its));
+        else localStorage.removeItem(keyCell(iso, s.id));
       });
       if (serverItems.length) localStorage.setItem(keyFeed(iso), JSON.stringify(feed));
       else localStorage.removeItem(keyFeed(iso));
@@ -1649,7 +1699,8 @@
       var iso = k.slice('pk:feed:'.length), f = readFeed(iso);
       if (!f) return;
       var hit = false;
-      f.items.forEach(function (it) { if (it.id === sid) { it.subject = newName; hit = true; } });
+      var prefix = sid + '#';
+      f.items.forEach(function (it) { if (it.id.indexOf(prefix) === 0) { it.subject = newName; hit = true; } });
       if (hit) localStorage.setItem(k, JSON.stringify(f));
     });
   }
@@ -1681,14 +1732,13 @@
   function daysBetween(fromIso, toIsoStr) {
     return Math.round((fromISO(toIsoStr).getTime() - fromISO(fromIso).getTime()) / 86400000);
   }
-  // 今日〜試験日で「文字あり・未○」のマスを数える（1日あたりの目安に使う）
+  // 今日〜試験日で「未○」の項目を数える（1日あたりの目安に使う）
   function countUndonePlanned(fromIso, toIsoStr) {
     var n = 0;
     forEachStoredKey('pk:cell:', function (k) {
       var rest = k.slice('pk:cell:'.length), iso = rest.slice(0, 10), sid = rest.slice(11);
       if (iso < fromIso || iso > toIsoStr) return;
-      if (!localStorage.getItem(k)) return;
-      if (!feedDone(iso, sid)) n++;
+      cellItems(iso, sid).forEach(function (it) { if (!it.done) n++; });
     });
     return n;
   }
@@ -1723,14 +1773,16 @@
     forEachStoredKey('pk:cell:', function (k) {
       var rest = k.slice('pk:cell:'.length), iso = rest.slice(0, 10), sid = rest.slice(11);
       if (iso > todayIso) return;
-      var text = localStorage.getItem(k);
-      if (!text) return;
+      var items = cellItems(iso, sid);
+      if (!items.length) return;
       var st = by[sid] || (by[sid] = { planned: 0, done: 0, rev: 0 });
-      st.planned++;
-      if (feedDone(iso, sid)) {
-        st.done++;
-        if (text.indexOf(REVIEW_MARK) !== -1) st.rev++;
-      }
+      items.forEach(function (it) {
+        st.planned++;
+        if (it.done) {
+          st.done++;
+          if (it.text.indexOf(REVIEW_MARK) !== -1) st.rev++;
+        }
+      });
     });
     return by;
   }
@@ -1817,9 +1869,9 @@
     var byDate = {};
     forEachStoredKey('pk:cell:', function (k) {
       var rest = k.slice('pk:cell:'.length), iso = rest.slice(0, 10), sid = rest.slice(11);
-      var text = localStorage.getItem(k);
-      if (!text) return;
-      (byDate[iso] || (byDate[iso] = [])).push({ sid: sid, text: text });
+      var items = cellItems(iso, sid);
+      if (!items.length) return;
+      (byDate[iso] || (byDate[iso] = [])).push({ sid: sid, items: items });
     });
     var dates = Object.keys(byDate).sort();
     if (!dates.length) {
@@ -1836,11 +1888,11 @@
           return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
         });
         byDate[iso].forEach(function (c) {
-          var mark = feedDone(iso, c.sid) ? '○' : (iso <= todayIso ? '✕' : ' ');
           var name = nameById[c.sid] || '（削除された教材）';
-          // セル内の改行は「 / 」でつないで1行に
-          var oneLine = c.text.split('\n').map(function (t) { return t.trim(); }).filter(Boolean).join(' / ');
-          lines.push('- [' + mark + '] ' + name + '：' + oneLine);
+          c.items.forEach(function (it) {
+            var mark = it.done ? '○' : (iso <= todayIso ? '✕' : ' ');
+            lines.push('- [' + mark + '] ' + name + '：' + it.text.trim());
+          });
         });
       });
     }
@@ -1912,13 +1964,14 @@
       subjects.forEach(function (s) {
         var td = document.createElement('td');
         td.className = 'cell';
-        var text = readCell(iso, s.id);
-        if (text) {
+        var items = cellItems(iso, s.id);
+        if (items.length) {
           var span = document.createElement('span');
           span.className = 'cell-text';
-          span.textContent = text;
+          span.textContent = items.map(function (it) { return it.text; }).join('\n');
           td.appendChild(span);
-          if (feedDone(iso, s.id)) td.classList.add('done');
+          if (items.every(function (it) { return it.done; })) td.classList.add('done');
+          else if (items.some(function (it) { return it.done; })) td.classList.add('partial');
         }
         (function (iso2, s2) { td.addEventListener('click', function () { openCellModal(iso2, s2); }); })(iso, s);
         tr.appendChild(td);
@@ -1930,56 +1983,123 @@
     return table;
   }
 
-  // ---- セルの書き込み ----
-  var editing = null, doneOn = false;
+  // ---- セルの書き込み（1マスに複数の計画を書け、○は計画ごとに付く） ----
+  var editing = null, editingItems = [];
   var cellModal = document.getElementById('cellModal');
-  var doneToggle = document.getElementById('doneToggle');
+  var cellItemsList = document.getElementById('cellItemsList');
   function openCellModal(iso, subject) {
     editing = { iso: iso, subject: subject };
     var d = fromISO(iso);
     document.getElementById('cellModalTitle').innerHTML =
       subject.name + '<span class="sub">' + (d.getMonth() + 1) + '月' + d.getDate() + '日（' + DOW[d.getDay()] + '）</span>';
-    document.getElementById('cellText').value = readCell(iso, subject.id);
-    doneOn = feedDone(iso, subject.id);
-    doneToggle.classList.toggle('on', doneOn);
-    updateCarryVisibility();
+    editingItems = cellItems(iso, subject.id).map(function (it) { return { id: it.id, text: it.text, done: !!it.done }; });
+    if (!editingItems.length) editingItems.push({ id: null, text: '', done: false });
+    renderCellItemsList();
     cellModal.style.display = 'flex';
-    if (!readCell(iso, subject.id)) setTimeout(function () { document.getElementById('cellText').focus(); }, 50);
+    if (!editingItems[0].text) setTimeout(function () {
+      var first = cellItemsList.querySelector('.item-text');
+      if (first) first.focus();
+    }, 50);
   }
-  function closeCellModal() { cellModal.style.display = 'none'; editing = null; }
-  // 繰り越しボタンは「文字があって、まだ○が付いていない」ときだけ出す
-  function updateCarryVisibility() {
-    var hasText = !!editing && !!document.getElementById('cellText').value.trim();
-    document.getElementById('cellCarry').style.display = (hasText && !doneOn) ? 'block' : 'none';
+  function closeCellModal() { cellModal.style.display = 'none'; editing = null; editingItems = []; }
+  // 行ごとの書き込み欄を組み立てる（○・文字・翌日へ繰り越す・この行をけす）
+  function renderCellItemsList() {
+    cellItemsList.innerHTML = '';
+    editingItems.forEach(function (item, idx) {
+      var row = document.createElement('div');
+      row.className = 'cell-item-row' + (item.done ? ' done' : '');
+      var ring = document.createElement('span');
+      ring.className = 'ring';
+      ring.setAttribute('role', 'button');
+      ring.setAttribute('aria-label', tx('doneLabel'));
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'write-input item-text';
+      input.maxLength = 200;
+      input.value = item.text;
+      input.placeholder = tx('cellPlace');
+      var carryBtn = document.createElement('button');
+      carryBtn.type = 'button';
+      carryBtn.className = 'item-carry';
+      carryBtn.title = tx('cellCarry');
+      carryBtn.setAttribute('aria-label', tx('cellCarry'));
+      carryBtn.textContent = '▶';
+      function updateCarryVisibility() { carryBtn.style.display = (item.text.trim() && !item.done) ? 'inline-block' : 'none'; }
+      updateCarryVisibility();
+      ring.addEventListener('click', function () {
+        item.done = !item.done;
+        row.classList.toggle('done', item.done);
+        updateCarryVisibility();
+      });
+      input.addEventListener('input', function () { item.text = input.value; updateCarryVisibility(); });
+      // 翌日へ繰り越す（＝この行だけ移動）: この行を消して、翌日の同じ教材へ新しい行として入れる。
+      // 今日側もこの場で確定保存する（そのままモーダルを閉じても今日と翌日で二重に残らないように）
+      carryBtn.addEventListener('click', function () {
+        var text = item.text.trim();
+        if (!text) return;
+        var sid = editing.subject.id, iso = editing.iso, nextIso = addDays(iso, 1);
+        var nextItems = cellItems(nextIso, sid);
+        nextItems.push({ id: genItemId(), text: text, done: false, u: Date.now() });
+        writeCellItems(nextIso, sid, nextItems);
+        if (item.id) unscheduleReviews(iso, sid, item.id);
+        editingItems.splice(idx, 1);
+        if (!editingItems.length) editingItems.push({ id: null, text: '', done: false });
+        var now = Date.now(), kept = [];
+        editingItems.forEach(function (it) {
+          var t = it.text.trim();
+          if (!t) return;
+          if (!it.id) it.id = genItemId();
+          kept.push({ id: it.id, text: t, done: it.done, u: now });
+        });
+        writeCellItems(iso, sid, kept);
+        renderCellItemsList();
+        flashSaved(tx('carryDone'));
+      });
+      var delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'item-del';
+      delBtn.title = tx('itemDelete');
+      delBtn.setAttribute('aria-label', tx('itemDelete'));
+      delBtn.textContent = '✕';
+      delBtn.addEventListener('click', function () {
+        if (item.id) unscheduleReviews(editing.iso, editing.subject.id, item.id);
+        editingItems.splice(idx, 1);
+        if (!editingItems.length) editingItems.push({ id: null, text: '', done: false });
+        renderCellItemsList();
+      });
+      row.appendChild(ring); row.appendChild(input); row.appendChild(carryBtn); row.appendChild(delBtn);
+      cellItemsList.appendChild(row);
+    });
   }
-  doneToggle.addEventListener('click', function () { doneOn = !doneOn; doneToggle.classList.toggle('on', doneOn); updateCarryVisibility(); });
-  document.getElementById('cellText').addEventListener('input', updateCarryVisibility);
-  // 翌日へ繰り越す（＝移動）: いまのセルを空にして、翌日の同じ教材へ入れる
-  document.getElementById('cellCarry').addEventListener('click', function () {
-    if (!editing) return;
-    var text = document.getElementById('cellText').value.trim();
-    if (!text) return;
-    var sid = editing.subject.id, nextIso = addDays(editing.iso, 1);
-    var existing = readCell(nextIso, sid);
-    writeCell(nextIso, sid, existing ? (existing + '\n' + text) : text);
-    writeCell(editing.iso, sid, '');
-    closeCellModal(); render(); flashSaved(tx('carryDone'));
+  document.getElementById('cellAddItem').addEventListener('click', function () {
+    editingItems.push({ id: null, text: '', done: false });
+    renderCellItemsList();
+    var rows = cellItemsList.querySelectorAll('.item-text');
+    var last = rows[rows.length - 1];
+    if (last) last.focus();
   });
   document.getElementById('cellSave').addEventListener('click', function () {
     if (!editing) return;
-    var iso = editing.iso, sid = editing.subject.id;
-    var text = document.getElementById('cellText').value.trim();
-    writeCell(iso, sid, text);
-    if (text) setDone(iso, sid, doneOn);
-    // 自動復習：○が付いたら未来へ復習を予約、外したら取り消す
-    if (text && doneOn) scheduleReviews(iso, sid, text);
-    else unscheduleReviews(iso, sid);
+    var iso = editing.iso, sid = editing.subject.id, now = Date.now();
+    var kept = [], dropped = [];
+    editingItems.forEach(function (it) {
+      var text = it.text.trim();
+      if (text) kept.push({ id: it.id || genItemId(), text: text, done: it.done, u: now });
+      else if (it.id) dropped.push(it.id);   // 文字を消して空にした既存の行は消える扱い
+    });
+    dropped.forEach(function (id) { unscheduleReviews(iso, sid, id); });
+    writeCellItems(iso, sid, kept);
+    // 自動復習：行ごとに○が付いたら未来へ復習を予約、外したら取り消す
+    kept.forEach(function (it) {
+      if (it.done) scheduleReviews(iso, sid, it.id, it.text);
+      else unscheduleReviews(iso, sid, it.id);
+    });
     closeCellModal(); render(); flashSaved();
   });
   document.getElementById('cellClear').addEventListener('click', function () {
     if (!editing) return;
-    unscheduleReviews(editing.iso, editing.subject.id);
-    writeCell(editing.iso, editing.subject.id, '');
+    editingItems.forEach(function (it) { if (it.id) unscheduleReviews(editing.iso, editing.subject.id, it.id); });
+    writeCellItems(editing.iso, editing.subject.id, []);
     closeCellModal(); render(); flashSaved();
   });
   document.getElementById('cellCancel').addEventListener('click', closeCellModal);
@@ -2442,12 +2562,13 @@
       subjects.push(obj);
       writeSubjects(subjects);
     }
-    // 今日から1日ずつ（既に書いてあれば改行で追記）
+    // 今日から1日ずつ（既に書いてあれば1つの項目として追加）
     var startIso = toISO(new Date());
     chapters.forEach(function (ch, i) {
       var iso = addDays(startIso, i);
-      var existing = readCell(iso, sid);
-      writeCell(iso, sid, existing ? (existing + '\n' + ch) : ch);
+      var items = cellItems(iso, sid);
+      items.push({ id: genItemId(), text: ch, done: false, u: Date.now() });
+      writeCellItems(iso, sid, items);
     });
     tocModal.style.display = 'none';
     closeSubjectModal();
@@ -2710,6 +2831,7 @@
   window.addEventListener('focus', foregroundRefresh);
   window.addEventListener('pageshow', foregroundRefresh);
 
+  migrateCellsToItems();
   applyWording();
   applyTheme();
   render();
