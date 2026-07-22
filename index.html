@@ -484,6 +484,12 @@
     box-shadow: 0 12px 32px rgba(30, 22, 10, 0.5);
     padding: 18px 18px 16px;
     color: #454a58;
+    /* このカードは常にアイボリー紙。黒板/黒ノート/電光掲示板テーマの薄い文字色を
+       ここで上書きし、中の文字（書きこみ欄など）がどのテーマでも読める濃さになるようにする */
+    --ink-text: #4a4e5c;
+    --ink-strong: #454a58;
+    --ink-soft: #8a8d99;
+    --placeholder: rgba(122, 126, 140, 0.4);
   }
   .settings-card h2 { font-size: 20px; font-weight: 600; margin-bottom: 12px; }
   .settings-card h2 .sub { font-size: 13px; font-weight: 400; color: var(--ink-soft); margin-left: 8px; }
