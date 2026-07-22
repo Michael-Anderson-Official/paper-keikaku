@@ -1018,6 +1018,22 @@
     background-size: contain;
   }
 
+  /* 桜テーマの飾り: 右上に桜の枝＋全面にうすい花びら。render()が書き換えるのはgridScroll
+     の中身だけなので.paper(#sheet)::afterは消えない。z-index:-1で本文の下・紙の地の上
+     （board以外のテーマなので::afterは空いている） */
+  body[data-paper="sakura"] .paper { isolation: isolate; }
+  body[data-paper="sakura"] .paper::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: url('img/sakura-branch.svg'), url('img/sakura-petals.svg');
+    background-repeat: no-repeat, repeat;
+    background-position: top right, top left;
+    background-size: 62% auto, 170px 170px;
+  }
+
   /* 電光掲示板: 消灯LEDの格子＋ドットフォント＋発光のにじみ */
   body[data-paper="led"] .paper {
     background-image: radial-gradient(circle at 1.5px 1.5px, rgba(255, 255, 255, 0.05) 1px, transparent 1.4px);
