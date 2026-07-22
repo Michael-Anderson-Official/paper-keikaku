@@ -1652,23 +1652,32 @@
     try {
       var subjects = readSubjects(), byId = {}; subjects.forEach(function (s) { byId[s.id] = s; });
       var serverItems = (feed && feed.items) || [];
-      var bySubject = {}, touched = {};          // sid -> [{id, text, done, u}]（feed idの"sid#itemId"を分解）
+      var bySubject = {}, touched = {}, legacyBySubject = {};   // sid -> [{id, text, done, u}]（feed idの"sid#itemId"を分解）
       serverItems.forEach(function (it) {
         var hash = it.id.indexOf('#');
-        if (hash < 0) return;                    // 項目分割前（旧形式）のidはここでは扱わない＝下で無視してローカルを守る
+        if (hash < 0) { if (byId[it.id]) legacyBySubject[it.id] = it; return; }   // 項目分割前（旧形式）のidはそのまま教材id
         var sid = it.id.slice(0, hash), itemId = it.id.slice(hash + 1);
         if (!byId[sid]) return;                  // 知らない教材は無視（集合の持ち主は計画表）
         touched[sid] = true;
         (bySubject[sid] || (bySubject[sid] = [])).push({ id: itemId, text: it.text || '', done: !!it.done, u: it.u || Date.now() });
       });
-      // 新形式（"sid#itemId"）の項目が1つでも届いた教材だけ、サーバー側の内容でこのマスを置き換える。
-      // 旧形式のまま（サーバーがまだ更新前のフィードを持っている等）の教材はローカルを一切触らない
-      // ＝移行済みのローカルデータを「サーバーに無い」と誤認して消してしまう事故を防ぐ
       subjects.forEach(function (s) {
-        if (!touched[s.id]) return;
-        var its = bySubject[s.id];
-        if (its && its.length) localStorage.setItem(keyCell(iso, s.id), JSON.stringify(its));
-        else localStorage.removeItem(keyCell(iso, s.id));
+        if (touched[s.id]) {
+          // 新形式の項目が届いた教材：サーバー側の内容でこのマスを置き換える（集合の持ち主は計画表）
+          var its = bySubject[s.id];
+          if (its && its.length) localStorage.setItem(keyCell(iso, s.id), JSON.stringify(its));
+          else localStorage.removeItem(keyCell(iso, s.id));
+          return;
+        }
+        // 新形式の項目が届かなかった教材：ローカルが空で、サーバーにまだ旧形式の記録が残っていれば
+        // それを取り込んで復元する（項目分割前の受信で誤って消してしまった分の回復）。
+        // ローカルに何か（すでに移行済み・書き直し済み）あれば絶対に上書きしない
+        var legacy = legacyBySubject[s.id];
+        if (legacy && legacy.text && !cellItems(iso, s.id).length) {
+          localStorage.setItem(keyCell(iso, s.id), JSON.stringify([
+            { id: genItemId(), text: legacy.text, done: !!legacy.done, u: legacy.u || Date.now() }
+          ]));
+        }
       });
       if (serverItems.length) localStorage.setItem(keyFeed(iso), JSON.stringify(feed));
       else localStorage.removeItem(keyFeed(iso));
