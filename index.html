@@ -1966,27 +1966,34 @@
 
   function render() {
     renderCountdown();
-    var start = fromISO(currentWeek), endIso = addDays(currentWeek, 6), end = fromISO(endIso);
-    document.getElementById('weekRange').textContent =
+    renderWeekInto(document, currentWeek);
+  }
+
+  // 週の見出し・グリッドをrootの中に描く。root=documentなら本物の画面、
+  // root=脇に置いた複製なら、そのDOMだけを行き先の週の内容に描き替える
+  // （黒板・電光掲示板の連結スライドで、本物のsheetを一切いじらずに済ませるため）
+  function renderWeekInto(root, weekIso) {
+    var start = fromISO(weekIso), endIso = addDays(weekIso, 6), end = fromISO(endIso);
+    root.querySelector('#weekRange').textContent =
       (start.getMonth() + 1) + '/' + start.getDate() + '〜' +
       (end.getMonth() !== start.getMonth() ? (end.getMonth() + 1) + '/' : '') + end.getDate();
-    document.getElementById('weekYear').textContent = warekiOf(start) + ' ' + start.getFullYear();
+    root.querySelector('#weekYear').textContent = warekiOf(start) + ' ' + start.getFullYear();
 
-    var scroll = document.getElementById('gridScroll');
+    var scroll = root.querySelector('#gridScroll');
     scroll.innerHTML = '';
     var subjects = readSubjects();
     if (!subjects.length) {
       var note = document.createElement('div');
       note.className = 'empty-note';
       note.innerHTML = tx('emptyNote');
-      scroll.appendChild(buildTable([], null));
+      scroll.appendChild(buildTable([], null, weekIso));
       scroll.appendChild(note);
       return;
     }
-    scroll.appendChild(buildTable(subjects, toISO(new Date())));
+    scroll.appendChild(buildTable(subjects, toISO(new Date()), weekIso));
   }
 
-  function buildTable(subjects, todayIso) {
+  function buildTable(subjects, todayIso, weekIso) {
     var table = document.createElement('table');
     table.className = 'plan';
     var thead = document.createElement('tr');
@@ -2017,7 +2024,7 @@
     table.appendChild(thead);
 
     for (var i = 0; i < 7; i++) {
-      var iso = addDays(currentWeek, i), d = fromISO(iso);
+      var iso = addDays(weekIso, i), d = fromISO(iso);
       var tr = document.createElement('tr');
       var label = document.createElement('td');
       label.className = 'day-label' +
@@ -2725,7 +2732,13 @@
   // ---- 週送り ----
   // 紙のテーマ: 貼り替えの小さなフェード＋スライド。黒板・電光掲示板は「めくれない」ので、
   // 手ざわり手帳と同じ「引き違い黒板」の連結スライド（2枚がくっついたまま横に動く）にする
+  var pendingSlideFinish = null;   // 連結スライドが進行中なら、その場で確定させる関数
   function goWeek(delta) {
+    // 前回の連結スライドがまだ動いている途中に連打されたら、まずそちらを確定させる。
+    // これをnextWeekの計算より前にやらないと、確定前の古いcurrentWeekを基準にしてしまい
+    // 連打のたびに週の進みが半分落ちてしまう（実機で報告された不具合の原因の一つ）
+    if (pendingSlideFinish) pendingSlideFinish();
+
     var sheet = document.getElementById('sheet');
     var nextWeek = delta === 0 ? weekStartOf(toISO(new Date())) : addDays(currentWeek, delta * 7);
     if (nextWeek === currentWeek) { currentWeek = nextWeek; render(); return; }
@@ -2745,18 +2758,14 @@
     var dir = delta === 0 ? (nextWeek > currentWeek ? 1 : -1) : (delta > 0 ? 1 : -1);
     var W = book.getBoundingClientRect().width;
 
-    // 行き先の週をこっそり本物のsheetへ描画してスナップショットを取り、今の週へ描き戻す
-    var savedWeek = currentWeek;
-    currentWeek = nextWeek;
-    render();
+    // 本物のsheet（今の週のまま、正しい状態）を複製し、複製の中だけを行き先の週へ描き替える。
+    // 本物のsheetには一切手を触れないので、途中で行き先の週がちらつくことがない
     var nextSheet = sheet.cloneNode(true);
-    nextSheet.removeAttribute('id');
+    renderWeekInto(nextSheet, nextWeek);
     nextSheet.querySelectorAll('[id]').forEach(function (el) { el.removeAttribute('id'); });
-    currentWeek = savedWeek;
-    render();
 
     nextSheet.style.transition = 'none';
-    nextSheet.style.transform = 'translateX(' + (dir > 0 ? W : -W) + 'px)';
+    nextSheet.style.transform = 'translate3d(' + (dir > 0 ? W : -W) + 'px,0,0)';
     nextSheet.style.pointerEvents = 'none';
     nextSheet.classList.add('board-sliding');
     book.appendChild(nextSheet);
@@ -2767,21 +2776,28 @@
     function finish() {
       if (done) return;
       done = true;
+      pendingSlideFinish = null;
       currentWeek = nextWeek;
       render();
       sheet.style.transition = sheet.style.transform = '';
       sheet.classList.remove('board-sliding');
       nextSheet.remove();
     }
+    pendingSlideFinish = finish;
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {
-        sheet.style.transition = nextSheet.style.transition = 'transform 0.32s ease';
-        sheet.style.transform = 'translateX(' + (-dir * W) + 'px)';
-        nextSheet.style.transform = 'translateX(0px)';
+        // 手ざわり手帳の「引き違い黒板」スライドと同じ速さ・イージング
+        var t = 'transform 0.42s cubic-bezier(0.3, 0.1, 0.3, 1)';
+        sheet.style.transition = nextSheet.style.transition = t;
+        sheet.style.transform = 'translate3d(' + (-dir * W) + 'px,0,0)';
+        nextSheet.style.transform = 'translate3d(0,0,0)';
       });
     });
-    nextSheet.addEventListener('transitionend', finish, { once: true });
-    setTimeout(finish, 450);   // 保険（transitionendが来ない環境向け）
+    nextSheet.addEventListener('transitionend', function (ev) {
+      if (ev.target !== nextSheet || ev.propertyName !== 'transform') return;   // 子要素からのバブリングで早期確定しない
+      finish();
+    });
+    setTimeout(finish, 600);   // 保険（transitionendが来ない環境向け）
   }
   document.getElementById('prevWeek').addEventListener('click', function () { goWeek(-1); });
   document.getElementById('nextWeek').addEventListener('click', function () { goWeek(1); });
