@@ -216,6 +216,8 @@
     overflow: hidden;
     transition: transform 0.18s ease, opacity 0.18s ease;
   }
+  /* 黒板・電光掲示板の「引き違い黒板」連結スライド中の板（手ざわり手帳と同じ見た目） */
+  .board-sliding { box-shadow: 0 0 26px rgba(0, 0, 0, 0.5); will-change: transform; }
   .paper.slide-out-left  { transform: translateX(-26px); opacity: 0; }
   .paper.slide-out-right { transform: translateX(26px);  opacity: 0; }
   .paper::before { /* 綴じ（左端のステッチ） */
@@ -2720,15 +2722,66 @@
     flashSaved(tx('tocAddedMsg', { n: chapters.length }));
   });
 
-  // ---- 週送り（貼り替えの小さなスライド） ----
+  // ---- 週送り ----
+  // 紙のテーマ: 貼り替えの小さなフェード＋スライド。黒板・電光掲示板は「めくれない」ので、
+  // 手ざわり手帳と同じ「引き違い黒板」の連結スライド（2枚がくっついたまま横に動く）にする
   function goWeek(delta) {
     var sheet = document.getElementById('sheet');
-    sheet.classList.add(delta > 0 ? 'slide-out-left' : 'slide-out-right');
-    setTimeout(function () {
-      currentWeek = delta === 0 ? weekStartOf(toISO(new Date())) : addDays(currentWeek, delta * 7);
+    var nextWeek = delta === 0 ? weekStartOf(toISO(new Date())) : addDays(currentWeek, delta * 7);
+    if (nextWeek === currentWeek) { currentWeek = nextWeek; render(); return; }
+
+    var theme = getTheme();
+    if (theme !== 'board' && theme !== 'led') {
+      sheet.classList.add(delta > 0 ? 'slide-out-left' : 'slide-out-right');
+      setTimeout(function () {
+        currentWeek = nextWeek;
+        render();
+        sheet.classList.remove('slide-out-left', 'slide-out-right');
+      }, 180);
+      return;
+    }
+
+    var book = document.getElementById('book');
+    var dir = delta === 0 ? (nextWeek > currentWeek ? 1 : -1) : (delta > 0 ? 1 : -1);
+    var W = book.getBoundingClientRect().width;
+
+    // 行き先の週をこっそり本物のsheetへ描画してスナップショットを取り、今の週へ描き戻す
+    var savedWeek = currentWeek;
+    currentWeek = nextWeek;
+    render();
+    var nextSheet = sheet.cloneNode(true);
+    nextSheet.removeAttribute('id');
+    nextSheet.querySelectorAll('[id]').forEach(function (el) { el.removeAttribute('id'); });
+    currentWeek = savedWeek;
+    render();
+
+    nextSheet.style.transition = 'none';
+    nextSheet.style.transform = 'translateX(' + (dir > 0 ? W : -W) + 'px)';
+    nextSheet.style.pointerEvents = 'none';
+    nextSheet.classList.add('board-sliding');
+    book.appendChild(nextSheet);
+    sheet.style.transition = 'none';
+    sheet.classList.add('board-sliding');
+
+    var done = false;
+    function finish() {
+      if (done) return;
+      done = true;
+      currentWeek = nextWeek;
       render();
-      sheet.classList.remove('slide-out-left', 'slide-out-right');
-    }, 180);
+      sheet.style.transition = sheet.style.transform = '';
+      sheet.classList.remove('board-sliding');
+      nextSheet.remove();
+    }
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        sheet.style.transition = nextSheet.style.transition = 'transform 0.32s ease';
+        sheet.style.transform = 'translateX(' + (-dir * W) + 'px)';
+        nextSheet.style.transform = 'translateX(0px)';
+      });
+    });
+    nextSheet.addEventListener('transitionend', finish, { once: true });
+    setTimeout(finish, 450);   // 保険（transitionendが来ない環境向け）
   }
   document.getElementById('prevWeek').addEventListener('click', function () { goWeek(-1); });
   document.getElementById('nextWeek').addEventListener('click', function () { goWeek(1); });
