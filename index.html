@@ -698,6 +698,30 @@
     cursor: pointer;
   }
   .cell-item-row .item-del { color: var(--sun); }
+  .cell-item-row.lp-active { background: rgba(90, 125, 90, 0.14); border-radius: 8px; }
+  /* 長押し→複数の日にコピーの、小さなカレンダー */
+  .copy-cal-head { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+  .copy-cal-head button {
+    font-family: inherit; font-size: 15px;
+    background: none; border: none; color: #4a4030;
+    padding: 6px 10px; cursor: pointer;
+  }
+  .copy-cal-head span { font-size: 14px; font-weight: 600; color: #4a4030; }
+  .copy-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 8px; }
+  .copy-cal-dow { text-align: center; font-size: 11px; color: #8a8d99; padding-bottom: 2px; }
+  .copy-cal-day {
+    aspect-ratio: 1;
+    font-family: inherit;
+    font-size: 13px;
+    color: #4a4030;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(120, 100, 60, 0.25);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .copy-cal-day:active { transform: translateY(1px); }
+  .copy-cal-day.is-today { border-color: var(--today-ring); font-weight: 700; }
+  .copy-cal-day.is-copied { background: #5a7d5a; border-color: #4d6b4d; color: #fff; }
   .cell-add-item {
     display: block;
     width: 100%;
@@ -1283,6 +1307,24 @@
   </div>
 </div>
 
+<!-- 行を長押し→複数の日にコピー -->
+<div id="copyDatesModal" class="settings-modal" style="display:none;">
+  <div class="settings-card">
+    <h2 id="copyDatesTitle">複数の日にコピー</h2>
+    <p id="copyDatesSub" class="settings-note" style="margin-top:0;"></p>
+    <div class="copy-cal-head">
+      <button type="button" id="copyCalPrev">◀</button>
+      <span id="copyCalMonthLabel"></span>
+      <button type="button" id="copyCalNext">▶</button>
+    </div>
+    <div id="copyCalGrid" class="copy-cal-grid"></div>
+    <div class="modal-btns">
+      <span class="spacer"></span>
+      <button class="primary" id="copyDatesClose">とじる</button>
+    </div>
+  </div>
+</div>
+
 <!-- 教材の追加・改名 -->
 <div id="subjectModal" class="settings-modal" style="display:none;">
   <div class="settings-card">
@@ -1398,6 +1440,10 @@
     cellPlace:      'やることを書く（例: 長文2ページ）',
     cellAddItem:    'もう1つ書く',
     itemDelete:     'この行をけす',
+    copyDatesTitle: '複数の日にコピー',
+    copyDatesSub:   '「{text}」を、タップした日に次々とコピーします',
+    copyDatesDone:  'コピーしました',
+    copyDatesDup:   'この日にはもうあります',
     doneLabel:      'できた（○をつける）',
     clearBtn:       'けす',
     closeBtn:       'とじる',
@@ -1493,6 +1539,8 @@
     setText('backupImportBtn', tx('backupImport'));
     setText('settingsClose', tx('closeBtn'));
     setText('cellAddItemLabel', tx('cellAddItem'));
+    setText('copyDatesTitle', tx('copyDatesTitle'));
+    setText('copyDatesClose', tx('closeBtn'));
     document.getElementById('subjectName').placeholder = tx('subjectPlace');
     setText('subjectDelete', tx('subjectDelete'));
     setText('coverPickBtn', tx('coverPick'));
@@ -2015,7 +2063,8 @@
       if (first) first.focus();
     }, 50);
   }
-  function closeCellModal() { cellModal.style.display = 'none'; editing = null; editingItems = []; }
+  // 長押しコピー・行ごとの繰り越しはSaveを待たずその場で確定するので、とじる時は常にグリッドを描き直す
+  function closeCellModal() { cellModal.style.display = 'none'; editing = null; editingItems = []; render(); }
   // 行ごとの書き込み欄を組み立てる（○・文字・翌日へ繰り越す・この行をけす）
   function renderCellItemsList() {
     cellItemsList.innerHTML = '';
@@ -2083,8 +2132,88 @@
       });
       row.appendChild(ring); row.appendChild(input); row.appendChild(carryBtn); row.appendChild(delBtn);
       cellItemsList.appendChild(row);
+      // 長押し→複数の日にコピー（文字入力欄・繰り越し／けすボタンの上では発動させない）
+      (function () {
+        var lpTimer = null, lpX = null, lpY = null;
+        function cancel() { if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; } row.classList.remove('lp-active'); }
+        row.addEventListener('pointerdown', function (ev) {
+          if (ev.target === input || ev.target.closest('.item-carry, .item-del, .ring')) return;
+          if (!item.text.trim()) return;
+          lpX = ev.clientX; lpY = ev.clientY;
+          row.classList.add('lp-active');
+          lpTimer = setTimeout(function () {
+            cancel();
+            openCopyDatesModal(editing.subject.id, item.text.trim());
+          }, 500);
+        });
+        row.addEventListener('pointermove', function (ev) {
+          if (!lpTimer) return;
+          if (Math.abs(ev.clientX - lpX) > 8 || Math.abs(ev.clientY - lpY) > 8) cancel();
+        });
+        row.addEventListener('pointerup', cancel);
+        row.addEventListener('pointercancel', cancel);
+      })();
     });
   }
+
+  // ---- 行を長押し→複数の日にコピー（ミニカレンダーでタップした日へ次々とコピー） ----
+  var copyDatesModal = document.getElementById('copyDatesModal');
+  var copyCalGrid = document.getElementById('copyCalGrid');
+  var copySource = null, copyCalMonth = null, copiedTo = {};
+  function openCopyDatesModal(sid, text) {
+    copySource = { sid: sid, text: text };
+    copiedTo = {};
+    copyCalMonth = fromISO(editing.iso);
+    copyCalMonth.setDate(1);
+    document.getElementById('copyDatesSub').textContent = tx('copyDatesSub', { text: text });
+    renderCopyCal();
+    copyDatesModal.style.display = 'flex';
+  }
+  function closeCopyDatesModal() { copyDatesModal.style.display = 'none'; copySource = null; }
+  function renderCopyCal() {
+    document.getElementById('copyCalMonthLabel').textContent = copyCalMonth.getFullYear() + '年' + (copyCalMonth.getMonth() + 1) + '月';
+    copyCalGrid.innerHTML = '';
+    DOW.forEach(function (w) {
+      var h = document.createElement('div'); h.className = 'copy-cal-dow'; h.textContent = w; copyCalGrid.appendChild(h);
+    });
+    var first = new Date(copyCalMonth.getFullYear(), copyCalMonth.getMonth(), 1);
+    var daysInMonth = new Date(copyCalMonth.getFullYear(), copyCalMonth.getMonth() + 1, 0).getDate();
+    var todayIso = toISO(new Date());
+    for (var i = 0; i < first.getDay(); i++) copyCalGrid.appendChild(document.createElement('div'));
+    var _loop = function (d) {
+      var dateObj = new Date(copyCalMonth.getFullYear(), copyCalMonth.getMonth(), d);
+      var iso = toISO(dateObj);
+      var cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = 'copy-cal-day' + (iso === todayIso ? ' is-today' : '') + (copiedTo[iso] ? ' is-copied' : '');
+      cell.textContent = d;
+      cell.addEventListener('click', function () { copyItemToDate(iso); });
+      copyCalGrid.appendChild(cell);
+    };
+    for (var d = 1; d <= daysInMonth; d++) _loop(d);
+  }
+  function copyItemToDate(iso) {
+    if (!copySource) return;
+    var items = cellItems(iso, copySource.sid);
+    if (items.some(function (it) { return it.text === copySource.text; })) {
+      flashSaved(tx('copyDatesDup'));
+    } else {
+      items.push({ id: genItemId(), text: copySource.text, done: false, u: Date.now() });
+      writeCellItems(iso, copySource.sid, items);
+      flashSaved(tx('copyDatesDone'));
+      // 開いているマスそのものへコピーしたときは、下の一覧にもすぐ反映する
+      if (editing && editing.iso === iso && editing.subject.id === copySource.sid) {
+        editingItems = cellItems(iso, copySource.sid).map(function (it) { return { id: it.id, text: it.text, done: !!it.done }; });
+        renderCellItemsList();
+      }
+    }
+    copiedTo[iso] = true;
+    renderCopyCal();
+  }
+  document.getElementById('copyCalPrev').addEventListener('click', function () { copyCalMonth.setMonth(copyCalMonth.getMonth() - 1); renderCopyCal(); });
+  document.getElementById('copyCalNext').addEventListener('click', function () { copyCalMonth.setMonth(copyCalMonth.getMonth() + 1); renderCopyCal(); });
+  document.getElementById('copyDatesClose').addEventListener('click', closeCopyDatesModal);
+  copyDatesModal.addEventListener('click', function (e) { if (e.target === copyDatesModal) closeCopyDatesModal(); });
   document.getElementById('cellAddItem').addEventListener('click', function () {
     editingItems.push({ id: null, text: '', done: false });
     renderCellItemsList();
@@ -2108,13 +2237,13 @@
       if (it.done) scheduleReviews(iso, sid, it.id, it.text);
       else unscheduleReviews(iso, sid, it.id);
     });
-    closeCellModal(); render(); flashSaved();
+    closeCellModal(); flashSaved();
   });
   document.getElementById('cellClear').addEventListener('click', function () {
     if (!editing) return;
     editingItems.forEach(function (it) { if (it.id) unscheduleReviews(editing.iso, editing.subject.id, it.id); });
     writeCellItems(editing.iso, editing.subject.id, []);
-    closeCellModal(); render(); flashSaved();
+    closeCellModal(); flashSaved();
   });
   document.getElementById('cellCancel').addEventListener('click', closeCellModal);
   cellModal.addEventListener('click', function (e) { if (e.target === cellModal) closeCellModal(); });
