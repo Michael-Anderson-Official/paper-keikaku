@@ -44,15 +44,15 @@
     --paper-back-3: #ebe4d0;
     --ink-strong: #454a58;
     --ink-text: #4a4e5c;
-    --ink-soft: #8a8d99;
-    --placeholder: rgba(122, 126, 140, 0.4);
+    --ink-soft: #686b78;
+    --placeholder: #686b78;
     --rule: rgba(122, 158, 196, 0.38);
     --rule-strong: rgba(122, 158, 196, 0.55);
     --margin-line: rgba(214, 130, 122, 0.55);
     --print: #5d6f93;
     --print-soft: #8291b0;
-    --sun: #c4645c;
-    --sat: #5b7fa6;
+    --sun: #a64f49;
+    --sat: #466b94;
     --today-ring: rgba(200, 80, 70, 0.75);
     --stitch: rgba(120, 100, 70, 0.4);
     --divider-label: #b08a84;
@@ -75,7 +75,7 @@
     --ink-strong: #e8e6df;
     --ink-text: #dfdcd2;
     --ink-soft: #9a9890;
-    --placeholder: rgba(255, 255, 255, 0.28);
+    --placeholder: #9a9890;
     --rule: rgba(255, 255, 255, 0.14);
     --rule-strong: rgba(255, 255, 255, 0.28);
     --margin-line: rgba(235, 140, 130, 0.55);
@@ -95,15 +95,15 @@
     --paper-back-3: #24413a;
     --ink-strong: #f0ede2;
     --ink-text: #e7e4d8;
-    --ink-soft: #a8b3a5;
-    --placeholder: rgba(255, 255, 255, 0.3);
+    --ink-soft: #c4ccc2;
+    --placeholder: #c4ccc2;
     --rule: rgba(255, 255, 255, 0.16);
     --rule-strong: rgba(255, 255, 255, 0.3);
     --margin-line: rgba(255, 190, 180, 0.5);
     --print: #b8cfe4;
     --print-soft: #93a9bd;
-    --sun: #f0a8a0;
-    --sat: #a8c4e8;
+    --sun: #ffc0b8;
+    --sat: #c4daf4;
     --today-ring: rgba(240, 168, 160, 0.85);
     --stitch: rgba(255, 255, 255, 0.25);
     --divider-label: #d8b8b2;
@@ -117,7 +117,7 @@
     --ink-strong: #ffb02e;
     --ink-text: #ffa41f;
     --ink-soft: #9a7b45;
-    --placeholder: rgba(255, 164, 31, 0.3);
+    --placeholder: #9a7b45;
     --rule: rgba(255, 176, 46, 0.12);
     --rule-strong: rgba(255, 176, 46, 0.3);
     --margin-line: rgba(255, 176, 46, 0.25);
@@ -137,15 +137,15 @@
     --paper-back-3: #f0d6de;
     --ink-strong: #5a4750;
     --ink-text: #5f4c54;
-    --ink-soft: #a98d96;
-    --placeholder: rgba(150, 110, 125, 0.4);
+    --ink-soft: #7a626c;
+    --placeholder: #7a626c;
     --rule: rgba(210, 150, 175, 0.35);
     --rule-strong: rgba(210, 150, 175, 0.5);
     --margin-line: rgba(224, 130, 150, 0.6);
     --print: #b06a86;
     --print-soft: #c28ba0;
-    --sun: #d9607e;
-    --sat: #7f8fc4;
+    --sun: #a94060;
+    --sat: #566aa6;
     --today-ring: rgba(220, 100, 130, 0.8);
     --stitch: rgba(180, 120, 140, 0.4);
     --divider-label: #c07d95;
@@ -158,15 +158,15 @@
     --paper-back-3: #d4e7db;
     --ink-strong: #3f4f48;
     --ink-text: #44544c;
-    --ink-soft: #8aa197;
-    --placeholder: rgba(90, 130, 110, 0.4);
+    --ink-soft: #60746b;
+    --placeholder: #60746b;
     --rule: rgba(120, 180, 150, 0.35);
     --rule-strong: rgba(120, 180, 150, 0.5);
     --margin-line: rgba(120, 190, 165, 0.55);
     --print: #4f8f78;
     --print-soft: #74a892;
-    --sun: #cf6f5f;
-    --sat: #5b8fa6;
+    --sun: #a54c42;
+    --sat: #3f7088;
     --today-ring: rgba(70, 160, 120, 0.8);
     --stitch: rgba(100, 140, 120, 0.4);
     --divider-label: #7ba491;
@@ -179,15 +179,15 @@
     --paper-back-3: #ddd3ec;
     --ink-strong: #4c4658;
     --ink-text: #514b5e;
-    --ink-soft: #9a8fae;
-    --placeholder: rgba(120, 105, 145, 0.4);
+    --ink-soft: #71667f;
+    --placeholder: #71667f;
     --rule: rgba(160, 140, 200, 0.32);
     --rule-strong: rgba(160, 140, 200, 0.48);
     --margin-line: rgba(180, 140, 205, 0.55);
     --print: #7a6aa0;
     --print-soft: #9587b5;
-    --sun: #c56b8f;
-    --sat: #6f7fc4;
+    --sun: #9b4168;
+    --sat: #5566a6;
     --today-ring: rgba(150, 110, 190, 0.8);
     --stitch: rgba(140, 120, 160, 0.4);
     --divider-label: #9a82b0;
@@ -421,13 +421,38 @@
     font-size: 13.5px;
     line-height: 1.4;
     color: var(--ink-text);
-    word-break: break-word;
-    white-space: pre-wrap;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
+    display: block;
     overflow: hidden;
   }
+  td.cell .cell-text.multi { max-height: 38px; }
+  td.cell .cell-text-item {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  td.cell .cell-text.single .cell-text-item {
+    display: -webkit-box;
+    word-break: break-word;
+    white-space: pre-wrap;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+  td.cell .cell-text-item.is-done {
+    color: var(--ink-soft);
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+  }
+  td.cell .cell-progress {
+    display: block;
+    margin-top: 1px;
+    color: var(--ink-soft);
+    font-size: 10.5px;
+    line-height: 1.2;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  td.cell.partial .cell-progress { color: var(--sun); }
   /* できた＝赤鉛筆の○ */
   td.cell.done::after {
     content: '';
@@ -439,16 +464,7 @@
     pointer-events: none;
   }
   td.cell.done .cell-text { color: var(--ink-soft); }
-  /* 一部だけできた＝角に小さな赤丸（全部できた＝周りの○と区別） */
-  td.cell.partial::after {
-    content: '';
-    position: absolute;
-    top: 4px; right: 6px;
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--today-ring);
-    pointer-events: none;
-  }
+  /* 複数項目の一部だけ完了した場合は、項目ごとの取り消し線と「1/3 完了」で示す。 */
 
   .empty-note {
     padding: 34px 20px 0 14px;
@@ -599,15 +615,18 @@
        ここで上書きし、中の文字（書きこみ欄など）がどのテーマでも読める濃さになるようにする */
     --ink-text: #4a4e5c;
     --ink-strong: #454a58;
-    --ink-soft: #8a8d99;
-    --placeholder: rgba(122, 126, 140, 0.4);
+    --ink-soft: #686b78;
+    --placeholder: #686b78;
+    --sun: #a64f49;
+    --sat: #466b94;
+    --today-ring: rgba(166, 79, 73, 0.82);
   }
   .settings-card button { min-height: 44px; }
   .settings-card input, .settings-card textarea { min-height: 44px; }
   .settings-card h2 { font-size: 20px; font-weight: 600; margin-bottom: 12px; }
   .settings-card h2 .sub { font-size: 13px; font-weight: 400; color: var(--ink-soft); margin-left: 8px; }
   .settings-label { font-size: 14px; color: #6b6046; margin-bottom: 8px; }
-  .settings-note { font-size: 12px; color: #8a8d99; margin-top: 10px; }
+  .settings-note { font-size: 12px; color: var(--ink-soft); margin-top: 10px; }
   .week-chips { display: flex; gap: 6px; flex-wrap: wrap; }
   .week-chips button {
     width: 44px; height: 44px;
@@ -691,12 +710,12 @@
     border: 1px solid rgba(120, 100, 60, 0.35);
   }
   .backup-nudge-later {
-    color: #8a8d99;
+    color: #686b78;
     background: transparent;
     border: 1px solid rgba(120, 100, 60, 0.2);
   }
 
-  /* カード右上の×（とじる） */
+  /* カード右上の×（閉じる） */
   .card-close-x {
     position: absolute;
     top: 6px;
@@ -711,7 +730,7 @@
     border-radius: 50%;
     font-size: 22px;
     line-height: 1;
-    color: #8a8d99;
+    color: var(--ink-soft);
     cursor: pointer;
   }
   .card-close-x:active { background: rgba(120, 100, 60, 0.12); }
@@ -729,7 +748,7 @@
     cursor: pointer;
   }
 
-  /* 詳細（手帳連携・自動バックアップ・データのひかえ）は既定で閉じる折りたたみ。
+  /* 詳細（手帳連携・自動バックアップ・ファイル保存）は既定で閉じる折りたたみ。
      毎日触る設定（かみ・週の始まり・試験日）だけを開いた瞬間に見せて、
      めったに触らない技術的な項目はここへ隠す */
   .settings-adv {
@@ -755,14 +774,15 @@
     display: inline-block;
     font-size: 18px;
     line-height: 1;
-    color: #8a8d99;
+    color: var(--ink-soft);
     transition: transform 0.15s ease;
   }
   .settings-adv[open] > summary::before { transform: rotate(90deg); }
   .settings-adv-hint {
     margin-left: auto;
     font-size: 11px;
-    color: #a7a396;
+    color: var(--ink-soft);
+    white-space: nowrap;
   }
   .settings-adv-body { padding-top: 2px; }
   /* 書き込み欄（罫線つき。手帳の書く欄と同じ字＝明朝） */
@@ -781,7 +801,7 @@
   }
   .write-input { border-bottom: 1px solid var(--rule-strong); background-image: none; }
   .write-textarea { height: 112px; }
-  .write-input::placeholder, .write-textarea::placeholder { color: var(--placeholder); }
+  .write-input::placeholder, .write-textarea::placeholder { color: var(--placeholder); opacity: 1; }
   /* できた○のトグル（設定内で完結する丸つけ） */
   .done-toggle {
     display: flex; align-items: center; gap: 8px;
@@ -868,7 +888,7 @@
     white-space: nowrap;
     min-height: 44px;
     padding: 0 9px;
-    color: #b06a5c;
+    color: #95483f;
     background: rgba(200, 100, 92, 0.09);
     border: 1px solid rgba(200, 100, 92, 0.3);
     border-radius: 12px;
@@ -906,14 +926,14 @@
     font-family: inherit;
     font-size: 13px;
     color: var(--ink-soft);
-    opacity: 0.6;
+    opacity: 1;
     background: transparent;
     border: none;
     cursor: pointer;
   }
   .cell-item-row .item-del:active { opacity: 1; }
   .cell-item-row.lp-active { background: rgba(90, 125, 90, 0.14); border-radius: 8px; }
-  /* 「ほかの日にも」→複数の日にコピーする小さなカレンダー */
+  /* 「ほかの日へコピー」→複数の日にコピーする小さなカレンダー */
   .copy-cal-head { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
   .copy-cal-head button {
     min-width: 44px;
@@ -923,7 +943,7 @@
   }
   .copy-cal-head span { font-size: 14px; font-weight: 600; color: #4a4030; }
   .copy-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 8px; }
-  .copy-cal-dow { text-align: center; font-size: 11px; color: #8a8d99; padding-bottom: 2px; }
+  .copy-cal-dow { text-align: center; font-size: 11px; color: var(--ink-soft); padding-bottom: 2px; }
   .copy-cal-day {
     aspect-ratio: 1;
     font-family: inherit;
@@ -1183,7 +1203,7 @@
     color: #f4f1e8;
     border-bottom-color: rgba(255, 255, 255, 0.35);
   }
-  .scan-manual-row .write-input::placeholder { color: rgba(255, 255, 255, 0.4); }
+  .scan-manual-row .write-input::placeholder { color: #b7b4ac; opacity: 1; }
   .scan-manual-row button.primary {
     min-height: 44px;
     font-family: inherit;
@@ -1296,7 +1316,12 @@
     left: 50%;
     transform: translateX(-50%);
     font-size: 12px;
-    color: #d8cdb4;
+    color: #fff;
+    background: rgba(35, 37, 42, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    padding: 7px 12px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
     opacity: 0;
     transition: opacity 0.25s;
     pointer-events: none;
@@ -1409,7 +1434,7 @@
   /* 電光掲示板はボタン文字もほのかに発光させて盤面と一体に */
   body[data-paper="led"] .menu-btn,
   body[data-paper="led"] .toolbar button { text-shadow: 0 0 5px; }
-  /* ---- きろく（教材ごとの達成率） ---- */
+  /* ---- 記録（教材ごとの達成率） ---- */
   .stats-list { display: flex; flex-direction: column; gap: 13px; margin: 10px 0 4px; }
   .stats-head { display: flex; align-items: baseline; gap: 8px; }
   .stats-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-strong); font-weight: 600; }
@@ -1467,15 +1492,15 @@
 <button id="menuBtn" type="button" class="menu-btn" aria-label="メニュー" aria-controls="menuPanel" aria-expanded="false">☰</button>
 <div id="menuPanel" class="menu-panel" style="display:none;" role="group" aria-label="メニュー項目">
   <button id="menuSettings" type="button">⚙ 設定</button>
-  <button id="menuStats" type="button">📊 きろく</button>
+  <button id="menuStats" type="button">📊 記録</button>
   <button id="menuExport" type="button">📤 書き出す（AIに貼る）</button>
-  <button id="menuTecho" type="button">📖 手ざわり手帳をひらく</button>
+  <button id="menuTecho" type="button">📖 手ざわり手帳を開く</button>
 </div>
 
 <!-- 計画と○✕記録の書き出し（AIに貼って合格確率を計算させる用） -->
 <div id="exportModal" class="settings-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="exportTitle" data-close-button="exportClose">
   <div class="settings-card">
-    <button id="exportCloseX" type="button" class="card-close-x" aria-label="とじる">×</button>
+    <button id="exportCloseX" type="button" class="card-close-x" aria-label="閉じる">×</button>
     <h2 id="exportTitle">書き出す</h2>
     <p class="settings-note" style="margin-top:0;">計画と○✕の記録を全部テキストにします。「コピー」してAI（ChatGPTなど）に貼り、「この記録で試験に受かりそうか、確率を出して」と聞けます。</p>
     <textarea id="exportText" class="export-text" readonly spellcheck="false"></textarea>
@@ -1483,25 +1508,25 @@
       <button id="exportCopyBtn" type="button" class="primary" style="flex:1;">コピー</button>
       <button id="exportSaveBtn" type="button" class="settings-close" style="margin-top:0; flex:1;">ファイルに保存</button>
     </div>
-    <button id="exportClose" type="button" class="settings-close">とじる</button>
+    <button id="exportClose" type="button" class="settings-close">閉じる</button>
   </div>
 </div>
 
-<!-- きろく（教材ごとの達成率） -->
+<!-- 記録（教材ごとの達成率） -->
 <div id="statsModal" class="settings-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="statsTitle" data-close-button="statsClose">
   <div class="settings-card">
-    <h2 id="statsTitle">きろく</h2>
-    <p class="settings-note" style="margin-top:0;">今日までに書きこんだマスが対象です（先の予定は数えません）。</p>
+    <h2 id="statsTitle">記録</h2>
+    <p class="settings-note" style="margin-top:0;">今日までに書き込んだマスが対象です（今後の予定は数えません）。</p>
     <div id="statsList" class="stats-list"></div>
-    <button id="statsClose" type="button" class="settings-close">とじる</button>
+    <button id="statsClose" type="button" class="settings-close">閉じる</button>
   </div>
 </div>
 
 <div id="settingsModal" class="settings-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="stTitle" data-close-button="settingsClose">
   <div class="settings-card">
-    <button id="settingsCloseX" type="button" class="card-close-x" aria-label="とじる">×</button>
+    <button id="settingsCloseX" type="button" class="card-close-x" aria-label="閉じる">×</button>
     <h2 id="stTitle">設定</h2>
-    <p class="settings-label" id="stThemeLabel">かみ</p>
+    <p class="settings-label" id="stThemeLabel">テーマ</p>
     <div id="themeChips" class="week-chips"></div>
     <p class="settings-note" id="stThemeNote"></p>
     <p class="settings-label" id="stWeekStartLabel" style="margin-top:16px;">週の始まり</p>
@@ -1514,37 +1539,37 @@
     </div>
     <div class="link-enter-row" style="margin-top:8px; align-items:center;">
       <input id="examDateInput" type="date" class="write-input">
-      <button id="examClearBtn" type="button" class="settings-close" style="margin-top:0; width:auto; padding:8px 12px; color:#c4645c;">消す</button>
+      <button id="examClearBtn" type="button" class="settings-close" style="margin-top:0; width:auto; padding:8px 12px; color:var(--sun);">削除</button>
     </div>
     <details class="settings-adv">
-      <summary>データと同期・バックアップ<span class="settings-adv-hint">手帳との連携・ひかえ</span></summary>
+      <summary>同期とバックアップ<span class="settings-adv-hint">手帳連携・復元</span></summary>
       <div class="settings-adv-body">
     <p class="settings-label" id="stLinkLabel" style="margin-top:8px;">手帳と連携</p>
     <p class="settings-note" id="stLinkNote" style="margin-top:0;"></p>
     <div id="linkOn" style="display:none;">
       <div class="link-code-row"><span id="linkCodeShow" class="link-code"></span><button id="linkCopyBtn" type="button" class="settings-close" style="margin-top:0; width:auto; padding:8px 12px;">コピー</button></div>
-      <button id="linkStopBtn" type="button" class="settings-close" style="margin-top:8px; color:#c4645c;">連携をやめる</button>
+      <button id="linkStopBtn" type="button" class="settings-close" style="margin-top:8px; color:var(--sun);">連携を停止</button>
     </div>
     <div id="linkOff">
-      <button id="linkStartBtn" type="button" class="settings-close" style="margin-top:0;">連携をはじめる（コードを作る）</button>
+       <button id="linkStartBtn" type="button" class="settings-close" style="margin-top:0;">連携を開始（コードを作成）</button>
       <div class="link-enter-row" style="margin-top:8px;">
-        <input id="linkCodeInput" type="text" class="write-input" placeholder="手帳のコードを入れる" autocapitalize="off" autocorrect="off" spellcheck="false">
-        <button id="linkJoinBtn" type="button" class="primary">つなぐ</button>
+        <input id="linkCodeInput" type="text" class="write-input" placeholder="手帳のコードを入力" autocapitalize="off" autocorrect="off" spellcheck="false">
+        <button id="linkJoinBtn" type="button" class="primary">接続</button>
       </div>
     </div>
-    <p class="settings-label" style="margin-top:16px;">自動バックアップ（じぶんのひかえ）</p>
+    <p class="settings-label" style="margin-top:16px;">自動バックアップ</p>
     <p id="vaultStatus" class="settings-note" style="margin-top:0;"></p>
     <div id="vaultOnBox">
       <div class="link-code-row"><span id="vaultCodeShow" class="link-code"></span><button id="vaultCopyBtn" type="button" class="settings-close" style="margin-top:0; width:auto; padding:8px 12px;">コピー</button></div>
-      <p class="settings-note" style="margin-top:6px;">↑この<b>復元コード</b>をスクショか紙にひかえてください。アプリを消しても機種変しても、コードを入れれば全部戻せます。</p>
+      <p class="settings-note" style="margin-top:6px;">↑この<b>復元コード</b>をスクリーンショットまたは紙に控えてください。アプリの削除後や機種変更後も、コードを入力すれば復元できます。</p>
     </div>
     <div class="link-enter-row" style="margin-top:8px;">
-      <input id="vaultRestoreInput" type="text" class="write-input" placeholder="復元コードを入れて戻す" autocapitalize="characters" autocorrect="off" spellcheck="false">
+      <input id="vaultRestoreInput" type="text" class="write-input" placeholder="復元コードを入力" autocapitalize="characters" autocorrect="off" spellcheck="false">
       <button id="vaultRestoreBtn" type="button" class="primary">復元</button>
     </div>
     <button id="vaultToggleBtn" type="button" class="settings-close" style="margin-top:8px;"></button>
 
-    <p class="settings-label" id="stBackupLabel" style="margin-top:16px;">データのひかえ</p>
+    <p class="settings-label" id="stBackupLabel" style="margin-top:16px;">データのバックアップ</p>
     <p class="settings-note" id="stBackupNote" style="margin-top:0;"></p>
     <div style="display:flex; gap:8px;">
       <button id="backupExportBtn" type="button" class="settings-close" style="margin-top:0;">ファイルに保存</button>
@@ -1553,7 +1578,7 @@
     <input id="backupImportInput" type="file" accept="application/json" style="display:none;">
       </div>
     </details>
-    <button id="settingsClose" type="button" class="settings-close">とじる</button>
+    <button id="settingsClose" type="button" class="settings-close">閉じる</button>
   </div>
 </div>
 
@@ -1563,7 +1588,7 @@
     <h2 id="cellModalTitle"></h2>
     <p class="settings-note" style="margin: -6px 0 10px;">書いた内容は自動で保存されます。</p>
     <div id="cellItemsList" class="cell-items"></div>
-    <button type="button" id="cellAddItem" class="cell-add-item">＋ <span id="cellAddItemLabel">もう1つ書く</span></button>
+    <button type="button" id="cellAddItem" class="cell-add-item">＋ <span id="cellAddItemLabel">項目を追加</span></button>
     <div class="modal-btns">
       <button class="danger" id="cellClear">すべて削除</button>
       <span class="spacer"></span>
@@ -1572,10 +1597,10 @@
   </div>
 </div>
 
-<!-- 「ほかの日にも」→複数の日にコピー -->
+<!-- 「ほかの日へコピー」→複数の日にコピー -->
 <div id="copyDatesModal" class="settings-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="copyDatesTitle" data-close-button="copyDatesClose">
   <div class="settings-card">
-    <h2 id="copyDatesTitle">複数の日にコピー</h2>
+    <h2 id="copyDatesTitle">日付を選んでコピー</h2>
     <p id="copyDatesSub" class="settings-note" style="margin-top:0;"></p>
     <div class="copy-cal-head">
       <button type="button" id="copyCalPrev">◀</button>
@@ -1585,7 +1610,7 @@
     <div id="copyCalGrid" class="copy-cal-grid"></div>
     <div class="modal-btns">
       <span class="spacer"></span>
-      <button class="primary" id="copyDatesClose">とじる</button>
+       <button class="primary" id="copyDatesClose">閉じる</button>
     </div>
   </div>
 </div>
@@ -1593,19 +1618,19 @@
 <!-- 教材の追加・改名 -->
 <div id="subjectModal" class="settings-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="subjectModalTitle" data-close-button="subjectCancel">
   <div class="settings-card">
-    <h2 id="subjectModalTitle">教材をふやす</h2>
+    <h2 id="subjectModalTitle">教材を追加</h2>
     <input type="text" id="subjectName" class="write-input" maxlength="60">
     <div class="cover-row">
       <div id="coverPreview" class="cover-preview"><span id="coverPreviewEmpty">📖</span></div>
       <div class="cover-actions">
-        <button type="button" id="coverPickBtn" class="cover-pick">表紙を選ぶ</button>
-        <button type="button" id="coverRemoveBtn" class="cover-remove" style="display:none;">はずす</button>
+        <button type="button" id="coverPickBtn" class="cover-pick">表紙を選択／撮影</button>
+        <button type="button" id="coverRemoveBtn" class="cover-remove" style="display:none;">外す</button>
       </div>
     </div>
     <input type="file" id="coverFileInput" accept="image/*" style="display:none;">
-    <button type="button" id="scanOpenBtn" class="scan-open">📷 <span id="scanOpenLabel">本のバーコードで入れる</span></button>
+    <button type="button" id="scanOpenBtn" class="scan-open">📷 <span id="scanOpenLabel">本のバーコードから追加</span></button>
     <button type="button" id="detailPlanOpenBtn" class="scan-open" style="display:none;">📋 <span>細かい計画表を表示</span></button>
-    <button type="button" id="tocOpenBtn" class="scan-open">📑 <span id="tocOpenLabel">目次の写真から章を入れる</span></button>
+    <button type="button" id="tocOpenBtn" class="scan-open">📑 <span id="tocOpenLabel">目次の写真から章を追加</span></button>
     <input type="file" id="tocFileInput" accept="image/*" style="display:none;">
     <div id="subjectReorder" class="subject-reorder" style="display:none;">
       <span id="reorderLabel">並び替え</span>
@@ -1614,9 +1639,9 @@
       <button type="button" id="subjectMoveRight" aria-label="右へ">▶</button>
     </div>
     <div class="modal-btns">
-      <button class="danger" id="subjectDelete" style="display:none">この列をけす</button>
+      <button class="danger" id="subjectDelete" style="display:none">この列を削除</button>
       <span class="spacer"></span>
-      <button id="subjectCancel">とじる</button>
+      <button id="subjectCancel">閉じる</button>
       <button class="primary" id="subjectSave">保存</button>
     </div>
   </div>
@@ -1626,7 +1651,7 @@
 <div id="detailPlanModal" class="settings-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="detailPlanTitle" data-close-button="detailPlanClose">
   <div class="settings-card">
     <h2 id="detailPlanTitle"></h2>
-    <p class="settings-note" style="margin-top:0;">行は自由に追加できます。列は1〜5回目の復習（1回目の日付を入れると、2〜5回目の日付を自動で入れます。あとから手で直せます）。</p>
+    <p class="settings-note" style="margin-top:0;">行は自由に追加できます。列は1〜5回目の復習（1回目の日付を入力すると、2〜5回目の日付を自動入力します。後から手動で変更できます）。</p>
     <div class="detail-table-wrap">
       <table class="detail-table">
         <thead id="detailTableHead"></thead>
@@ -1636,7 +1661,7 @@
     <button type="button" id="detailAddRowBtn" class="cell-add-item">＋ 行を追加</button>
     <div class="modal-btns">
       <span class="spacer"></span>
-      <button class="primary" id="detailPlanClose">とじる</button>
+      <button class="primary" id="detailPlanClose">閉じる</button>
     </div>
   </div>
 </div>
@@ -1652,10 +1677,10 @@
     <p id="scanManualLabel" class="scan-manual-label"></p>
     <div class="scan-manual-row">
       <input type="text" id="scanIsbnInput" class="write-input" inputmode="numeric" maxlength="13" placeholder="978…">
-      <button type="button" id="scanIsbnGo" class="primary">さがす</button>
+      <button type="button" id="scanIsbnGo" class="primary">検索</button>
     </div>
   </div>
-  <button type="button" id="scanClose" class="scan-close">とじる</button>
+  <button type="button" id="scanClose" class="scan-close">閉じる</button>
 </div>
 
 <!-- 目次OCRの進み具合 -->
@@ -1663,7 +1688,7 @@
   <div class="settings-card ocr-progress">
     <p id="ocrStatus" class="ocr-status" role="status" aria-live="polite"></p>
     <div class="ocr-bar"><span id="ocrBar"></span></div>
-    <button type="button" id="ocrCancel" class="settings-close">とじる</button>
+    <button type="button" id="ocrCancel" class="settings-close">閉じる</button>
   </div>
 </div>
 
@@ -1673,11 +1698,11 @@
     <h2 id="tocTitle">読み取った章</h2>
     <p class="settings-note" id="tocNote" style="margin-top:0;"></p>
     <div id="tocList" class="toc-list"></div>
-    <button type="button" id="tocReread" class="toc-reread">↕ <span id="tocRereadLabel">縦書きの本？ 縦書きで読み直す</span></button>
+    <button type="button" id="tocReread" class="toc-reread">↕ <span id="tocRereadLabel">縦書きとして再読取</span></button>
     <div class="modal-btns">
-      <button id="tocCancel">とじる</button>
+      <button id="tocCancel">閉じる</button>
       <span class="spacer"></span>
-      <button class="primary" id="tocAdd">今日から入れる</button>
+      <button class="primary" id="tocAdd">今日から追加</button>
     </div>
   </div>
 </div>
@@ -1686,64 +1711,65 @@
 (function () {
   'use strict';
 
-  // ---- ことばづかい（大人向け・漢字。対象は中学生〜社会人のため固定） ----
+  // ---- UI文言（大人向け。対象は中学生〜社会人のため固定） ----
   var WORDS = {
     emptyNote:      '最初の教材を追加すると、1週間の計画を書き始められます。<br><br>書いた計画は<b>手ざわり手帳</b>の同じ日のタスク欄にも表示されます。',
     emptyAdd:       '最初の教材を追加',
-    subjectAdd:     '教材をふやす',
-    subjectEdit:    '教材の名前をかえる',
-    subjectPlace:   '教材や科目の名前（例: 英語）',
-    subjectDelete:  'この列をけす',
+    subjectAdd:     '教材を追加',
+    subjectEdit:    '教材を編集',
+    subjectPlace:   '教材名または科目名（例：民法）',
+    subjectDelete:  'この列を削除',
     reorderLabel:   '列の並び替え',
     cellCarry:      '翌日へ繰り越す',
     carryDone:      '翌日へ繰り越しました',
-    scanOpen:       '本のバーコードで入れる',
+    scanOpen:       '本のバーコードから追加',
     scanManual:     'うまく読めないときは、本の裏の番号（978…）を入力',
     scanStarting:   'カメラを準備しています…',
     scanPoint:      '本の裏のバーコードを枠の中へ',
-    scanLooking:    '書名をさがしています…',
-    scanNotFound:   'この本は見つかりませんでした。名前は手で入れてね。',
-    scanBadCode:    'これは本のバーコードではないみたい。978で始まる方をかざしてね。',
-    scanNoCamera:   'カメラが使えませんでした。下に番号を入力してね。',
-    scanBadIsbn:    '本の番号は13桁（978…）で入れてね。',
-    scanGo:         'さがす',
-    tocOpen:        '目次の写真から章を入れる',
+    scanLooking:    '書名を検索しています…',
+    scanNotFound:   'この本は見つかりませんでした。名前を手入力してください。',
+    scanBadCode:    '本のバーコードではありません。978で始まるコードを読み取ってください。',
+    scanNoCamera:   'カメラを使用できません。下に番号を入力してください。',
+    scanBadIsbn:    '本の番号を13桁（978…）で入力してください。',
+    scanGo:         '検索',
+    tocOpen:        '目次の写真から章を追加',
     ocrPreparing:   '読み取りの準備をしています…（初回は少し時間がかかります）',
     ocrReading:     '文字を読んでいます…',
     ocrFailed:      '読み取れませんでした。目次がはっきり写った写真を、まっすぐ撮る／選ぶと読みやすいです。',
-    ocrNoLines:     '章が見つかりませんでした。別の写真を選ぶ／撮り直すか、手で入力してね。',
+    ocrNoLines:     '章が見つかりませんでした。別の写真を選ぶ／撮り直すか、手入力してください。',
     tocTitle:       '読み取った章',
-    tocNote:        'いる章だけ○にして「今日から入れる」を押すと、今日から1日ずつ計画に入ります。文字は直せます。',
-    tocAdd:         '今日から入れる',
-    tocReread:      '縦書きの本？ 縦書きで読み直す',
-    tocAddedMsg:    '{n}個を計画に入れました',
-    tocNonePicked:  '入れる章に○を付けてね。',
+    tocNote:        '追加する章だけ○にして「今日から追加」を押すと、今日から1日ずつ計画に入ります。文字は編集できます。',
+    tocAdd:         '今日から追加',
+    tocReread:      '縦書きとして再読取',
+    tocAddedMsg:    '{n}件を計画に追加しました',
+    tocNonePicked:  '追加する章に○を付けてください。',
     subjectUntitled:'教材',
-    coverPick:      '表紙を選ぶ／撮る',
-    coverRemove:    'はずす',
-    deleteConfirm:  '「{name}」の列と、書いた計画をぜんぶ消します。よろしいですか？',
-    cellPlace:      'やることを書く（例: 長文2ページ）',
-    cellAddItem:    'もう1つ書く',
-    itemDelete:     'この行をけす',
-    copyDatesTitle: '複数の日にコピー',
-    copyDatesSub:   '「{text}」を、タップした日に次々とコピーします',
-    copyDatesOpen:  'ほかの日にも',
+    coverPick:      '表紙を選択／撮影',
+    coverRemove:    '外す',
+    deleteConfirm:  '「{name}」の列と、書いた計画をすべて削除します。よろしいですか？',
+    cellPlace:      '計画を入力（例：長文2ページ）',
+    cellAddItem:    '項目を追加',
+    itemDelete:     'この行を削除',
+    copyDatesTitle: '日付を選んでコピー',
+    copyDatesSub:   '「{text}」を選択した日にコピーします。複数の日を選べます',
+    copyDatesOpen:  'ほかの日へコピー',
     copyDatesDone:  'コピーしました',
     copyDatesDup:   'この日にはもうあります',
-    doneLabel:      'できた（○をつける）',
+    doneLabel:      '完了にする',
     undoneLabel:    '未完了に戻す',
     cellClearConfirm:'「{subject}」{date}の計画をすべて削除しますか？',
-    clearBtn:       'けす',
-    closeBtn:       'とじる',
+    clearBtn:       'すべて削除',
+    closeBtn:       '閉じる',
     saveBtn:        '保存',
     prevBtn:        '◀ 前へ',
     nextBtn:        '次へ ▶',
     todayBtn:       '今週',
     menuSettings:   '⚙ 設定',
-    menuTecho:      '📖 手ざわり手帳をひらく',
+    menuStats:      '📊 記録',
+    menuTecho:      '📖 手ざわり手帳を開く',
     stTitle:        '設定',
-    stTheme:        'かみ（テーマ）',
-    stThemeNote:    '紙の色やふんいきを変えます。手ざわり手帳と共通の設定です。',
+    stTheme:        'テーマ',
+    stThemeNote:    '紙の色や雰囲気を変更します。手ざわり手帳と共通の設定です。',
     themeIvory:     'アイボリー',
     themeWhite:     '白',
     themeBlack:     '黒',
@@ -1755,19 +1781,19 @@
     stWeekStart:    '週の始まり',
     stWeekStartNote:'計画表の曜日の並びが変わります。手ざわり手帳と共通の設定です。',
     stLink:         '手帳と連携',
-    stLinkNoteOff:  '別々のアプリとして使うときは、この連携コードで手ざわり手帳とつなぎます。「はじめる」でコードを作り、手帳の設定に同じコードを入れてください（計画がサーバー経由で手帳に届きます）。',
+    stLinkNoteOff:  '別々のアプリとして使うときは、連携コードで手ざわり手帳と接続します。「連携を開始」でコードを作成し、手帳の設定に同じコードを入力してください（計画がサーバー経由で手帳に届きます）。',
     stLinkNoteOn:   'このコードを手ざわり手帳の設定に入れると、書いた計画が手帳の今日のページに出ます。同じコードなら別の端末ともつながります。',
     linkCopied:     'コピーしました',
-    linkBadCode:    'コードは8〜40文字の英数字で入れてね。',
-    linkStopConfirm:'連携をやめますか？（手帳への同期が止まります。計画そのものは消えません）',
-    linkJoined:     'つなぎました',
-    stBackup:       'データのひかえ',
-    stBackupNote:   '計画表の中身をファイルに保存できます。機種変や、アイコンを消す前のお守りに。',
+    linkBadCode:    'コードを8〜40文字の英数字で入力してください。',
+    linkStopConfirm:'連携を停止しますか？（手帳への同期は止まりますが、計画は削除されません）',
+    linkJoined:     '連携しました',
+    stBackup:       'データのバックアップ',
+    stBackupNote:   '計画表の中身をファイルに保存できます。機種変更や、アプリを削除する前のバックアップとして利用できます。',
     backupExport:   'ファイルに保存',
     backupImport:   '復元',
-    restoreConfirm: 'このファイルの中身で計画表を復元します。いま書いてある同じ日の計画は上書きされます。よろしいですか？',
+    restoreConfirm: 'このファイルの内容で計画表を復元します。現在の同じ日の計画は上書きされます。よろしいですか？',
     restoreDone:    '復元しました。開き直します。',
-    restoreBad:     '復元できませんでした。「手ざわり計画表のひかえ」ファイルか確認してください。'
+    restoreBad:     '復元できませんでした。「手ざわり計画表のバックアップ」ファイルか確認してください。'
   };
 
   // ---- テーマ（かみ）。手ざわり手帳と共有する。[id, 文言キー, 見本の背景色, 見本の文字色] ----
@@ -1806,13 +1832,14 @@
     if (vars) { for (var k in vars) s = s.replace('{' + k + '}', vars[k]); }
     return s;
   }
-  // 常に画面にある静的DOMの文言をことばづかいに合わせて更新する
+  // 常に画面にある静的DOMへ共通文言を反映する
   function applyWording() {
     function setText(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
     setText('prevWeek', tx('prevBtn'));
     setText('nextWeek', tx('nextBtn'));
     setText('todayBtn', tx('todayBtn'));
     setText('menuSettings', tx('menuSettings'));
+    setText('menuStats', tx('menuStats'));
     setText('menuTecho', tx('menuTecho'));
     setText('stTitle', tx('stTitle'));
     setText('stThemeLabel', tx('stTheme'));
@@ -1825,11 +1852,17 @@
     setText('backupExportBtn', tx('backupExport'));
     setText('backupImportBtn', tx('backupImport'));
     setText('settingsClose', tx('closeBtn'));
+    setText('exportClose', tx('closeBtn'));
+    setText('statsClose', tx('closeBtn'));
+    setText('cellClear', tx('clearBtn'));
+    setText('cellSave', tx('closeBtn'));
     setText('cellAddItemLabel', tx('cellAddItem'));
     setText('copyDatesTitle', tx('copyDatesTitle'));
     setText('copyDatesClose', tx('closeBtn'));
     document.getElementById('subjectName').placeholder = tx('subjectPlace');
     setText('subjectDelete', tx('subjectDelete'));
+    setText('subjectCancel', tx('closeBtn'));
+    setText('subjectSave', tx('saveBtn'));
     setText('coverPickBtn', tx('coverPick'));
     setText('coverRemoveBtn', tx('coverRemove'));
     setText('reorderLabel', tx('reorderLabel'));
@@ -1841,8 +1874,12 @@
     setText('tocRereadLabel', tx('tocReread'));
     setText('tocCancel', tx('closeBtn'));
     setText('ocrCancel', tx('closeBtn'));
+    setText('detailPlanClose', tx('closeBtn'));
+    setText('scanClose', tx('closeBtn'));
     setText('scanManualLabel', tx('scanManual'));
     setText('scanIsbnGo', tx('scanGo'));
+    document.getElementById('exportCloseX').setAttribute('aria-label', tx('closeBtn'));
+    document.getElementById('settingsCloseX').setAttribute('aria-label', tx('closeBtn'));
     document.title = '手ざわり計画表';
   }
 
@@ -2240,7 +2277,7 @@
     var left = daysBetween(todayIso, ed);
     box.style.display = 'block';
     if (left < 0) {
-      box.innerHTML = '<span class="ec-passed">🎯 ' + esc(examName()) + ' おつかれさまでした</span>';
+      box.innerHTML = '<span class="ec-passed">🎯 ' + esc(examName()) + ' お疲れさまでした</span>';
       updateCountdownHeight();
       return;
     }
@@ -2260,7 +2297,7 @@
   }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
-  // ---- きろく：教材ごとの「書いた・できた○・達成率」 ----
+  // ---- 記録：教材ごとの「計画・完了・達成率」 ----
   // 今日までのマスだけを数える（未来の予定を入れても達成率が下がらないように）
   function computeStats() {
     var todayIso = toISO(new Date());
@@ -2282,7 +2319,7 @@
     var row = document.createElement('div');
     row.className = 'stats-row' + (isTotal ? ' stats-total' : '');
     var pct = st.planned ? Math.round(st.done / st.planned * 100) : 0;
-    var sub = 'できた○ ' + st.done + ' ／ 書いた ' + st.planned;
+    var sub = '完了 ' + st.done + ' ／ 計画 ' + st.planned;
     row.innerHTML =
       '<div class="stats-head"><span class="stats-name">' + esc(name) + '</span>' +
       '<span class="stats-pct">' + pct + '%</span></div>' +
@@ -2303,10 +2340,10 @@
       shown++;
     });
     if (!shown) {
-      list.innerHTML = '<p class="stats-empty">まだ記録がありません。マスに書いて「できた○」を付けると、ここに育っていきます。</p>';
+      list.innerHTML = '<p class="stats-empty">まだ記録はありません。マスに計画を書き、完了にするとここへ集計されます。</p>';
       return;
     }
-    if (shown > 1) list.appendChild(buildStatsRow('ぜんぶ', total, true));
+    if (shown > 1) list.appendChild(buildStatsRow('全体', total, true));
   }
 
   // ---- 計画と○✕記録の全書き出し（AIに貼って合格確率を計算させる用） ----
@@ -2319,7 +2356,7 @@
     var lines = [];
     lines.push('# 手ざわり計画表 — 学習記録の書き出し');
     lines.push('書き出し日: ' + todayIso + '（' + DOW[fromISO(todayIso).getDay()] + '）');
-    lines.push('記号: [○]=できた  [✕]=まだ（予定日を過ぎた）  [ ]=これからの予定');
+    lines.push('記号: [○]=完了  [✕]=未完了（予定日を経過）  [ ]=今後の予定');
     lines.push('');
 
     // 試験情報
@@ -2343,11 +2380,11 @@
       anyStat = true;
       totalP += st.planned; totalD += st.done;
       var pct = st.planned ? Math.round(st.done / st.planned * 100) : 0;
-      lines.push('- ' + s.name + '：' + pct + '%（できた ' + st.done + ' / 予定 ' + st.planned + '）');
+      lines.push('- ' + s.name + '：' + pct + '%（完了 ' + st.done + ' / 計画 ' + st.planned + '）');
     });
     if (anyStat) {
       var totalPct = totalP ? Math.round(totalD / totalP * 100) : 0;
-      lines.push('- ぜんぶ：' + totalPct + '%（できた ' + totalD + ' / 予定 ' + totalP + '）');
+      lines.push('- 全体：' + totalPct + '%（完了 ' + totalD + ' / 計画 ' + totalP + '）');
     } else {
       lines.push('（まだ記録がありません）');
     }
@@ -2498,16 +2535,31 @@
         cellButton.className = 'cell-button';
         cellButton.dataset.focusKey = 'cell:' + iso + ':' + s.id;
         var items = cellItems(iso, s.id);
+        var doneCount = 0;
         if (items.length) {
-          var span = document.createElement('span');
-          span.className = 'cell-text';
-          span.textContent = items.map(function (it) { return it.text; }).join('\n');
-          cellButton.appendChild(span);
-          if (items.every(function (it) { return it.done; })) td.classList.add('done');
-          else if (items.some(function (it) { return it.done; })) td.classList.add('partial');
+          doneCount = items.filter(function (it) { return it.done; }).length;
+          var textWrap = document.createElement('span');
+          textWrap.className = 'cell-text ' + (items.length === 1 ? 'single' : 'multi');
+          (items.length === 1 ? items : items.slice(0, 2)).forEach(function (it) {
+            var itemText = document.createElement('span');
+            itemText.className = 'cell-text-item' + (it.done ? ' is-done' : '');
+            itemText.textContent = it.text;
+            textWrap.appendChild(itemText);
+          });
+          cellButton.appendChild(textWrap);
+          if (items.length > 1) {
+            var progress = document.createElement('span');
+            progress.className = 'cell-progress';
+            progress.textContent = doneCount + '/' + items.length + ' 完了';
+            cellButton.appendChild(progress);
+          }
+          if (doneCount === items.length) td.classList.add('done');
+          else if (doneCount) td.classList.add('partial');
         }
         var cellLabel = (d.getMonth() + 1) + '月' + d.getDate() + '日（' + DOW[d.getDay()] + '）・' + s.name;
-        cellButton.setAttribute('aria-label', cellLabel + (items.length ? 'の計画を編集' : 'に計画を書く'));
+        cellButton.setAttribute('aria-label', items.length
+          ? cellLabel + 'の計画を編集。全' + items.length + '件中' + doneCount + '件完了'
+          : cellLabel + 'に計画を書く');
         (function (iso2, s2) { cellButton.addEventListener('click', function () { openCellModal(iso2, s2); }); })(iso, s);
         td.appendChild(cellButton);
         tr.appendChild(td);
@@ -2576,7 +2628,7 @@
     render();
     if (showSaved && saved) flashSaved();
   }
-  // 行ごとの書き込み欄を組み立てる（○・×・文字・この行をけす。×は「できなかった」印で、押すと自動で翌日へ繰り越す）
+  // 行ごとの書き込み欄を組み立てる（完了・文字・繰り越し・コピー・行削除）。
   function renderCellItemsList() {
     cellItemsList.innerHTML = '';
     editingItems.forEach(function (item, idx) {
@@ -2597,7 +2649,7 @@
       copyBtn.type = 'button';
       copyBtn.className = 'copy-other';
       copyBtn.textContent = tx('copyDatesOpen');
-      copyBtn.setAttribute('aria-label', 'ほかの日にコピー');
+      copyBtn.setAttribute('aria-label', 'ほかの日へコピー');
       var actions = document.createElement('div');
       actions.className = 'cell-item-actions';
       var input = document.createElement('textarea');
@@ -2961,7 +3013,7 @@
       rowDelBtn.type = 'button';
       rowDelBtn.className = 'detail-row-del';
       rowDelBtn.textContent = '✕';
-      rowDelBtn.setAttribute('aria-label', 'この行をけす');
+      rowDelBtn.setAttribute('aria-label', 'この行を削除');
       rowDelBtn.addEventListener('click', function () {
         unlinkDetailRow(detailSubjectId, row);
         data.rows.splice(idx, 1);
@@ -3485,7 +3537,7 @@
     document.getElementById('examNameInput').value = '';
     renderCountdown(); flashSaved();
   });
-  // きろく（達成率）
+  // 記録（達成率）
   var statsModal = document.getElementById('statsModal');
   document.getElementById('menuStats').addEventListener('click', function () {
     setMenuOpen(false);
@@ -3621,14 +3673,14 @@
     flashSaved(tx('linkCopied'));
   });
 
-  // ---- データのひかえ（バックアップ／復元。pk:キーのみ対象） ----
+  // ---- ファイルへのバックアップ／復元（pk:キーのみ対象） ----
   document.getElementById('backupExportBtn').addEventListener('click', function () {
     var items = {};
     forEachStoredKey('pk:', function (k) { items[k] = localStorage.getItem(k); });
     var blob = new Blob([JSON.stringify({ app: 'tezawari-keikaku', v: 1, savedAt: new Date().toISOString(), items: items }, null, 0)], { type: 'application/json' });
     var url = URL.createObjectURL(blob), a = document.createElement('a');
     a.href = url;
-    a.download = '手ざわり計画表のひかえ-' + toISO(new Date()) + '.json';
+    a.download = '手ざわり計画表のバックアップ-' + toISO(new Date()) + '.json';
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
     localStorage.setItem('pk:backupAt', String(Date.now()));   // ひかえ促しの抑止に使う
@@ -3697,7 +3749,7 @@
     navigator.storage.persist().catch(function () {});
   }
 
-  // ---- 自動バックアップ（じぶんのひかえ）: 書くたびに全データをサーバーへ預ける ----
+  // ---- 自動バックアップ: 変更のたびに全データをサーバーへ保存する ----
   // 手帳と同じ仕組み（worker/worker.jsの/vault）。復元コードは同一オリジンなら手帳と共用する。
   (function () {
     var VAULT_META = { 'pk:vaultCode': 1, 'pk:vaultAt': 1, 'pk:vaultOff': 1, 'pk:vaultNoticed': 1, 'pk:backupAt': 1, 'pk:backupNudgeAt': 1 };  // 管理用。預けない・変更してもpushしない
@@ -3776,7 +3828,7 @@
 
     function fmtAgo(t) {
       var m = Math.floor((Date.now() - t) / 60000);
-      if (m < 1) return 'たった今';
+      if (m < 1) return '今';
       if (m < 60) return m + '分前';
       var h = Math.floor(m / 60);
       if (h < 24) return h + '時間前';
@@ -3788,18 +3840,18 @@
       var onBox = document.getElementById('vaultOnBox');
       var toggle = document.getElementById('vaultToggleBtn');
       if (!vaultOn()) {
-        st.textContent = 'いまはオフです。オンにすると、書くたびに中身をサーバーへ自動で預け、アプリを消しても復元コードで戻せます。';
+        st.textContent = '現在はオフです。オンにすると、変更のたびにデータをサーバーへ自動保存し、アプリの削除後も復元コードで戻せます。';
         onBox.style.display = 'none';
-        toggle.textContent = '自動バックアップをはじめる';
+        toggle.textContent = '自動バックアップを開始';
         return;
       }
       var at = parseInt(localStorage.getItem('pk:vaultAt') || '0', 10);
       st.textContent = at
-        ? '書くたびに自動でサーバーへ預けています（最終: ' + fmtAgo(at) + '）。'
-        : '書くたびに自動でサーバーへ預けます（まだ預けていません。何か書くと始まります）。';
+        ? '変更のたびにサーバーへ自動保存しています（最終: ' + fmtAgo(at) + '）。'
+        : '変更のたびにサーバーへ自動保存します（計画を入力すると開始します）。';
       onBox.style.display = '';
       document.getElementById('vaultCodeShow').textContent = vaultCode();
-      toggle.textContent = '自動バックアップをやめる';
+      toggle.textContent = '自動バックアップを停止';
     }
     document.getElementById('vaultCopyBtn').addEventListener('click', function () {
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(vaultCode()).catch(function () {});
@@ -3807,7 +3859,7 @@
     });
     document.getElementById('vaultToggleBtn').addEventListener('click', function () {
       if (vaultOn()) {
-        if (!confirm('自動バックアップをやめますか？\nサーバーに預けた分は残りますが、以後は更新されません。')) return;
+        if (!confirm('自動バックアップを停止しますか？\nサーバーに保存済みのデータは残りますが、以後は更新されません。')) return;
         localStorage.setItem('pk:vaultOff', '1');
       } else {
         localStorage.removeItem('pk:vaultOff');
@@ -3824,7 +3876,7 @@
         .then(function (j) {
           if (!j || !j.items) throw new Error('bad');
           var when = j.savedAt ? new Date(j.savedAt).toLocaleString('ja-JP') : '不明';
-          if (!confirm('ひかえ（' + when + ' 時点）の内容で、今の計画表の中身を置き換えます。よろしいですか？')) return;
+          if (!confirm('バックアップ（' + when + ' 時点）の内容で、現在の計画表を置き換えます。よろしいですか？')) return;
           var doomed = [];
           for (var i = 0; i < localStorage.length; i++) {
             var k = localStorage.key(i);
@@ -3836,10 +3888,10 @@
           });
           vOrigSet.call(localStorage, 'pk:vaultCode', v);
           vOrigSet.call(localStorage, 'pk:vaultNoticed', '1');
-          alert('戻しました。');
+          alert('復元しました。');
           location.reload();
         })
-        .catch(function () { alert('ひかえが見つかりませんでした。コードを確かめてください。'); });
+        .catch(function () { alert('バックアップが見つかりませんでした。コードを確認してください。'); });
     });
     function maybeNoticeCode() {
       // 空の初回起動では説明を重ねない。最初の計画が実際に預けられた後でだけ案内する。
@@ -3850,8 +3902,8 @@
       var bar = document.createElement('div');
       bar.className = 'backup-nudge';
       bar.innerHTML =
-        '<span class="backup-nudge-text">🔒 自動バックアップを始めました。復元コード <b>' + vaultCode() + '</b> をスクショか紙にひかえておくと、アプリを消しても機種変でも戻せます。</span>' +
-        '<span class="backup-nudge-btns"><button type="button" class="backup-nudge-open">設定で見る</button><button type="button" class="backup-nudge-later">わかった</button></span>';
+        '<span class="backup-nudge-text">🔒 自動バックアップを開始しました。復元コード <b>' + vaultCode() + '</b> をスクリーンショットまたは紙に控えておくと、アプリの削除後や機種変更後も復元できます。</span>' +
+        '<span class="backup-nudge-btns"><button type="button" class="backup-nudge-open">設定で確認</button><button type="button" class="backup-nudge-later">確認しました</button></span>';
       document.body.appendChild(bar);
       bar.querySelector('.backup-nudge-later').addEventListener('click', function () { bar.remove(); });
       bar.querySelector('.backup-nudge-open').addEventListener('click', function () {
@@ -3901,8 +3953,8 @@
       var bar = document.createElement('div');
       bar.className = 'backup-nudge';
       bar.innerHTML =
-        '<span class="backup-nudge-text">計画はこの端末の中だけにあります。ときどき「ひかえ」をファイルに保存しておくと、機種変や万一の消失でも戻せます。</span>' +
-        '<span class="backup-nudge-btns"><button type="button" class="backup-nudge-open">設定をひらく</button><button type="button" class="backup-nudge-later">あとで</button></span>';
+        '<span class="backup-nudge-text">自動バックアップが最近完了していません。データをファイルにも保存しておくと、機種変更や万一の消失時に復元できます。</span>' +
+        '<span class="backup-nudge-btns"><button type="button" class="backup-nudge-open">設定を開く</button><button type="button" class="backup-nudge-later">後で</button></span>';
       document.body.appendChild(bar);
       function dismiss() {
         localStorage.setItem('pk:backupNudgeAt', String(Date.now()));
