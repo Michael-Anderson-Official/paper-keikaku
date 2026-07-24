@@ -738,7 +738,7 @@
   }
   /* セルの書き込み：1マスに複数行（計画ごとに○） */
   .cell-items { display: flex; flex-direction: column; gap: 8px; }
-  .cell-item-row { display: flex; align-items: center; gap: 8px; }
+  .cell-item-row { display: flex; align-items: flex-start; gap: 8px; }
   .cell-item-row .ring {
     flex: none;
     width: 22px; height: 22px;
@@ -756,7 +756,15 @@
     border-radius: 48% 52% 46% 54% / 54% 46% 52% 48%;
     transform: rotate(-4deg);
   }
-  .cell-item-row .item-text { flex: 1; min-width: 0; }
+  .cell-item-row .item-text {
+    flex: 1;
+    min-width: 0;
+    min-height: 44px;
+    max-height: 112px;
+    line-height: 22px;
+    padding: 10px 0 6px;
+    overflow-y: auto;
+  }
   .cell-item-row.done .item-text { color: var(--ink-soft); text-decoration: line-through; text-decoration-color: rgba(138, 141, 153, 0.6); }
   /* 翌日へ繰り越し。意味の分かるチップに（未完了で文字がある行だけ表示）。
      繰り越しと削除が両方「×」で紛らわしかったのを解消するための表示 */
@@ -1334,7 +1342,7 @@
   <button id="nextWeek" type="button">次へ ▶</button>
 </div>
 
-<div class="save-note" id="saveNote">とじました</div>
+<div class="save-note" id="saveNote">保存しました</div>
 
 <!-- 右上のメニュー（☰）と設定（手帳と同じ） -->
 <button id="menuBtn" type="button" class="menu-btn" aria-label="メニュー">☰</button>
@@ -1434,13 +1442,13 @@
 <div id="cellModal" class="settings-modal" style="display:none;">
   <div class="settings-card">
     <h2 id="cellModalTitle"></h2>
+    <p class="settings-note" style="margin: -6px 0 10px;">書いた内容は自動で保存されます。</p>
     <div id="cellItemsList" class="cell-items"></div>
     <button type="button" id="cellAddItem" class="cell-add-item">＋ <span id="cellAddItemLabel">もう1つ書く</span></button>
     <div class="modal-btns">
-      <button class="danger" id="cellClear">けす</button>
+      <button class="danger" id="cellClear">すべて削除</button>
       <span class="spacer"></span>
-      <button id="cellCancel">とじる</button>
-      <button class="primary" id="cellSave">保存</button>
+      <button class="primary" id="cellSave">閉じる</button>
     </div>
   </div>
 </div>
@@ -1602,6 +1610,7 @@
     copyDatesDone:  'コピーしました',
     copyDatesDup:   'この日にはもうあります',
     doneLabel:      'できた（○をつける）',
+    cellClearConfirm:'「{subject}」{date}の計画をすべて削除しますか？',
     clearBtn:       'けす',
     closeBtn:       'とじる',
     saveBtn:        '保存',
@@ -1988,7 +1997,7 @@
   var saveNoteTimer = 0;
   function flashSaved(msg) {
     var el = document.getElementById('saveNote');
-    el.textContent = msg || 'とじました';
+    el.textContent = msg || '保存しました';
     el.classList.add('show');
     clearTimeout(saveNoteTimer);
     saveNoteTimer = setTimeout(function () { el.classList.remove('show'); }, 900);
@@ -2273,11 +2282,13 @@
   }
 
   // ---- セルの書き込み（1マスに複数の計画を書け、○は計画ごとに付く） ----
-  var editing = null, editingItems = [];
+  var editing = null, editingItems = [], editingDirty = false, cellAutoSaveTimer = 0;
   var cellModal = document.getElementById('cellModal');
   var cellItemsList = document.getElementById('cellItemsList');
   function openCellModal(iso, subject) {
     editing = { iso: iso, subject: subject };
+    editingDirty = false;
+    clearTimeout(cellAutoSaveTimer);
     var d = fromISO(iso);
     document.getElementById('cellModalTitle').innerHTML =
       subject.name + '<span class="sub">' + (d.getMonth() + 1) + '月' + d.getDate() + '日（' + DOW[d.getDay()] + '）</span>';
@@ -2285,13 +2296,46 @@
     if (!editingItems.length) editingItems.push({ id: null, text: '', done: false });
     renderCellItemsList();
     cellModal.style.display = 'flex';
-    if (!editingItems[0].text) setTimeout(function () {
+    setTimeout(function () {
+      cellItemsList.querySelectorAll('.item-text').forEach(resizeItemText);
       var first = cellItemsList.querySelector('.item-text');
-      if (first) first.focus();
+      if (first && !editingItems[0].text) first.focus();
     }, 50);
   }
-  // 長押しコピー・行ごとの繰り越しはSaveを待たずその場で確定するので、とじる時は常にグリッドを描き直す
-  function closeCellModal() { cellModal.style.display = 'none'; editing = null; editingItems = []; render(); }
+  function resizeItemText(el) {
+    el.style.height = '0';
+    el.style.height = Math.min(112, Math.max(44, el.scrollHeight)) + 'px';
+  }
+  function saveEditingCell() {
+    if (!editing || !editingDirty) return false;
+    clearTimeout(cellAutoSaveTimer);
+    var iso = editing.iso, sid = editing.subject.id, now = Date.now(), kept = [];
+    editingItems.forEach(function (it) {
+      var text = it.text.trim();
+      if (!text) return;
+      if (!it.id) it.id = genItemId();
+      kept.push({ id: it.id, text: text, done: !!it.done, u: now });
+    });
+    writeCellItems(iso, sid, kept);
+    editingDirty = false;
+    return true;
+  }
+  function scheduleCellAutosave() {
+    editingDirty = true;
+    clearTimeout(cellAutoSaveTimer);
+    cellAutoSaveTimer = setTimeout(saveEditingCell, 350);
+  }
+  // 紙に書いたものは、閉じ方にかかわらず残す。変更があれば閉じる前に必ず確定する。
+  function closeCellModal(showSaved) {
+    var saved = saveEditingCell();
+    clearTimeout(cellAutoSaveTimer);
+    cellModal.style.display = 'none';
+    editing = null;
+    editingItems = [];
+    editingDirty = false;
+    render();
+    if (showSaved && saved) flashSaved();
+  }
   // 行ごとの書き込み欄を組み立てる（○・×・文字・この行をけす。×は「できなかった」印で、押すと自動で翌日へ繰り越す）
   function renderCellItemsList() {
     cellItemsList.innerHTML = '';
@@ -2308,8 +2352,8 @@
       carry.textContent = '→明日';
       carry.title = tx('cellCarry');
       carry.setAttribute('aria-label', tx('cellCarry'));
-      var input = document.createElement('input');
-      input.type = 'text';
+      var input = document.createElement('textarea');
+      input.rows = 1;
       input.className = 'write-input item-text';
       input.maxLength = 200;
       input.value = item.text;
@@ -2320,8 +2364,14 @@
         item.done = !item.done;
         row.classList.toggle('done', item.done);
         updateCrossVisibility();
+        scheduleCellAutosave();
       });
-      input.addEventListener('input', function () { item.text = input.value; updateCrossVisibility(); });
+      input.addEventListener('input', function () {
+        item.text = input.value;
+        updateCrossVisibility();
+        resizeItemText(input);
+        scheduleCellAutosave();
+      });
       // ×＝できなかった印（翌日へ自動で繰り越す）: この行を消して、翌日の同じ教材へ新しい行として入れる。
       // 今日側もこの場で確定保存する（そのままモーダルを閉じても今日と翌日で二重に残らないように）
       carry.addEventListener('click', function () {
@@ -2342,6 +2392,8 @@
           kept.push({ id: it.id, text: t, done: it.done, u: now });
         });
         writeCellItems(iso, sid, kept);
+        clearTimeout(cellAutoSaveTimer);
+        editingDirty = false;
         renderCellItemsList();
         flashSaved(tx('carryDone'));
       });
@@ -2355,9 +2407,11 @@
         editingItems.splice(idx, 1);
         if (!editingItems.length) editingItems.push({ id: null, text: '', done: false });
         renderCellItemsList();
+        scheduleCellAutosave();
       });
       row.appendChild(ring); row.appendChild(input); row.appendChild(carry); row.appendChild(delBtn);
       cellItemsList.appendChild(row);
+      resizeItemText(input);
       // 長押し→複数の日にコピー（文字入力欄・×／けすボタンの上では発動させない）
       (function () {
         var lpTimer = null, lpX = null, lpY = null;
@@ -2369,6 +2423,7 @@
           row.classList.add('lp-active');
           lpTimer = setTimeout(function () {
             cancel();
+            saveEditingCell();
             openCopyDatesModal(editing.subject.id, item.text.trim());
           }, 500);
         });
@@ -2448,23 +2503,19 @@
     if (last) last.focus();
   });
   document.getElementById('cellSave').addEventListener('click', function () {
-    if (!editing) return;
-    var iso = editing.iso, sid = editing.subject.id, now = Date.now();
-    var kept = [];
-    editingItems.forEach(function (it) {
-      var text = it.text.trim();
-      if (text) kept.push({ id: it.id || genItemId(), text: text, done: it.done, u: now });
-    });
-    writeCellItems(iso, sid, kept);
-    closeCellModal(); flashSaved();
+    closeCellModal(true);
   });
   document.getElementById('cellClear').addEventListener('click', function () {
     if (!editing) return;
+    var d = fromISO(editing.iso);
+    var dateLabel = (d.getMonth() + 1) + '月' + d.getDate() + '日';
+    if (!confirm(tx('cellClearConfirm', { subject: editing.subject.name, date: dateLabel }))) return;
+    clearTimeout(cellAutoSaveTimer);
+    editingDirty = false;
     writeCellItems(editing.iso, editing.subject.id, []);
-    closeCellModal(); flashSaved();
+    closeCellModal(false); flashSaved('削除しました');
   });
-  document.getElementById('cellCancel').addEventListener('click', closeCellModal);
-  cellModal.addEventListener('click', function (e) { if (e.target === cellModal) closeCellModal(); });
+  cellModal.addEventListener('click', function (e) { if (e.target === cellModal) closeCellModal(true); });
 
   // ---- 教材モーダル ----
   var editingSubject = null;
