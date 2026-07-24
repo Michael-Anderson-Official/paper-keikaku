@@ -453,10 +453,26 @@
   .empty-note {
     padding: 34px 20px 0 14px;
     font-size: 15px;
-    line-height: 2;
+    line-height: 1.75;
     color: var(--ink-soft);
   }
   .empty-note b { color: var(--ink-strong); font-weight: 600; }
+  .empty-add-button {
+    display: block;
+    min-width: min(100%, 220px);
+    min-height: 48px;
+    margin-top: 20px;
+    padding: 10px 18px;
+    border: 1px solid #4d6b4d;
+    border-radius: 9px;
+    background: #5a7d5a;
+    color: #fff;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .empty-add-button:active { transform: translateY(1px); }
 
   /* ---- 下部ツールバー（手ざわり手帳と同じ） ---- */
   .toolbar { display: flex; gap: 6px; margin-top: 14px; align-items: center; }
@@ -792,7 +808,13 @@
   }
   /* セルの書き込み：1マスに複数行（計画ごとに○） */
   .cell-items { display: flex; flex-direction: column; gap: 8px; }
-  .cell-item-row { display: flex; align-items: flex-start; gap: 8px; }
+  .cell-item-row {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    column-gap: 8px;
+    row-gap: 2px;
+    align-items: start;
+  }
   .cell-item-row .ring {
     flex: none;
     width: 44px;
@@ -825,7 +847,8 @@
     transform: rotate(-4deg);
   }
   .cell-item-row .item-text {
-    flex: 1;
+    grid-column: 2;
+    grid-row: 1;
     min-width: 0;
     min-height: 44px;
     max-height: 112px;
@@ -837,7 +860,6 @@
   /* 翌日へ繰り越し。意味の分かるチップに（未完了で文字がある行だけ表示）。
      繰り越しと削除が両方「×」で紛らわしかったのを解消するための表示 */
   .cell-item-row .carry {
-    flex: none;
     display: inline-flex;
     align-items: center;
     font-family: inherit;
@@ -853,9 +875,33 @@
     cursor: pointer;
   }
   .cell-item-row .carry:active { background: rgba(200, 100, 92, 0.18); }
+  .cell-item-actions {
+    grid-column: 2 / 4;
+    grid-row: 2;
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+  .cell-item-row .copy-other {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 10px;
+    border: 1px solid rgba(90, 125, 90, 0.32);
+    border-radius: 12px;
+    background: rgba(90, 125, 90, 0.08);
+    color: #557255;
+    font: inherit;
+    font-size: 11px;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .cell-item-row .copy-other:active { background: rgba(90, 125, 90, 0.16); }
   /* 削除は繰り越しと区別するため控えめなグレーの✕に（赤の重複をやめる） */
   .cell-item-row .item-del {
-    flex: none;
+    grid-column: 3;
+    grid-row: 1;
     width: 44px; height: 44px;
     font-family: inherit;
     font-size: 13px;
@@ -867,7 +913,7 @@
   }
   .cell-item-row .item-del:active { opacity: 1; }
   .cell-item-row.lp-active { background: rgba(90, 125, 90, 0.14); border-radius: 8px; }
-  /* 長押し→複数の日にコピーの、小さなカレンダー */
+  /* 「ほかの日にも」→複数の日にコピーする小さなカレンダー */
   .copy-cal-head { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
   .copy-cal-head button {
     min-width: 44px;
@@ -1526,7 +1572,7 @@
   </div>
 </div>
 
-<!-- 行を長押し→複数の日にコピー -->
+<!-- 「ほかの日にも」→複数の日にコピー -->
 <div id="copyDatesModal" class="settings-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="copyDatesTitle" data-close-button="copyDatesClose">
   <div class="settings-card">
     <h2 id="copyDatesTitle">複数の日にコピー</h2>
@@ -1642,7 +1688,8 @@
 
   // ---- ことばづかい（大人向け・漢字。対象は中学生〜社会人のため固定） ----
   var WORDS = {
-    emptyNote:      'まだ何もありません。<br>右上の「＋」から教材や科目をふやして、<br>1週間の計画を書きこもう。<br><br>書いた計画は<b>手ざわり手帳</b>の<br>その日のタスク欄に印刷されます。',
+    emptyNote:      '最初の教材を追加すると、1週間の計画を書き始められます。<br><br>書いた計画は<b>手ざわり手帳</b>の同じ日のタスク欄にも表示されます。',
+    emptyAdd:       '最初の教材を追加',
     subjectAdd:     '教材をふやす',
     subjectEdit:    '教材の名前をかえる',
     subjectPlace:   '教材や科目の名前（例: 英語）',
@@ -1680,6 +1727,7 @@
     itemDelete:     'この行をけす',
     copyDatesTitle: '複数の日にコピー',
     copyDatesSub:   '「{text}」を、タップした日に次々とコピーします',
+    copyDatesOpen:  'ほかの日にも',
     copyDatesDone:  'コピーしました',
     copyDatesDup:   'この日にはもうあります',
     doneLabel:      'できた（○をつける）',
@@ -2363,6 +2411,13 @@
       var note = document.createElement('div');
       note.className = 'empty-note';
       note.innerHTML = tx('emptyNote');
+      var addFirst = document.createElement('button');
+      addFirst.type = 'button';
+      addFirst.className = 'empty-add-button';
+      addFirst.dataset.focusKey = 'empty:add';
+      addFirst.textContent = tx('emptyAdd');
+      addFirst.addEventListener('click', function () { openSubjectModal(null); });
+      note.appendChild(addFirst);
       scroll.appendChild(buildTable([], null, weekIso));
       scroll.appendChild(note);
       return;
@@ -2538,13 +2593,25 @@
       carry.textContent = '→明日';
       carry.title = tx('cellCarry');
       carry.setAttribute('aria-label', tx('cellCarry'));
+      var copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.className = 'copy-other';
+      copyBtn.textContent = tx('copyDatesOpen');
+      copyBtn.setAttribute('aria-label', 'ほかの日にコピー');
+      var actions = document.createElement('div');
+      actions.className = 'cell-item-actions';
       var input = document.createElement('textarea');
       input.rows = 1;
       input.className = 'write-input item-text';
       input.maxLength = 200;
       input.value = item.text;
       input.placeholder = tx('cellPlace');
-      function updateCrossVisibility() { carry.style.display = (item.text.trim() && !item.done) ? 'inline-flex' : 'none'; }
+      function updateCrossVisibility() {
+        var hasText = !!item.text.trim();
+        carry.style.display = (hasText && !item.done) ? 'inline-flex' : 'none';
+        copyBtn.style.display = hasText ? 'inline-flex' : 'none';
+        actions.style.display = hasText ? 'flex' : 'none';
+      }
       updateCrossVisibility();
       ring.addEventListener('click', function () {
         item.done = !item.done;
@@ -2585,6 +2652,12 @@
         renderCellItemsList();
         flashSaved(tx('carryDone'));
       });
+      copyBtn.addEventListener('click', function () {
+        var text = item.text.trim();
+        if (!text) return;
+        saveEditingCell();
+        openCopyDatesModal(editing.subject.id, text);
+      });
       var delBtn = document.createElement('button');
       delBtn.type = 'button';
       delBtn.className = 'item-del';
@@ -2597,15 +2670,20 @@
         renderCellItemsList();
         scheduleCellAutosave();
       });
-      row.appendChild(ring); row.appendChild(input); row.appendChild(carry); row.appendChild(delBtn);
+      actions.appendChild(carry);
+      actions.appendChild(copyBtn);
+      row.appendChild(ring);
+      row.appendChild(input);
+      row.appendChild(delBtn);
+      row.appendChild(actions);
       cellItemsList.appendChild(row);
       resizeItemText(input);
-      // 長押し→複数の日にコピー（文字入力欄・×／けすボタンの上では発動させない）
+      // 長押しもコピーのショートカットとして残す（各ボタンの上では発動させない）
       (function () {
         var lpTimer = null, lpX = null, lpY = null;
         function cancel() { if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; } row.classList.remove('lp-active'); }
         row.addEventListener('pointerdown', function (ev) {
-          if (ev.target === input || ev.target.closest('.item-del, .ring, .carry')) return;
+          if (ev.target === input || ev.target.closest('.item-del, .ring, .carry, .copy-other')) return;
           if (!item.text.trim()) return;
           lpX = ev.clientX; lpY = ev.clientY;
           row.classList.add('lp-active');
@@ -2625,7 +2703,7 @@
     });
   }
 
-  // ---- 行を長押し→複数の日にコピー（ミニカレンダーでタップした日へ次々とコピー） ----
+  // ---- 複数の日にコピー（ミニカレンダーでタップした日へ次々とコピー） ----
   var copyDatesModal = document.getElementById('copyDatesModal');
   var copyCalGrid = document.getElementById('copyCalGrid');
   var copySource = null, copyCalMonth = null, copiedTo = {};
@@ -3651,6 +3729,19 @@
       }
       return items;
     }
+    function hasSavedPlan() {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (!k || k.indexOf('pk:cell:') !== 0) continue;
+        try {
+          var rows = JSON.parse(localStorage.getItem(k) || '[]');
+          if (Array.isArray(rows) && rows.some(function (row) {
+            return row && typeof row.text === 'string' && row.text.trim();
+          })) return true;
+        } catch (e) {}
+      }
+      return false;
+    }
     var vPushTimer = 0, vPushing = false, vQueued = false;
     function vaultPushSoon() {
       if (!vaultOn()) return;
@@ -3751,6 +3842,8 @@
         .catch(function () { alert('ひかえが見つかりませんでした。コードを確かめてください。'); });
     });
     function maybeNoticeCode() {
+      // 空の初回起動では説明を重ねない。最初の計画が実際に預けられた後でだけ案内する。
+      if (!hasSavedPlan()) return;
       if (localStorage.getItem('pk:vaultNoticed')) return;
       localStorage.setItem('pk:vaultNoticed', '1');
       if (localStorage.getItem('pt:vaultNoticed')) return;   // 手帳側で案内済みなら二重に出さない
