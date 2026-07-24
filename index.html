@@ -687,19 +687,36 @@
     border-radius: 48% 52% 46% 54% / 54% 46% 52% 48%;
     transform: rotate(-4deg);
   }
+  .cell-item-row .cross {
+    flex: none;
+    width: 22px; height: 22px;
+    border: 2px solid rgba(200, 80, 70, 0.3);
+    border-radius: 50%;
+    position: relative;
+    cursor: pointer;
+  }
+  .cell-item-row .cross::before, .cell-item-row .cross::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 12px; height: 2.4px;
+    background: var(--today-ring);
+    border-radius: 2px;
+  }
+  .cell-item-row .cross::before { transform: translate(-50%, -50%) rotate(45deg); }
+  .cell-item-row .cross::after { transform: translate(-50%, -50%) rotate(-45deg); }
   .cell-item-row .item-text { flex: 1; min-width: 0; }
   .cell-item-row.done .item-text { color: var(--ink-soft); }
-  .cell-item-row .item-carry, .cell-item-row .item-del {
+  .cell-item-row .item-del {
     flex: none;
     width: 30px; height: 30px;
     font-family: inherit;
     font-size: 14px;
-    color: #8a7d5a;
+    color: var(--sun);
     background: transparent;
     border: none;
     cursor: pointer;
   }
-  .cell-item-row .item-del { color: var(--sun); }
   .cell-item-row.lp-active { background: rgba(90, 125, 90, 0.14); border-radius: 8px; }
   /* 長押し→複数の日にコピーの、小さなカレンダー */
   .copy-cal-head { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
@@ -2074,7 +2091,7 @@
   }
   // 長押しコピー・行ごとの繰り越しはSaveを待たずその場で確定するので、とじる時は常にグリッドを描き直す
   function closeCellModal() { cellModal.style.display = 'none'; editing = null; editingItems = []; render(); }
-  // 行ごとの書き込み欄を組み立てる（○・文字・翌日へ繰り越す・この行をけす）
+  // 行ごとの書き込み欄を組み立てる（○・×・文字・この行をけす。×は「できなかった」印で、押すと自動で翌日へ繰り越す）
   function renderCellItemsList() {
     cellItemsList.innerHTML = '';
     editingItems.forEach(function (item, idx) {
@@ -2084,29 +2101,28 @@
       ring.className = 'ring';
       ring.setAttribute('role', 'button');
       ring.setAttribute('aria-label', tx('doneLabel'));
+      var cross = document.createElement('span');
+      cross.className = 'cross';
+      cross.setAttribute('role', 'button');
+      cross.title = tx('cellCarry');
+      cross.setAttribute('aria-label', tx('cellCarry'));
       var input = document.createElement('input');
       input.type = 'text';
       input.className = 'write-input item-text';
       input.maxLength = 200;
       input.value = item.text;
       input.placeholder = tx('cellPlace');
-      var carryBtn = document.createElement('button');
-      carryBtn.type = 'button';
-      carryBtn.className = 'item-carry';
-      carryBtn.title = tx('cellCarry');
-      carryBtn.setAttribute('aria-label', tx('cellCarry'));
-      carryBtn.textContent = '▶';
-      function updateCarryVisibility() { carryBtn.style.display = (item.text.trim() && !item.done) ? 'inline-block' : 'none'; }
-      updateCarryVisibility();
+      function updateCrossVisibility() { cross.style.display = (item.text.trim() && !item.done) ? 'inline-block' : 'none'; }
+      updateCrossVisibility();
       ring.addEventListener('click', function () {
         item.done = !item.done;
         row.classList.toggle('done', item.done);
-        updateCarryVisibility();
+        updateCrossVisibility();
       });
-      input.addEventListener('input', function () { item.text = input.value; updateCarryVisibility(); });
-      // 翌日へ繰り越す（＝この行だけ移動）: この行を消して、翌日の同じ教材へ新しい行として入れる。
+      input.addEventListener('input', function () { item.text = input.value; updateCrossVisibility(); });
+      // ×＝できなかった印（翌日へ自動で繰り越す）: この行を消して、翌日の同じ教材へ新しい行として入れる。
       // 今日側もこの場で確定保存する（そのままモーダルを閉じても今日と翌日で二重に残らないように）
-      carryBtn.addEventListener('click', function () {
+      cross.addEventListener('click', function () {
         var text = item.text.trim();
         if (!text) return;
         var sid = editing.subject.id, iso = editing.iso, nextIso = addDays(iso, 1);
@@ -2139,14 +2155,14 @@
         if (!editingItems.length) editingItems.push({ id: null, text: '', done: false });
         renderCellItemsList();
       });
-      row.appendChild(ring); row.appendChild(input); row.appendChild(carryBtn); row.appendChild(delBtn);
+      row.appendChild(ring); row.appendChild(cross); row.appendChild(input); row.appendChild(delBtn);
       cellItemsList.appendChild(row);
-      // 長押し→複数の日にコピー（文字入力欄・繰り越し／けすボタンの上では発動させない）
+      // 長押し→複数の日にコピー（文字入力欄・×／けすボタンの上では発動させない）
       (function () {
         var lpTimer = null, lpX = null, lpY = null;
         function cancel() { if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; } row.classList.remove('lp-active'); }
         row.addEventListener('pointerdown', function (ev) {
-          if (ev.target === input || ev.target.closest('.item-carry, .item-del, .ring')) return;
+          if (ev.target === input || ev.target.closest('.item-del, .ring, .cross')) return;
           if (!item.text.trim()) return;
           lpX = ev.clientX; lpY = ev.clientY;
           row.classList.add('lp-active');
@@ -2779,7 +2795,14 @@
       pendingSlideFinish = null;
       currentWeek = nextWeek;
       render();
-      sheet.style.transition = sheet.style.transform = '';
+      // このsheetにはまだスライド用の0.42s transitionが生きたままなので、transformだけ
+      // 先に戻すと「もう一度アニメーションして一瞬前に戻る」ように見える。まずtransitionを
+      // 明示的に'none'にしてtransformを即座に戻し、レイアウトを確定させてからtransitionを
+      // 既定（''）へ戻す（この時点ではtransformはもう変化しないのでアニメされない）
+      sheet.style.transition = 'none';
+      sheet.style.transform = '';
+      void sheet.offsetWidth;
+      sheet.style.transition = '';
       sheet.classList.remove('board-sliding');
       nextSheet.remove();
     }
