@@ -371,8 +371,16 @@
     pointer-events: none;
   }
   td.cell.done .cell-text { color: var(--ink-soft); }
-  /* 復習🔁の横の小さな数字＝1〜4回目のどれか */
-  td.cell .cell-text .rev-num { font-size: 0.68em; color: var(--today-ring); font-weight: 700; }
+  /* 復習🔁の数字＝1〜4回目のどれか。マスが狭く、横に並べる文字を足すとすぐ2行に
+     折り返ってしまうため、行の幅を一切増やさないよう🔁の上に小さな丸バッジとして重ねる */
+  td.cell .cell-text .rev-icon { position: relative; display: inline-block; }
+  td.cell .cell-text .rev-num {
+    position: absolute; top: -3px; right: -5px;
+    width: 10px; height: 10px;
+    font-size: 8px; line-height: 10px; font-weight: 700;
+    color: #fff; background: var(--today-ring);
+    border-radius: 50%; text-align: center;
+  }
   /* 一部だけできた＝角に小さな赤丸（全部できた＝周りの○と区別） */
   td.cell.partial::after {
     content: '';
@@ -2110,7 +2118,7 @@
           // 復習項目（🔁1 本文 のような形）は、数字だけ小さく色付きの<sup>にして「何回目か」を目立たせる
           span.innerHTML = items.map(function (it) {
             var m = it.text.match(/^🔁(\d+) ([\s\S]*)$/);
-            if (m) return REVIEW_MARK + '<sup class="rev-num">' + esc(m[1]) + '</sup> ' + esc(m[2]);
+            if (m) return '<span class="rev-icon">' + REVIEW_MARK + '<span class="rev-num">' + esc(m[1]) + '</span></span>' + esc(m[2]);
             return esc(it.text);
           }).join('\n');
           td.appendChild(span);
