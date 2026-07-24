@@ -245,22 +245,10 @@
   .page-date .big { font-size: 30px; font-weight: 600; letter-spacing: 0.04em; }
   .page-date .small { display: block; font-size: 13px; color: var(--ink-soft); margin-top: 2px; }
 
-  /* 案内文（ヘッダーの下・手帳のわき役の色） */
-  .plan-sub {
-    position: absolute;
-    top: 84px;
-    left: 34px;
-    right: 18px;
-    font-size: 11px;
-    line-height: 1.5;
-    color: var(--divider-label);
-    pointer-events: none;
-  }
-
   /* ---- 計画表グリッド ---- */
   .grid-scroll {
     position: absolute;
-    top: 118px;
+    top: 78px;
     left: 0;
     right: 0;
     bottom: 0;
@@ -427,9 +415,8 @@
       padding-bottom: 6px;
     }
     .page-date { top: calc(22px + env(safe-area-inset-top, 0px) + var(--countdown-h, 0px)); }
-    .plan-sub { top: calc(84px + env(safe-area-inset-top, 0px) + var(--countdown-h, 0px)); }
     .grid-scroll {
-      top: calc(118px + env(safe-area-inset-top, 0px) + var(--countdown-h, 0px));
+      top: calc(78px + env(safe-area-inset-top, 0px) + var(--countdown-h, 0px));
       bottom: calc(76px + env(safe-area-inset-bottom, 0px));
     }
     .toolbar {
@@ -1130,7 +1117,6 @@
   }
   body[data-paper="board"] .page-date,
   body[data-paper="board"] .exam-countdown,
-  body[data-paper="board"] .plan-sub,
   body[data-paper="board"] .empty-note,
   body[data-paper="board"] table.plan td,
   body[data-paper="board"] table.plan th.corner,
@@ -1267,7 +1253,6 @@
       <span class="small" id="weekYear"></span>
     </div>
     <div class="exam-countdown" id="examCountdown" style="display:none;"></div>
-    <div class="plan-sub" id="planSub"></div>
     <div class="grid-scroll" id="gridScroll"></div>
   </div>
 </div>
@@ -1500,7 +1485,6 @@
 
   // ---- ことばづかい（大人向け・漢字。対象は中学生〜社会人のため固定） ----
   var WORDS = {
-    planSub:        '勉強の計画表　—　書いた計画は、手ざわり手帳の今日のページに印刷されます',
     emptyNote:      'まだ何もありません。<br>右上の「＋」から教材や科目をふやして、<br>1週間の計画を書きこもう。<br><br>書いた計画は<b>手ざわり手帳</b>の<br>その日のタスク欄に印刷されます。',
     subjectAdd:     '教材をふやす',
     subjectEdit:    '教材の名前をかえる',
@@ -1618,7 +1602,6 @@
   // 常に画面にある静的DOMの文言をことばづかいに合わせて更新する
   function applyWording() {
     function setText(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
-    document.getElementById('planSub').innerHTML = tx('planSub');
     setText('prevWeek', tx('prevBtn'));
     setText('nextWeek', tx('nextBtn'));
     setText('todayBtn', tx('todayBtn'));
