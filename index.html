@@ -803,6 +803,30 @@
     padding: 6px 8px;
     cursor: pointer;
   }
+  .detail-add-row { display: flex; gap: 8px; }
+  .detail-add-row .cell-add-item { margin-top: 12px; }
+  .detail-table th .detail-col-label-input {
+    width: 46px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-strong);
+    border: none;
+    background: transparent;
+    text-align: center;
+    padding: 2px;
+  }
+  .detail-table th .detail-col-del {
+    display: block;
+    margin: 2px auto 0;
+    border: none;
+    background: none;
+    color: var(--sun);
+    font-size: 10px;
+    line-height: 1;
+    padding: 2px;
+    cursor: pointer;
+  }
   .cell-add-item:active { transform: translateY(1px); }
   .modal-btns { display: flex; gap: 8px; margin-top: 14px; align-items: center; }
   .modal-btns .spacer { flex: 1; }
@@ -1426,20 +1450,17 @@
 <div id="detailPlanModal" class="settings-modal" style="display:none;">
   <div class="settings-card">
     <h2 id="detailPlanTitle"></h2>
-    <p class="settings-note" style="margin-top:0;">行を自由に追加して、何日おき（1・2・4・7・14・30日）に復習したか日付を記録できます。</p>
+    <p class="settings-note" style="margin-top:0;">行・列とも自由に追加できます。列は「何回目の復習か」、セルはその日付です。</p>
     <div class="detail-table-wrap">
       <table class="detail-table">
-        <thead>
-          <tr>
-            <th></th>
-            <th>1</th><th>2</th><th>4</th><th>7</th><th>14</th><th>30</th>
-            <th></th>
-          </tr>
-        </thead>
+        <thead id="detailTableHead"></thead>
         <tbody id="detailTableBody"></tbody>
       </table>
     </div>
-    <button type="button" id="detailAddRowBtn" class="cell-add-item">＋ 行を追加</button>
+    <div class="detail-add-row">
+      <button type="button" id="detailAddRowBtn" class="cell-add-item">＋ 行を追加</button>
+      <button type="button" id="detailAddColBtn" class="cell-add-item">＋ 列を追加</button>
+    </div>
     <div class="modal-btns">
       <span class="spacer"></span>
       <button class="primary" id="detailPlanClose">とじる</button>
@@ -1832,35 +1853,47 @@
     localStorage.removeItem(keyDetail(sid));
   }
 
-  // ---- 細かい計画表（教材専用の目次/項目一覧。1〜10・11〜20のような行を自由に追加し、
-  // 何日おきに復習したか（1・2・4・7・14・30日）を行ごとに日付で記録する進捗表）----
-  var DETAIL_COLS = ['1', '2', '4', '7', '14', '30'];
+  // ---- 細かい計画表（教材専用の目次/項目一覧。1〜10・11〜20のような行と、何回目の復習かという
+  // 列を、どちらも自由に追加・削除できる。セルにその日付を記録する進捗表）----
   function keyDetail(sid) { return 'pk:detail:' + sid; }
+  // 列は最初は1・2・3・4（＝復習回数）。行・列とも {id, label} を持ち、セルは列のidで引く
+  function defaultDetailCols() {
+    return ['1', '2', '3', '4'].map(function (n) { return { id: genItemId(), label: n }; });
+  }
   // セルは {date, itemId}。itemIdは、日付を書いたときにメインのその日のマスへ書き込んだ
   // 項目のidで、日付を変える／消すときにメイン側の古い項目を見つけて追従させるために使う
   function readDetail(sid) {
     try {
-      var d = JSON.parse(localStorage.getItem(keyDetail(sid)) || 'null');
-      if (!d || !Array.isArray(d.rows)) return { rows: [] };
+      var raw = localStorage.getItem(keyDetail(sid));
+      var d = raw ? JSON.parse(raw) : null;
+      if (!d || typeof d !== 'object') d = {};
+      if (!Array.isArray(d.rows)) d.rows = [];
       d.rows.forEach(function (r) {
         if (!r.cells || typeof r.cells !== 'object') r.cells = {};
-        DETAIL_COLS.forEach(function (col) {
-          var v = r.cells[col];
-          if (!v) return;
-          if (typeof v === 'string') r.cells[col] = { date: v, itemId: null };   // 旧形式（日付文字列のみ）との後方互換
+        Object.keys(r.cells).forEach(function (k) {
+          var v = r.cells[k];
+          if (v && typeof v === 'string') r.cells[k] = { date: v, itemId: null };   // 旧形式（日付文字列のみ）との後方互換
         });
       });
+      if (!Array.isArray(d.cols) || !d.cols.length) {
+        // 列という概念が無かった旧形式（cellsが'1'/'2'/'4'のような固定キーで直接入っていた）からの
+        // 移行。見つかったキーをそのままid・ラベルとして列にする。何も無ければ初期の1〜4列にする
+        var foundKeys = {};
+        d.rows.forEach(function (r) { Object.keys(r.cells).forEach(function (k) { foundKeys[k] = true; }); });
+        var keys = Object.keys(foundKeys);
+        d.cols = keys.length ? keys.map(function (k) { return { id: k, label: k }; }) : defaultDetailCols();
+      }
       return d;
-    } catch (e) { return { rows: [] }; }
+    } catch (e) { return { cols: defaultDetailCols(), rows: [] }; }
   }
   function writeDetail(sid, data) {
     try { localStorage.setItem(keyDetail(sid), JSON.stringify(data)); } catch (e) {}
   }
   // 細かい計画表のセルに日付を書く／変える／消すと、メイン(日別グリッド)の該当日のマスにも
-  // 「行ラベル（○日）」という項目として書き込む・移動する・消す。書いた時点でできたはず
-  // （過去の記録を入れる用途のため）なので、○（done）を最初から付けた状態にする
+  // 「行ラベル（列ラベル回目）」という項目として書き込む・移動する・消す。書いた時点でできた
+  // はず（過去の記録を入れる用途のため）なので、○（done）を最初から付けた状態にする
   function applyDetailCell(sid, row, col, newDateValue) {
-    var cell = row.cells[col] || { date: '', itemId: null };
+    var cell = row.cells[col.id] || { date: '', itemId: null };
     if (cell.itemId && cell.date) {
       var oldItems = cellItems(cell.date, sid);
       var kept = oldItems.filter(function (it) { return it.id !== cell.itemId; });
@@ -1869,32 +1902,54 @@
     var newItemId = null;
     if (newDateValue) {
       var label = (row.label || '').trim() || '（無題）';
+      var colLabel = (col.label || '').trim() || '？';
       var items = cellItems(newDateValue, sid);
       newItemId = genItemId();
-      items.push({ id: newItemId, text: label + '（' + col + '日）', done: true, u: Date.now() });
+      items.push({ id: newItemId, text: label + '（' + colLabel + '回目）', done: true, u: Date.now() });
       writeCellItems(newDateValue, sid, items);
     }
-    row.cells[col] = { date: newDateValue, itemId: newItemId };
+    row.cells[col.id] = { date: newDateValue, itemId: newItemId };
   }
-  // 行のラベルを変えたとき、既にメインへ反映済みのセルがあれば、その項目のテキストも更新する
-  function relabelDetailRow(sid, row) {
+  // 反映済みの項目テキストを、そのセルの今のラベルに合わせて書き直す（行・列どちらのラベルを
+  // 変えたときも呼ぶ）
+  function relinkDetailCellText(sid, row, col) {
+    var cell = row.cells[col.id];
+    if (!cell || !cell.itemId || !cell.date) return;
+    var items = cellItems(cell.date, sid);
+    var found = items.find(function (it) { return it.id === cell.itemId; });
+    if (!found) return;
     var label = (row.label || '').trim() || '（無題）';
-    DETAIL_COLS.forEach(function (col) {
-      var cell = row.cells[col];
-      if (!cell || !cell.itemId || !cell.date) return;
-      var items = cellItems(cell.date, sid);
-      var found = items.find(function (it) { return it.id === cell.itemId; });
-      if (found) { found.text = label + '（' + col + '日）'; writeCellItems(cell.date, sid, items); }
-    });
+    var colLabel = (col.label || '').trim() || '？';
+    found.text = label + '（' + colLabel + '回目）';
+    writeCellItems(cell.date, sid, items);
+  }
+  // 行のラベルを変えたとき、既にメインへ反映済みの全セルのテキストも更新する
+  function relabelDetailRow(sid, data, row) {
+    data.cols.forEach(function (col) { relinkDetailCellText(sid, row, col); });
+  }
+  // 列のラベルを変えたとき、既にメインへ反映済みの全行のその列のテキストも更新する
+  function relabelDetailCol(sid, data, col) {
+    data.rows.forEach(function (row) { relinkDetailCellText(sid, row, col); });
   }
   // 行を消すとき、メインへ反映済みだった項目も一緒に消す
-  function unlinkDetailRow(sid, row) {
-    DETAIL_COLS.forEach(function (col) {
-      var cell = row.cells[col];
+  function unlinkDetailRow(sid, data, row) {
+    data.cols.forEach(function (col) {
+      var cell = row.cells[col.id];
       if (!cell || !cell.itemId || !cell.date) return;
       var items = cellItems(cell.date, sid);
       var kept = items.filter(function (it) { return it.id !== cell.itemId; });
       if (kept.length !== items.length) writeCellItems(cell.date, sid, kept);
+    });
+  }
+  // 列を消すとき、メインへ反映済みだった項目も一緒に消す（全行ぶん）
+  function unlinkDetailCol(sid, data, col) {
+    data.rows.forEach(function (row) {
+      var cell = row.cells[col.id];
+      if (!cell || !cell.itemId || !cell.date) return;
+      var items = cellItems(cell.date, sid);
+      var kept = items.filter(function (it) { return it.id !== cell.itemId; });
+      if (kept.length !== items.length) writeCellItems(cell.date, sid, kept);
+      delete row.cells[col.id];
     });
   }
 
@@ -2479,8 +2534,10 @@
   document.getElementById('subjectCancel').addEventListener('click', closeSubjectModal);
   subjectModal.addEventListener('click', function (e) { if (e.target === subjectModal) closeSubjectModal(); });
 
-  // ---- 細かい計画表（教材専用の目次/項目一覧。行=通し番号の区切り、列=何日おきに復習したか） ----
+  // ---- 細かい計画表（教材専用の目次/項目一覧。行=通し番号の区切り、列=何回目の復習か。
+  // どちらも自由に追加・削除できる） ----
   var detailPlanModal = document.getElementById('detailPlanModal');
+  var detailTableHead = document.getElementById('detailTableHead');
   var detailTableBody = document.getElementById('detailTableBody');
   var detailSubjectId = null;
   function openDetailPlanModal(subject) {
@@ -2492,6 +2549,41 @@
   function closeDetailPlanModal() { detailPlanModal.style.display = 'none'; detailSubjectId = null; }
   function renderDetailTable() {
     var data = readDetail(detailSubjectId);
+
+    var headTr = document.createElement('tr');
+    headTr.appendChild(document.createElement('th'));
+    data.cols.forEach(function (col, cidx) {
+      var th = document.createElement('th');
+      var colInput = document.createElement('input');
+      colInput.type = 'text';
+      colInput.className = 'detail-col-label-input';
+      colInput.maxLength = 10;
+      colInput.value = col.label || '';
+      colInput.addEventListener('change', function () {
+        col.label = colInput.value.trim();
+        relabelDetailCol(detailSubjectId, data, col);
+        writeDetail(detailSubjectId, data);
+      });
+      th.appendChild(colInput);
+      var colDelBtn = document.createElement('button');
+      colDelBtn.type = 'button';
+      colDelBtn.className = 'detail-col-del';
+      colDelBtn.textContent = '✕';
+      colDelBtn.setAttribute('aria-label', 'この列をけす');
+      colDelBtn.addEventListener('click', function () {
+        unlinkDetailCol(detailSubjectId, data, col);
+        data.cols.splice(cidx, 1);
+        writeDetail(detailSubjectId, data);
+        renderDetailTable();
+        render();   // メイン側のグリッドにも即反映する
+      });
+      th.appendChild(colDelBtn);
+      headTr.appendChild(th);
+    });
+    headTr.appendChild(document.createElement('th'));
+    detailTableHead.innerHTML = '';
+    detailTableHead.appendChild(headTr);
+
     detailTableBody.innerHTML = '';
     data.rows.forEach(function (row, idx) {
       var tr = document.createElement('tr');
@@ -2504,16 +2596,16 @@
       labelInput.value = row.label || '';
       labelInput.addEventListener('change', function () {
         row.label = labelInput.value.trim();
-        relabelDetailRow(detailSubjectId, row);
+        relabelDetailRow(detailSubjectId, data, row);
         writeDetail(detailSubjectId, data);
       });
       tdLabel.appendChild(labelInput);
       tr.appendChild(tdLabel);
-      DETAIL_COLS.forEach(function (col) {
+      data.cols.forEach(function (col) {
         var td = document.createElement('td');
         var inp = document.createElement('input');
         inp.type = 'date';
-        inp.value = (row.cells[col] && row.cells[col].date) || '';
+        inp.value = (row.cells[col.id] && row.cells[col.id].date) || '';
         inp.addEventListener('change', function () {
           applyDetailCell(detailSubjectId, row, col, inp.value);
           writeDetail(detailSubjectId, data);
@@ -2529,7 +2621,7 @@
       rowDelBtn.textContent = '✕';
       rowDelBtn.setAttribute('aria-label', 'この行をけす');
       rowDelBtn.addEventListener('click', function () {
-        unlinkDetailRow(detailSubjectId, row);
+        unlinkDetailRow(detailSubjectId, data, row);
         data.rows.splice(idx, 1);
         writeDetail(detailSubjectId, data);
         renderDetailTable();
@@ -2550,6 +2642,18 @@
     writeDetail(detailSubjectId, data);
     renderDetailTable();
     var inputs = detailTableBody.querySelectorAll('.detail-label-input');
+    var last = inputs[inputs.length - 1];
+    if (last) last.focus();
+  });
+  document.getElementById('detailAddColBtn').addEventListener('click', function () {
+    if (!detailSubjectId) return;
+    var data = readDetail(detailSubjectId);
+    var nums = data.cols.map(function (c) { return parseInt(c.label, 10); }).filter(function (n) { return !isNaN(n); });
+    var next = nums.length ? (Math.max.apply(null, nums) + 1) : (data.cols.length + 1);
+    data.cols.push({ id: genItemId(), label: String(next) });
+    writeDetail(detailSubjectId, data);
+    renderDetailTable();
+    var inputs = detailTableHead.querySelectorAll('.detail-col-label-input');
     var last = inputs[inputs.length - 1];
     if (last) last.focus();
   });
