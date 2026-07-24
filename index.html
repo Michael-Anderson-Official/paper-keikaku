@@ -255,11 +255,22 @@
     overflow: auto;
     -webkit-overflow-scrolling: touch;
     padding: 0 12px 14px 30px;
+    /* 横スクロールした教材名が、綴じしろ（左30px）へはみ出して見えないようにする */
+    clip-path: inset(0 0 0 30px);
   }
-  table.plan { border-collapse: collapse; width: 100%; table-layout: fixed; }
-  table.plan th, table.plan td { border: 1px solid var(--rule); vertical-align: top; }
+  table.plan {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    table-layout: fixed;
+  }
+  table.plan th, table.plan td {
+    border: 0;
+    border-right: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
   table.plan th { border-top: none; }
-  table.plan th:first-child, table.plan td:first-child { border-left: none; }
   table.plan tr:last-child td { border-bottom: none; }
 
   th.subject {
@@ -270,6 +281,10 @@
     vertical-align: middle;
     cursor: pointer;
     padding: 3px 4px;
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    background-color: var(--paper);
   }
   /* 教材の表紙（列見出しの上に小さく。本棚のように） */
   th.subject .subject-cover {
@@ -293,23 +308,39 @@
     white-space: normal;
     word-break: break-word;
   }
-  th.corner { width: 42px; }
+  th.corner {
+    width: 44px;
+    position: sticky;
+    top: 0;
+    left: 0;
+    z-index: 6;
+    background-color: var(--paper);
+    box-shadow: 1px 0 0 var(--rule);
+  }
   th.add-col {
-    width: 38px;
+    width: 44px;
     font-size: 19px;
     font-weight: 400;
     color: var(--ink-soft);
     vertical-align: middle;
     cursor: pointer;
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    background-color: var(--paper);
   }
 
   td.day-label {
-    width: 42px;
+    width: 44px;
     padding: 6px 3px 0 0;
     text-align: center;
     font-size: 11px;
     color: var(--ink-soft);
-    position: relative;
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background-color: var(--paper);
+    box-shadow: 1px 0 0 var(--rule);
   }
   td.day-label .date-num {
     display: block;
@@ -2178,6 +2209,11 @@
   function buildTable(subjects, todayIso, weekIso) {
     var table = document.createElement('table');
     table.className = 'plan';
+    // 3教材までは画面幅を均等に使う。4教材以上は1列96pxを守って横スクロールにし、
+    // 「一覧性を保とうとして文字が読めなくなる」状態を避ける。
+    if (subjects.length > 3) {
+      table.style.minWidth = (88 + subjects.length * 96) + 'px';
+    }
     var thead = document.createElement('tr');
     var corner = document.createElement('th'); corner.className = 'corner'; thead.appendChild(corner);
     subjects.forEach(function (s) {
