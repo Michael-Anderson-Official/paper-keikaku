@@ -725,36 +725,39 @@
     border-radius: 48% 52% 46% 54% / 54% 46% 52% 48%;
     transform: rotate(-4deg);
   }
-  .cell-item-row .cross {
+  .cell-item-row .item-text { flex: 1; min-width: 0; }
+  .cell-item-row.done .item-text { color: var(--ink-soft); text-decoration: line-through; text-decoration-color: rgba(138, 141, 153, 0.6); }
+  /* 翌日へ繰り越し。意味の分かるチップに（未完了で文字がある行だけ表示）。
+     繰り越しと削除が両方「×」で紛らわしかったのを解消するための表示 */
+  .cell-item-row .carry {
     flex: none;
-    width: 22px; height: 22px;
-    border: 2px solid rgba(200, 80, 70, 0.3);
-    border-radius: 50%;
-    position: relative;
+    display: inline-flex;
+    align-items: center;
+    font-family: inherit;
+    font-size: 11px;
+    line-height: 1;
+    white-space: nowrap;
+    padding: 5px 8px;
+    color: #b06a5c;
+    background: rgba(200, 100, 92, 0.09);
+    border: 1px solid rgba(200, 100, 92, 0.3);
+    border-radius: 12px;
     cursor: pointer;
   }
-  .cell-item-row .cross::before, .cell-item-row .cross::after {
-    content: '';
-    position: absolute;
-    top: 50%; left: 50%;
-    width: 12px; height: 2.4px;
-    background: var(--today-ring);
-    border-radius: 2px;
-  }
-  .cell-item-row .cross::before { transform: translate(-50%, -50%) rotate(45deg); }
-  .cell-item-row .cross::after { transform: translate(-50%, -50%) rotate(-45deg); }
-  .cell-item-row .item-text { flex: 1; min-width: 0; }
-  .cell-item-row.done .item-text { color: var(--ink-soft); }
+  .cell-item-row .carry:active { background: rgba(200, 100, 92, 0.18); }
+  /* 削除は繰り越しと区別するため控えめなグレーの✕に（赤の重複をやめる） */
   .cell-item-row .item-del {
     flex: none;
-    width: 30px; height: 30px;
+    width: 28px; height: 28px;
     font-family: inherit;
-    font-size: 14px;
-    color: var(--sun);
+    font-size: 13px;
+    color: var(--ink-soft);
+    opacity: 0.6;
     background: transparent;
     border: none;
     cursor: pointer;
   }
+  .cell-item-row .item-del:active { opacity: 1; }
   .cell-item-row.lp-active { background: rgba(90, 125, 90, 0.14); border-radius: 8px; }
   /* 長押し→複数の日にコピーの、小さなカレンダー */
   .copy-cal-head { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
@@ -2263,18 +2266,19 @@
       ring.className = 'ring';
       ring.setAttribute('role', 'button');
       ring.setAttribute('aria-label', tx('doneLabel'));
-      var cross = document.createElement('span');
-      cross.className = 'cross';
-      cross.setAttribute('role', 'button');
-      cross.title = tx('cellCarry');
-      cross.setAttribute('aria-label', tx('cellCarry'));
+      var carry = document.createElement('button');
+      carry.type = 'button';
+      carry.className = 'carry';
+      carry.textContent = '→明日';
+      carry.title = tx('cellCarry');
+      carry.setAttribute('aria-label', tx('cellCarry'));
       var input = document.createElement('input');
       input.type = 'text';
       input.className = 'write-input item-text';
       input.maxLength = 200;
       input.value = item.text;
       input.placeholder = tx('cellPlace');
-      function updateCrossVisibility() { cross.style.display = (item.text.trim() && !item.done) ? 'inline-block' : 'none'; }
+      function updateCrossVisibility() { carry.style.display = (item.text.trim() && !item.done) ? 'inline-flex' : 'none'; }
       updateCrossVisibility();
       ring.addEventListener('click', function () {
         item.done = !item.done;
@@ -2284,7 +2288,7 @@
       input.addEventListener('input', function () { item.text = input.value; updateCrossVisibility(); });
       // ×＝できなかった印（翌日へ自動で繰り越す）: この行を消して、翌日の同じ教材へ新しい行として入れる。
       // 今日側もこの場で確定保存する（そのままモーダルを閉じても今日と翌日で二重に残らないように）
-      cross.addEventListener('click', function () {
+      carry.addEventListener('click', function () {
         var text = item.text.trim();
         if (!text) return;
         var sid = editing.subject.id, iso = editing.iso, nextIso = addDays(iso, 1);
@@ -2316,14 +2320,14 @@
         if (!editingItems.length) editingItems.push({ id: null, text: '', done: false });
         renderCellItemsList();
       });
-      row.appendChild(ring); row.appendChild(cross); row.appendChild(input); row.appendChild(delBtn);
+      row.appendChild(ring); row.appendChild(input); row.appendChild(carry); row.appendChild(delBtn);
       cellItemsList.appendChild(row);
       // 長押し→複数の日にコピー（文字入力欄・×／けすボタンの上では発動させない）
       (function () {
         var lpTimer = null, lpX = null, lpY = null;
         function cancel() { if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; } row.classList.remove('lp-active'); }
         row.addEventListener('pointerdown', function (ev) {
-          if (ev.target === input || ev.target.closest('.item-del, .ring, .cross')) return;
+          if (ev.target === input || ev.target.closest('.item-del, .ring, .carry')) return;
           if (!item.text.trim()) return;
           lpX = ev.clientX; lpY = ev.clientY;
           row.classList.add('lp-active');
