@@ -1839,9 +1839,7 @@
   }
 
   // ---- 細かい計画表（教材専用の目次/項目一覧。1〜10・11〜20のような行を自由に追加できる。
-  // 列は1〜5回目の復習で全教材共通固定。1回目の日付を入れると、2〜5回目の目安の日付を
-  // 自動で入れる（2日後・6日後・13日後・43日後＝初回の翌日→2日後→4日後→1週間後→
-  // 1週間後→1ヶ月後、というユーザー指定の間隔）----
+  // 列は1〜5回目の復習で全教材共通固定。日付はすべて手入力（自動計算はしない）----
   var DETAIL_COLS = [
     { id: 'c1', label: '1' },
     { id: 'c2', label: '2' },
@@ -1849,8 +1847,6 @@
     { id: 'c4', label: '4' },
     { id: 'c5', label: '5' }
   ];
-  // 1回目の日付からの日数（1回目自身は0）。まだ空いている列だけを自動で埋める
-  var DETAIL_AUTO_OFFSET_DAYS = { c1: 0, c2: 2, c3: 6, c4: 13, c5: 43 };
   function keyDetail(sid) { return 'pk:detail:' + sid; }
   // セルは {date, itemId}。itemIdは、日付を書いたときにメインのその日のマスへ書き込んだ
   // 項目のidで、日付を変える／消すときにメイン側の古い項目を見つけて追従させるために使う
@@ -1929,20 +1925,6 @@
       if (kept.length !== items.length) writeCellItems(cell.date, sid, kept);
     });
   }
-  // 1回目(c1)の日付を入れたとき、まだ空いている2〜5回目の欄だけ、決めた間隔で目安の日付を
-  // 自動で埋める（既に日付が入っている欄は上書きしない）
-  function autoFillDetailRow(sid, row, c1Date) {
-    if (!c1Date) return;
-    DETAIL_COLS.forEach(function (col) {
-      if (col.id === 'c1') return;
-      var existing = row.cells[col.id];
-      if (existing && existing.date) return;
-      var offset = DETAIL_AUTO_OFFSET_DAYS[col.id];
-      if (offset == null) return;
-      applyDetailCell(sid, row, col, addDays(c1Date, offset));
-    });
-  }
-
   // ---- 保存の合図 ----
   var saveNoteTimer = 0;
   function flashSaved(msg) {
@@ -2587,10 +2569,7 @@
         inp.value = (row.cells[col.id] && row.cells[col.id].date) || '';
         inp.addEventListener('change', function () {
           applyDetailCell(detailSubjectId, row, col, inp.value);
-          var rerender = false;
-          if (col.id === 'c1' && inp.value) { autoFillDetailRow(detailSubjectId, row, inp.value); rerender = true; }
           writeDetail(detailSubjectId, data);
-          if (rerender) renderDetailTable();   // 自動で埋めた2〜5回目の日付を画面にも反映する
           render();   // メイン側のグリッドにも即反映する
         });
         td.appendChild(inp);
