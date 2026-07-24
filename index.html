@@ -412,10 +412,15 @@
     .book { position: fixed; inset: 0; width: auto; height: auto; }
     .book::before { display: none; }
     .paper { border-radius: 0; }
-    .page-date { top: calc(22px + env(safe-area-inset-top, 0px)); }
-    .plan-sub { top: calc(84px + env(safe-area-inset-top, 0px)); }
+    /* --countdown-hはJS(renderCountdown)が、試験日カウントダウンの実際の高さ（0px=非表示）を
+       都度measureしてsetPropertyする。ダイナミックアイランド等の切り欠きに重ならないよう
+       カウントダウン自身にもsafe-area-inset-topぶんの余白を持たせ、その下に続く見出し・案内文・
+       グリッドは「基準位置＋safe-area＋カウントダウンの高さ」だけ下げて、両者が重ならないようにする */
+    .exam-countdown { padding-top: env(safe-area-inset-top, 0px); }
+    .page-date { top: calc(22px + env(safe-area-inset-top, 0px) + var(--countdown-h, 0px)); }
+    .plan-sub { top: calc(84px + env(safe-area-inset-top, 0px) + var(--countdown-h, 0px)); }
     .grid-scroll {
-      top: calc(118px + env(safe-area-inset-top, 0px));
+      top: calc(118px + env(safe-area-inset-top, 0px) + var(--countdown-h, 0px));
       bottom: calc(76px + env(safe-area-inset-bottom, 0px));
     }
     .toolbar {
@@ -1958,14 +1963,25 @@
     });
     return n;
   }
+  // ダイナミックアイランド等の切り欠きに重ならないよう、カウントダウンの実際の高さ（非表示なら0）を
+  // 都度measureして--countdown-hへ反映する。見出し・案内文・グリッドはこの値ぶん下へ押し出される
+  function updateCountdownHeight() {
+    var box = document.getElementById('examCountdown');
+    var h = box.style.display === 'none' ? 0 : box.offsetHeight;
+    document.documentElement.style.setProperty('--countdown-h', h + 'px');
+  }
   function renderCountdown() {
     var box = document.getElementById('examCountdown');
     var ed = examDate();
-    if (!ed) { box.style.display = 'none'; box.innerHTML = ''; return; }
+    if (!ed) { box.style.display = 'none'; box.innerHTML = ''; updateCountdownHeight(); return; }
     var todayIso = toISO(new Date());
     var left = daysBetween(todayIso, ed);
     box.style.display = 'block';
-    if (left < 0) { box.innerHTML = '<span class="ec-passed">🎯 ' + esc(examName()) + ' おつかれさまでした</span>'; return; }
+    if (left < 0) {
+      box.innerHTML = '<span class="ec-passed">🎯 ' + esc(examName()) + ' おつかれさまでした</span>';
+      updateCountdownHeight();
+      return;
+    }
     var head = left === 0
       ? '<span class="ec-main">🎯 ' + esc(examName()) + ' は<span class="ec-days">今日</span>です</span>'
       : '<span class="ec-main">🎯 ' + esc(examName()) + ' まで あと<span class="ec-days">' + left + '</span>日</span>';
@@ -1978,6 +1994,7 @@
       }
     }
     box.innerHTML = html;
+    updateCountdownHeight();
   }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
