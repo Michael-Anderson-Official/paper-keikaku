@@ -2324,10 +2324,15 @@
     });
     dropped.forEach(function (id) { unscheduleReviews(iso, sid, id); });
     writeCellItems(iso, sid, kept);
-    // 自動復習：行ごとに○が付いたら未来へ復習を予約、外したら取り消す
+    // 自動復習：行ごとに○が付いたら未来へ復習を予約、外したら取り消す。
+    // ただし復習項目(🔁で始まる行)自体に○を付けても、そこから孫の復習をまた予約すると
+    // 際限なく増え続けてしまうため、復習項目からは新たな予約をしない
     kept.forEach(function (it) {
-      if (it.done) scheduleReviews(iso, sid, it.id, it.text);
-      else unscheduleReviews(iso, sid, it.id);
+      if (it.done) {
+        if (it.text.indexOf(REVIEW_MARK) !== 0) scheduleReviews(iso, sid, it.id, it.text);
+      } else {
+        unscheduleReviews(iso, sid, it.id);
+      }
     });
     closeCellModal(); flashSaved();
   });
