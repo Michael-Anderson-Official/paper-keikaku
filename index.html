@@ -1678,6 +1678,55 @@
     });
     if (added.length) localStorage.setItem(keyRev(srcIso, sid, itemId), JSON.stringify(added));
   }
+  // 指定の項目（sid内、iso日・itemId）がどこかの復習シリーズのメンバーかを、pk:rev:*キーを
+  // 総当たりして探す。項目そのものには印を付けない（cellの項目配列はセーブのたびに{id,text,done,u}
+  // へ組み直され、手帳との同期(applyRemoteFeed)でもまるごと置き換わるため、項目に持たせた印は
+  // 消えてしまう。pk:rev:*はどちらからも一切触られないので、こちらだけに記録を持たせる）
+  function findReviewChain(sid, iso, itemId) {
+    var hit = null;
+    forEachStoredKey('pk:rev:', function (k) {
+      if (hit) return;
+      var rest = k.slice('pk:rev:'.length);
+      var parts = rest.split(':');
+      if (parts.length < 3 || parts[1] !== sid) return;
+      var raw = localStorage.getItem(k);
+      if (!raw) return;
+      var chain; try { chain = JSON.parse(raw); } catch (e) { return; }
+      if (!Array.isArray(chain)) return;
+      if (chain.some(function (e) { return e.iso === iso && e.id === itemId; })) hit = { key: k, chain: chain };
+    });
+    return hit;
+  }
+  // ×で繰り越された項目が復習シリーズの1つだった場合、同シリーズでまだ来ていない先の予約
+  // （fromIsoより後ろの日付ぶん）も1日ずつ後ろ倒しにする。既に完了済み・見つからない（削除済み等）
+  // ものはそのまま、移動先に同文の項目が既にある場合は重複を避けて動かさない。
+  // selfNewLoc を渡すと、繰り越した本人ぶんのチェーン内記録も新しい日付/idへ更新する
+  function cascadeReviewChain(sid, fromIso, itemId, selfNewLoc) {
+    var found = findReviewChain(sid, fromIso, itemId);
+    if (!found) return;
+    var changed = false;
+    var chain = found.chain.map(function (entry) {
+      if (entry.iso === fromIso && entry.id === itemId) {
+        if (!selfNewLoc) return entry;
+        changed = true;
+        return selfNewLoc;
+      }
+      if (!(entry.iso > fromIso)) return entry;   // 過去・当日ぶんは対象外
+      var items = cellItems(entry.iso, sid);
+      var it2 = items.find(function (it) { return it.id === entry.id; });
+      if (!it2 || it2.done) return entry;   // 見つからない・完了済みはそのまま
+      var targetIso = addDays(entry.iso, 1);
+      var targetItems = cellItems(targetIso, sid);
+      if (targetItems.some(function (it) { return it.text === it2.text; })) return entry;   // 移動先に同文があれば動かさない
+      writeCellItems(entry.iso, sid, items.filter(function (it) { return it.id !== entry.id; }));
+      var nid = genItemId();
+      targetItems.push({ id: nid, text: it2.text, done: false, u: Date.now() });
+      writeCellItems(targetIso, sid, targetItems);
+      changed = true;
+      return { iso: targetIso, id: nid };
+    });
+    if (changed) localStorage.setItem(found.key, JSON.stringify(chain));
+  }
   function unscheduleReviews(srcIso, sid, itemId) {
     var raw = localStorage.getItem(keyRev(srcIso, sid, itemId));
     if (!raw) return;
@@ -2121,15 +2170,18 @@
       });
       input.addEventListener('input', function () { item.text = input.value; updateCrossVisibility(); });
       // ×＝できなかった印（翌日へ自動で繰り越す）: この行を消して、翌日の同じ教材へ新しい行として入れる。
-      // 今日側もこの場で確定保存する（そのままモーダルを閉じても今日と翌日で二重に残らないように）
+      // 今日側もこの場で確定保存する（そのままモーダルを閉じても今日と翌日で二重に残らないように）。
+      // 復習シリーズの1つだった場合は、同シリーズのまだ来ていない先の予約も1日ずつ後ろ倒しにする
       cross.addEventListener('click', function () {
         var text = item.text.trim();
         if (!text) return;
         var sid = editing.subject.id, iso = editing.iso, nextIso = addDays(iso, 1);
         var nextItems = cellItems(nextIso, sid);
-        nextItems.push({ id: genItemId(), text: text, done: false, u: Date.now() });
+        var nid = genItemId();
+        nextItems.push({ id: nid, text: text, done: false, u: Date.now() });
         writeCellItems(nextIso, sid, nextItems);
         if (item.id) unscheduleReviews(iso, sid, item.id);
+        if (item.id) cascadeReviewChain(sid, iso, item.id, { iso: nextIso, id: nid });
         editingItems.splice(idx, 1);
         if (!editingItems.length) editingItems.push({ id: null, text: '', done: false });
         var now = Date.now(), kept = [];
