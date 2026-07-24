@@ -371,6 +371,8 @@
     pointer-events: none;
   }
   td.cell.done .cell-text { color: var(--ink-soft); }
+  /* 復習🔁の横の小さな数字＝1〜4回目のどれか */
+  td.cell .cell-text .rev-num { font-size: 0.68em; color: var(--today-ring); font-weight: 700; }
   /* 一部だけできた＝角に小さな赤丸（全部できた＝周りの○と区別） */
   td.cell.partial::after {
     content: '';
@@ -1665,9 +1667,9 @@
     if (localStorage.getItem(keyRev(srcIso, sid, itemId))) return;   // 二重予約しない
     var base = srcText.split('\n')[0].slice(0, 40);
     if (!base) return;
-    var line = REVIEW_MARK + base;
     var added = [];
-    REVIEW_INTERVALS.forEach(function (d) {
+    REVIEW_INTERVALS.forEach(function (d, i) {
+      var line = REVIEW_MARK + (i + 1) + ' ' + base;   // 🔁の横に1〜4の数字＝何回目の復習かが分かるように
       var tIso = addDays(srcIso, d);
       var items = cellItems(tIso, sid);
       if (items.some(function (it) { return it.text === line; })) return;   // すでに同じ復習項目があれば足さない
@@ -2105,7 +2107,12 @@
         if (items.length) {
           var span = document.createElement('span');
           span.className = 'cell-text';
-          span.textContent = items.map(function (it) { return it.text; }).join('\n');
+          // 復習項目（🔁1 本文 のような形）は、数字だけ小さく色付きの<sup>にして「何回目か」を目立たせる
+          span.innerHTML = items.map(function (it) {
+            var m = it.text.match(/^🔁(\d+) ([\s\S]*)$/);
+            if (m) return REVIEW_MARK + '<sup class="rev-num">' + esc(m[1]) + '</sup> ' + esc(m[2]);
+            return esc(it.text);
+          }).join('\n');
           td.appendChild(span);
           if (items.every(function (it) { return it.done; })) td.classList.add('done');
           else if (items.some(function (it) { return it.done; })) td.classList.add('partial');
