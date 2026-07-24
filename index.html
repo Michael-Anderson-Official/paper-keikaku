@@ -371,16 +371,6 @@
     pointer-events: none;
   }
   td.cell.done .cell-text { color: var(--ink-soft); }
-  /* 復習🔁の数字＝1〜4回目のどれか。マスが狭く、横に並べる文字を足すとすぐ2行に
-     折り返ってしまうため、行の幅を一切増やさないよう🔁の上に小さな丸バッジとして重ねる */
-  td.cell .cell-text .rev-icon { position: relative; display: inline-block; }
-  td.cell .cell-text .rev-num {
-    position: absolute; top: 0; left: 0;
-    width: 10px; height: 10px;
-    font-size: 8px; line-height: 10px; font-weight: 700;
-    color: #fff; background: var(--today-ring);
-    border-radius: 50%; text-align: center;
-  }
   /* 一部だけできた＝角に小さな赤丸（全部できた＝周りの○と区別） */
   td.cell.partial::after {
     content: '';
@@ -715,19 +705,6 @@
   }
   .cell-item-row .cross::before { transform: translate(-50%, -50%) rotate(45deg); }
   .cell-item-row .cross::after { transform: translate(-50%, -50%) rotate(-45deg); }
-  /* 「できたら復習も入れる」チェック。付けるまでは薄いグレーの🔁、付けると色が戻って目立つ */
-  .cell-item-row .rev-toggle {
-    flex: none;
-    width: 22px; height: 22px;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 13px;
-    border: 2px solid rgba(120, 100, 60, 0.25);
-    border-radius: 50%;
-    filter: grayscale(1);
-    opacity: 0.45;
-    cursor: pointer;
-  }
-  .cell-item-row .rev-toggle.on { filter: none; opacity: 1; border-color: var(--today-ring); background: rgba(200, 80, 70, 0.12); }
   .cell-item-row .item-text { flex: 1; min-width: 0; }
   .cell-item-row.done .item-text { color: var(--ink-soft); }
   .cell-item-row .item-del {
@@ -1344,9 +1321,6 @@
       <input id="examDateInput" type="date" class="write-input">
       <button id="examClearBtn" type="button" class="settings-close" style="margin-top:0; width:auto; padding:8px 12px; color:#c4645c;">消す</button>
     </div>
-    <p class="settings-label" id="stReviewLabel" style="margin-top:16px;">自動で復習を入れる</p>
-    <p class="settings-note" id="stReviewNote" style="margin-top:0;">計画ごとに「🔁 できたら復習も入れる」にチェックを付けておくと、その計画に「できた○」を付けたとき、1日後・3日後・1週間後・2週間後の同じ教材に🔁復習を自動で書き込みます。</p>
-    <div id="reviewChips" class="week-chips"></div>
     <p class="settings-label" id="stLinkLabel" style="margin-top:16px;">手帳と連携</p>
     <p class="settings-note" id="stLinkNote" style="margin-top:0;"></p>
     <div id="linkOn" style="display:none;">
@@ -1557,7 +1531,6 @@
     cellPlace:      'やることを書く（例: 長文2ページ）',
     cellAddItem:    'もう1つ書く',
     itemDelete:     'この行をけす',
-    revToggleLabel: 'できたら復習も入れる',
     copyDatesTitle: '複数の日にコピー',
     copyDatesSub:   '「{text}」を、タップした日に次々とコピーします',
     copyDatesDone:  'コピーしました',
@@ -1754,90 +1727,6 @@
     syncPush(iso);
   }
 
-  // ---- 自動復習（間隔反復）：計画に○を付けると未来の同じ教材へ🔁復習という別項目を書き込む ----
-  var REVIEW_INTERVALS = [1, 3, 7, 14];   // 何日後に復習を入れるか
-  var REVIEW_MARK = '🔁';
-  function reviewOn() { return localStorage.getItem('pk:reviewOn') !== '0'; }   // 既定オン
-  function keyRev(iso, sid, itemId) { return 'pk:rev:' + iso + ':' + sid + ':' + itemId; }   // 予約した復習の記録（取り消し用）
-  function scheduleReviews(srcIso, sid, itemId, srcText) {
-    if (!reviewOn()) return;
-    if (localStorage.getItem(keyRev(srcIso, sid, itemId))) return;   // 二重予約しない
-    var base = srcText.split('\n')[0].slice(0, 40);
-    if (!base) return;
-    var added = [];
-    REVIEW_INTERVALS.forEach(function (d, i) {
-      var line = REVIEW_MARK + (i + 1) + ' ' + base;   // 🔁の横に1〜4の数字＝何回目の復習かが分かるように
-      var tIso = addDays(srcIso, d);
-      var items = cellItems(tIso, sid);
-      if (items.some(function (it) { return it.text === line; })) return;   // すでに同じ復習項目があれば足さない
-      var nid = genItemId();
-      items.push({ id: nid, text: line, done: false, u: Date.now() });
-      writeCellItems(tIso, sid, items);
-      added.push({ iso: tIso, id: nid });
-    });
-    if (added.length) localStorage.setItem(keyRev(srcIso, sid, itemId), JSON.stringify(added));
-  }
-  // 指定の項目（sid内、iso日・itemId）がどこかの復習シリーズのメンバーかを、pk:rev:*キーを
-  // 総当たりして探す。項目そのものには印を付けない（cellの項目配列はセーブのたびに{id,text,done,u}
-  // へ組み直され、手帳との同期(applyRemoteFeed)でもまるごと置き換わるため、項目に持たせた印は
-  // 消えてしまう。pk:rev:*はどちらからも一切触られないので、こちらだけに記録を持たせる）
-  function findReviewChain(sid, iso, itemId) {
-    var hit = null;
-    forEachStoredKey('pk:rev:', function (k) {
-      if (hit) return;
-      var rest = k.slice('pk:rev:'.length);
-      var parts = rest.split(':');
-      if (parts.length < 3 || parts[1] !== sid) return;
-      var raw = localStorage.getItem(k);
-      if (!raw) return;
-      var chain; try { chain = JSON.parse(raw); } catch (e) { return; }
-      if (!Array.isArray(chain)) return;
-      if (chain.some(function (e) { return e.iso === iso && e.id === itemId; })) hit = { key: k, chain: chain };
-    });
-    return hit;
-  }
-  // ×で繰り越された項目が復習シリーズの1つだった場合、同シリーズでまだ来ていない先の予約
-  // （fromIsoより後ろの日付ぶん）も1日ずつ後ろ倒しにする。既に完了済み・見つからない（削除済み等）
-  // ものはそのまま、移動先に同文の項目が既にある場合は重複を避けて動かさない。
-  // selfNewLoc を渡すと、繰り越した本人ぶんのチェーン内記録も新しい日付/idへ更新する
-  function cascadeReviewChain(sid, fromIso, itemId, selfNewLoc) {
-    var found = findReviewChain(sid, fromIso, itemId);
-    if (!found) return;
-    var changed = false;
-    var chain = found.chain.map(function (entry) {
-      if (entry.iso === fromIso && entry.id === itemId) {
-        if (!selfNewLoc) return entry;
-        changed = true;
-        return selfNewLoc;
-      }
-      if (!(entry.iso > fromIso)) return entry;   // 過去・当日ぶんは対象外
-      var items = cellItems(entry.iso, sid);
-      var it2 = items.find(function (it) { return it.id === entry.id; });
-      if (!it2 || it2.done) return entry;   // 見つからない・完了済みはそのまま
-      var targetIso = addDays(entry.iso, 1);
-      var targetItems = cellItems(targetIso, sid);
-      if (targetItems.some(function (it) { return it.text === it2.text; })) return entry;   // 移動先に同文があれば動かさない
-      writeCellItems(entry.iso, sid, items.filter(function (it) { return it.id !== entry.id; }));
-      var nid = genItemId();
-      targetItems.push({ id: nid, text: it2.text, done: false, u: Date.now() });
-      writeCellItems(targetIso, sid, targetItems);
-      changed = true;
-      return { iso: targetIso, id: nid };
-    });
-    if (changed) localStorage.setItem(found.key, JSON.stringify(chain));
-  }
-  function unscheduleReviews(srcIso, sid, itemId) {
-    var raw = localStorage.getItem(keyRev(srcIso, sid, itemId));
-    if (!raw) return;
-    var list; try { list = JSON.parse(raw); } catch (e) { list = []; }
-    list.forEach(function (r) {
-      var items = cellItems(r.iso, sid);
-      var kept = items.filter(function (it) { return it.id !== r.id; });
-      if (kept.length !== items.length) writeCellItems(r.iso, sid, kept);
-    });
-    localStorage.removeItem(keyRev(srcIso, sid, itemId));
-  }
-
   // ---- 手帳との連携（即時同期。中継サーバー=Durable ObjectへHTTPでpush・WebSocketで受信） ----
   // 別々のiOSアプリはlocalStorageを共有できないため、共有コードで中継する。
   var LINK_BASE = window.__linkBase || 'https://keikakuchou-notify.keikakuchou-app.workers.dev';
@@ -1947,16 +1836,66 @@
   // 何日おきに復習したか（1・2・4・7・14・30日）を行ごとに日付で記録する進捗表）----
   var DETAIL_COLS = ['1', '2', '4', '7', '14', '30'];
   function keyDetail(sid) { return 'pk:detail:' + sid; }
+  // セルは {date, itemId}。itemIdは、日付を書いたときにメインのその日のマスへ書き込んだ
+  // 項目のidで、日付を変える／消すときにメイン側の古い項目を見つけて追従させるために使う
   function readDetail(sid) {
     try {
       var d = JSON.parse(localStorage.getItem(keyDetail(sid)) || 'null');
       if (!d || !Array.isArray(d.rows)) return { rows: [] };
-      d.rows.forEach(function (r) { if (!r.cells || typeof r.cells !== 'object') r.cells = {}; });
+      d.rows.forEach(function (r) {
+        if (!r.cells || typeof r.cells !== 'object') r.cells = {};
+        DETAIL_COLS.forEach(function (col) {
+          var v = r.cells[col];
+          if (!v) return;
+          if (typeof v === 'string') r.cells[col] = { date: v, itemId: null };   // 旧形式（日付文字列のみ）との後方互換
+        });
+      });
       return d;
     } catch (e) { return { rows: [] }; }
   }
   function writeDetail(sid, data) {
     try { localStorage.setItem(keyDetail(sid), JSON.stringify(data)); } catch (e) {}
+  }
+  // 細かい計画表のセルに日付を書く／変える／消すと、メイン(日別グリッド)の該当日のマスにも
+  // 「行ラベル（○日）」という項目として書き込む・移動する・消す。書いた時点でできたはず
+  // （過去の記録を入れる用途のため）なので、○（done）を最初から付けた状態にする
+  function applyDetailCell(sid, row, col, newDateValue) {
+    var cell = row.cells[col] || { date: '', itemId: null };
+    if (cell.itemId && cell.date) {
+      var oldItems = cellItems(cell.date, sid);
+      var kept = oldItems.filter(function (it) { return it.id !== cell.itemId; });
+      if (kept.length !== oldItems.length) writeCellItems(cell.date, sid, kept);
+    }
+    var newItemId = null;
+    if (newDateValue) {
+      var label = (row.label || '').trim() || '（無題）';
+      var items = cellItems(newDateValue, sid);
+      newItemId = genItemId();
+      items.push({ id: newItemId, text: label + '（' + col + '日）', done: true, u: Date.now() });
+      writeCellItems(newDateValue, sid, items);
+    }
+    row.cells[col] = { date: newDateValue, itemId: newItemId };
+  }
+  // 行のラベルを変えたとき、既にメインへ反映済みのセルがあれば、その項目のテキストも更新する
+  function relabelDetailRow(sid, row) {
+    var label = (row.label || '').trim() || '（無題）';
+    DETAIL_COLS.forEach(function (col) {
+      var cell = row.cells[col];
+      if (!cell || !cell.itemId || !cell.date) return;
+      var items = cellItems(cell.date, sid);
+      var found = items.find(function (it) { return it.id === cell.itemId; });
+      if (found) { found.text = label + '（' + col + '日）'; writeCellItems(cell.date, sid, items); }
+    });
+  }
+  // 行を消すとき、メインへ反映済みだった項目も一緒に消す
+  function unlinkDetailRow(sid, row) {
+    DETAIL_COLS.forEach(function (col) {
+      var cell = row.cells[col];
+      if (!cell || !cell.itemId || !cell.date) return;
+      var items = cellItems(cell.date, sid);
+      var kept = items.filter(function (it) { return it.id !== cell.itemId; });
+      if (kept.length !== items.length) writeCellItems(cell.date, sid, kept);
+    });
   }
 
   // ---- 保存の合図 ----
@@ -2011,7 +1950,7 @@
   }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
-  // ---- きろく：教材ごとの「書いた・できた○・達成率・うち復習」 ----
+  // ---- きろく：教材ごとの「書いた・できた○・達成率」 ----
   // 今日までのマスだけを数える（未来の予定を入れても達成率が下がらないように）
   function computeStats() {
     var todayIso = toISO(new Date());
@@ -2021,13 +1960,10 @@
       if (iso > todayIso) return;
       var items = cellItems(iso, sid);
       if (!items.length) return;
-      var st = by[sid] || (by[sid] = { planned: 0, done: 0, rev: 0 });
+      var st = by[sid] || (by[sid] = { planned: 0, done: 0 });
       items.forEach(function (it) {
         st.planned++;
-        if (it.done) {
-          st.done++;
-          if (it.text.indexOf(REVIEW_MARK) !== -1) st.rev++;
-        }
+        if (it.done) st.done++;
       });
     });
     return by;
@@ -2036,8 +1972,7 @@
     var row = document.createElement('div');
     row.className = 'stats-row' + (isTotal ? ' stats-total' : '');
     var pct = st.planned ? Math.round(st.done / st.planned * 100) : 0;
-    var sub = 'できた○ ' + st.done + ' ／ 書いた ' + st.planned +
-      (st.rev ? '（うち' + REVIEW_MARK + '復習 ' + st.rev + '）' : '');
+    var sub = 'できた○ ' + st.done + ' ／ 書いた ' + st.planned;
     row.innerHTML =
       '<div class="stats-head"><span class="stats-name">' + esc(name) + '</span>' +
       '<span class="stats-pct">' + pct + '%</span></div>' +
@@ -2049,11 +1984,11 @@
     var list = document.getElementById('statsList');
     list.innerHTML = '';
     var by = computeStats();
-    var total = { planned: 0, done: 0, rev: 0 }, shown = 0;
+    var total = { planned: 0, done: 0 }, shown = 0;
     readSubjects().forEach(function (s) {
       var st = by[s.id];
       if (!st) return;                       // まだ何も書いていない教材は出さない
-      total.planned += st.planned; total.done += st.done; total.rev += st.rev;
+      total.planned += st.planned; total.done += st.done;
       list.appendChild(buildStatsRow(s.name, st, false));
       shown++;
     });
@@ -2065,7 +2000,6 @@
   }
 
   // ---- 計画と○✕記録の全書き出し（AIに貼って合格確率を計算させる用） ----
-  // 復習行の「🔁」プレフィックスはそのまま残す（復習だと分かる方がAIの判断材料になる）
   function buildExportText() {
     var todayIso = toISO(new Date());
     var subjects = readSubjects();
@@ -2099,8 +2033,7 @@
       anyStat = true;
       totalP += st.planned; totalD += st.done;
       var pct = st.planned ? Math.round(st.done / st.planned * 100) : 0;
-      lines.push('- ' + s.name + '：' + pct + '%（できた ' + st.done + ' / 予定 ' + st.planned +
-        (st.rev ? '、うち復習 ' + st.rev : '') + '）');
+      lines.push('- ' + s.name + '：' + pct + '%（できた ' + st.done + ' / 予定 ' + st.planned + '）');
     });
     if (anyStat) {
       var totalPct = totalP ? Math.round(totalD / totalP * 100) : 0;
@@ -2221,12 +2154,7 @@
         if (items.length) {
           var span = document.createElement('span');
           span.className = 'cell-text';
-          // 復習項目（🔁1 本文 のような形）は、数字だけ小さく色付きの<sup>にして「何回目か」を目立たせる
-          span.innerHTML = items.map(function (it) {
-            var m = it.text.match(/^🔁(\d+) ([\s\S]*)$/);
-            if (m) return '<span class="rev-icon">' + REVIEW_MARK + '<span class="rev-num">' + esc(m[1]) + '</span></span>' + esc(m[2]);
-            return esc(it.text);
-          }).join('\n');
+          span.textContent = items.map(function (it) { return it.text; }).join('\n');
           td.appendChild(span);
           if (items.every(function (it) { return it.done; })) td.classList.add('done');
           else if (items.some(function (it) { return it.done; })) td.classList.add('partial');
@@ -2250,8 +2178,8 @@
     var d = fromISO(iso);
     document.getElementById('cellModalTitle').innerHTML =
       subject.name + '<span class="sub">' + (d.getMonth() + 1) + '月' + d.getDate() + '日（' + DOW[d.getDay()] + '）</span>';
-    editingItems = cellItems(iso, subject.id).map(function (it) { return { id: it.id, text: it.text, done: !!it.done, rev: !!it.rev }; });
-    if (!editingItems.length) editingItems.push({ id: null, text: '', done: false, rev: false });
+    editingItems = cellItems(iso, subject.id).map(function (it) { return { id: it.id, text: it.text, done: !!it.done }; });
+    if (!editingItems.length) editingItems.push({ id: null, text: '', done: false });
     renderCellItemsList();
     cellModal.style.display = 'flex';
     if (!editingItems[0].text) setTimeout(function () {
@@ -2276,22 +2204,6 @@
       cross.setAttribute('role', 'button');
       cross.title = tx('cellCarry');
       cross.setAttribute('aria-label', tx('cellCarry'));
-      // 「できたら復習も入れる」チェック。これが付いている行だけ、○を付けて保存したときに
-      // 未来へ🔁復習を自動で予約する（以前は○さえ付ければ自動だったが、際限なく増える／
-      // 不要な項目にまで入るのを避けたいという要望で、行ごとの明示チェック制に変更した）
-      var revToggle = document.createElement('span');
-      revToggle.className = 'rev-toggle' + (item.rev ? ' on' : '');
-      revToggle.setAttribute('role', 'button');
-      revToggle.title = tx('revToggleLabel');
-      revToggle.setAttribute('aria-label', tx('revToggleLabel'));
-      revToggle.textContent = REVIEW_MARK;
-      // 復習項目自体(🔁で始まる行)には出さない。孫の復習は作らない仕様なので選ばせても無意味なため
-      function updateRevToggleVisibility() { revToggle.style.display = item.text.trim().indexOf(REVIEW_MARK) === 0 ? 'none' : 'inline-flex'; }
-      updateRevToggleVisibility();
-      revToggle.addEventListener('click', function () {
-        item.rev = !item.rev;
-        revToggle.classList.toggle('on', item.rev);
-      });
       var input = document.createElement('input');
       input.type = 'text';
       input.className = 'write-input item-text';
@@ -2305,10 +2217,9 @@
         row.classList.toggle('done', item.done);
         updateCrossVisibility();
       });
-      input.addEventListener('input', function () { item.text = input.value; updateCrossVisibility(); updateRevToggleVisibility(); });
+      input.addEventListener('input', function () { item.text = input.value; updateCrossVisibility(); });
       // ×＝できなかった印（翌日へ自動で繰り越す）: この行を消して、翌日の同じ教材へ新しい行として入れる。
-      // 今日側もこの場で確定保存する（そのままモーダルを閉じても今日と翌日で二重に残らないように）。
-      // 復習シリーズの1つだった場合は、同シリーズのまだ来ていない先の予約も1日ずつ後ろ倒しにする
+      // 今日側もこの場で確定保存する（そのままモーダルを閉じても今日と翌日で二重に残らないように）
       cross.addEventListener('click', function () {
         var text = item.text.trim();
         if (!text) return;
@@ -2317,16 +2228,14 @@
         var nid = genItemId();
         nextItems.push({ id: nid, text: text, done: false, u: Date.now() });
         writeCellItems(nextIso, sid, nextItems);
-        if (item.id) unscheduleReviews(iso, sid, item.id);
-        if (item.id) cascadeReviewChain(sid, iso, item.id, { iso: nextIso, id: nid });
         editingItems.splice(idx, 1);
-        if (!editingItems.length) editingItems.push({ id: null, text: '', done: false, rev: false });
+        if (!editingItems.length) editingItems.push({ id: null, text: '', done: false });
         var now = Date.now(), kept = [];
         editingItems.forEach(function (it) {
           var t = it.text.trim();
           if (!t) return;
           if (!it.id) it.id = genItemId();
-          kept.push({ id: it.id, text: t, done: it.done, u: now, rev: it.rev });
+          kept.push({ id: it.id, text: t, done: it.done, u: now });
         });
         writeCellItems(iso, sid, kept);
         renderCellItemsList();
@@ -2339,19 +2248,18 @@
       delBtn.setAttribute('aria-label', tx('itemDelete'));
       delBtn.textContent = '✕';
       delBtn.addEventListener('click', function () {
-        if (item.id) unscheduleReviews(editing.iso, editing.subject.id, item.id);
         editingItems.splice(idx, 1);
-        if (!editingItems.length) editingItems.push({ id: null, text: '', done: false, rev: false });
+        if (!editingItems.length) editingItems.push({ id: null, text: '', done: false });
         renderCellItemsList();
       });
-      row.appendChild(ring); row.appendChild(revToggle); row.appendChild(cross); row.appendChild(input); row.appendChild(delBtn);
+      row.appendChild(ring); row.appendChild(cross); row.appendChild(input); row.appendChild(delBtn);
       cellItemsList.appendChild(row);
       // 長押し→複数の日にコピー（文字入力欄・×／けすボタンの上では発動させない）
       (function () {
         var lpTimer = null, lpX = null, lpY = null;
         function cancel() { if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; } row.classList.remove('lp-active'); }
         row.addEventListener('pointerdown', function (ev) {
-          if (ev.target === input || ev.target.closest('.item-del, .ring, .cross, .rev-toggle')) return;
+          if (ev.target === input || ev.target.closest('.item-del, .ring, .cross')) return;
           if (!item.text.trim()) return;
           lpX = ev.clientX; lpY = ev.clientY;
           row.classList.add('lp-active');
@@ -2417,7 +2325,7 @@
       flashSaved(tx('copyDatesDone'));
       // 開いているマスそのものへコピーしたときは、下の一覧にもすぐ反映する
       if (editing && editing.iso === iso && editing.subject.id === copySource.sid) {
-        editingItems = cellItems(iso, copySource.sid).map(function (it) { return { id: it.id, text: it.text, done: !!it.done, rev: !!it.rev }; });
+        editingItems = cellItems(iso, copySource.sid).map(function (it) { return { id: it.id, text: it.text, done: !!it.done }; });
         renderCellItemsList();
       }
     }
@@ -2429,7 +2337,7 @@
   document.getElementById('copyDatesClose').addEventListener('click', closeCopyDatesModal);
   copyDatesModal.addEventListener('click', function (e) { if (e.target === copyDatesModal) closeCopyDatesModal(); });
   document.getElementById('cellAddItem').addEventListener('click', function () {
-    editingItems.push({ id: null, text: '', done: false, rev: false });
+    editingItems.push({ id: null, text: '', done: false });
     renderCellItemsList();
     var rows = cellItemsList.querySelectorAll('.item-text');
     var last = rows[rows.length - 1];
@@ -2438,29 +2346,16 @@
   document.getElementById('cellSave').addEventListener('click', function () {
     if (!editing) return;
     var iso = editing.iso, sid = editing.subject.id, now = Date.now();
-    var kept = [], dropped = [];
+    var kept = [];
     editingItems.forEach(function (it) {
       var text = it.text.trim();
-      if (text) kept.push({ id: it.id || genItemId(), text: text, done: it.done, u: now, rev: it.rev });
-      else if (it.id) dropped.push(it.id);   // 文字を消して空にした既存の行は消える扱い
+      if (text) kept.push({ id: it.id || genItemId(), text: text, done: it.done, u: now });
     });
-    dropped.forEach(function (id) { unscheduleReviews(iso, sid, id); });
     writeCellItems(iso, sid, kept);
-    // 自動復習：「できたら復習も入れる」にチェックが付いている行だけ、○が付いたときに
-    // 未来へ復習を予約する（以前は○さえ付ければ自動だったが、行ごとの明示チェック制に変更）。
-    // 復習項目(🔁で始まる行)自体には常にチェックUIを出さない＝孫の復習は作らない
-    kept.forEach(function (it) {
-      if (it.done) {
-        if (it.rev && it.text.indexOf(REVIEW_MARK) !== 0) scheduleReviews(iso, sid, it.id, it.text);
-      } else {
-        unscheduleReviews(iso, sid, it.id);
-      }
-    });
     closeCellModal(); flashSaved();
   });
   document.getElementById('cellClear').addEventListener('click', function () {
     if (!editing) return;
-    editingItems.forEach(function (it) { if (it.id) unscheduleReviews(editing.iso, editing.subject.id, it.id); });
     writeCellItems(editing.iso, editing.subject.id, []);
     closeCellModal(); flashSaved();
   });
@@ -2609,6 +2504,7 @@
       labelInput.value = row.label || '';
       labelInput.addEventListener('change', function () {
         row.label = labelInput.value.trim();
+        relabelDetailRow(detailSubjectId, row);
         writeDetail(detailSubjectId, data);
       });
       tdLabel.appendChild(labelInput);
@@ -2617,10 +2513,11 @@
         var td = document.createElement('td');
         var inp = document.createElement('input');
         inp.type = 'date';
-        inp.value = row.cells[col] || '';
+        inp.value = (row.cells[col] && row.cells[col].date) || '';
         inp.addEventListener('change', function () {
-          row.cells[col] = inp.value;
+          applyDetailCell(detailSubjectId, row, col, inp.value);
           writeDetail(detailSubjectId, data);
+          render();   // メイン側のグリッドにも即反映する
         });
         td.appendChild(inp);
         tr.appendChild(td);
@@ -2632,9 +2529,11 @@
       rowDelBtn.textContent = '✕';
       rowDelBtn.setAttribute('aria-label', 'この行をけす');
       rowDelBtn.addEventListener('click', function () {
+        unlinkDetailRow(detailSubjectId, row);
         data.rows.splice(idx, 1);
         writeDetail(detailSubjectId, data);
         renderDetailTable();
+        render();   // メイン側のグリッドにも即反映する
       });
       tdDel.appendChild(rowDelBtn);
       tr.appendChild(tdDel);
@@ -3114,7 +3013,6 @@
     renderThemeChips(); renderWeekStartChips(); renderLinkSection();
     document.getElementById('examNameInput').value = localStorage.getItem('pk:examName') || '';
     document.getElementById('examDateInput').value = examDate();
-    renderReviewChips();
     settingsModal.style.display = 'flex';
   });
   // 試験日・試験名の入力
@@ -3134,22 +3032,6 @@
     document.getElementById('examNameInput').value = '';
     renderCountdown(); flashSaved();
   });
-  // 自動復習のオン/オフ
-  function renderReviewChips() {
-    var wrap = document.getElementById('reviewChips');
-    wrap.innerHTML = '';
-    [['1', 'つかう'], ['0', 'つかわない']].forEach(function (opt) {
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.textContent = opt[1];
-      b.className = (reviewOn() ? '1' : '0') === opt[0] ? 'active' : '';
-      b.addEventListener('click', function () {
-        localStorage.setItem('pk:reviewOn', opt[0]);
-        renderReviewChips(); flashSaved();
-      });
-      wrap.appendChild(b);
-    });
-  }
   // きろく（達成率）
   document.getElementById('menuStats').addEventListener('click', function () {
     menuPanel.style.display = 'none';
