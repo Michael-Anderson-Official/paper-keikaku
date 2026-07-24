@@ -777,6 +777,55 @@
     border-radius: 8px;
     cursor: pointer;
   }
+  /* 細かい計画表（教材専用の目次/進捗表） */
+  .detail-table-wrap {
+    max-height: 48vh;
+    overflow: auto;
+    margin-top: 10px;
+    border: 1px solid rgba(120, 100, 60, 0.25);
+    border-radius: 8px;
+  }
+  .detail-table { border-collapse: collapse; width: 100%; font-size: 12px; }
+  .detail-table th, .detail-table td {
+    border: 1px solid rgba(120, 100, 60, 0.18);
+    padding: 2px;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .detail-table th {
+    position: sticky; top: 0;
+    background: #f3ecd9;
+    color: var(--ink-strong);
+    font-weight: 600;
+    padding: 5px 2px;
+  }
+  .detail-table .detail-label-input {
+    width: 62px;
+    font-family: inherit;
+    font-size: 12px;
+    color: var(--ink-text);
+    border: none;
+    background: transparent;
+    text-align: center;
+    padding: 6px 2px;
+  }
+  .detail-table input[type="date"] {
+    width: 100px;
+    font-family: inherit;
+    font-size: 11px;
+    color: var(--ink-text);
+    border: none;
+    background: transparent;
+    padding: 6px 1px;
+  }
+  .detail-table .detail-row-del {
+    border: none;
+    background: none;
+    color: var(--sun);
+    font-size: 13px;
+    padding: 6px 8px;
+    cursor: pointer;
+  }
   .cell-add-item:active { transform: translateY(1px); }
   .modal-btns { display: flex; gap: 8px; margin-top: 14px; align-items: center; }
   .modal-btns .spacer { flex: 1; }
@@ -1381,6 +1430,7 @@
     </div>
     <input type="file" id="coverFileInput" accept="image/*" style="display:none;">
     <button type="button" id="scanOpenBtn" class="scan-open">📷 <span id="scanOpenLabel">本のバーコードで入れる</span></button>
+    <button type="button" id="detailPlanOpenBtn" class="scan-open" style="display:none;">📋 <span>細かい計画表を表示</span></button>
     <button type="button" id="tocOpenBtn" class="scan-open">📑 <span id="tocOpenLabel">目次の写真から章を入れる</span></button>
     <input type="file" id="tocFileInput" accept="image/*" style="display:none;">
     <div id="subjectReorder" class="subject-reorder" style="display:none;">
@@ -1394,6 +1444,31 @@
       <span class="spacer"></span>
       <button id="subjectCancel">とじる</button>
       <button class="primary" id="subjectSave">書きこむ</button>
+    </div>
+  </div>
+</div>
+
+<!-- 細かい計画表（教材専用の目次/項目一覧・進捗管理） -->
+<div id="detailPlanModal" class="settings-modal" style="display:none;">
+  <div class="settings-card">
+    <h2 id="detailPlanTitle"></h2>
+    <p class="settings-note" style="margin-top:0;">行を自由に追加して、何日おき（1・2・4・7・14・30日）に復習したか日付を記録できます。</p>
+    <div class="detail-table-wrap">
+      <table class="detail-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>1</th><th>2</th><th>4</th><th>7</th><th>14</th><th>30</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="detailTableBody"></tbody>
+      </table>
+    </div>
+    <button type="button" id="detailAddRowBtn" class="cell-add-item">＋ 行を追加</button>
+    <div class="modal-btns">
+      <span class="spacer"></span>
+      <button class="primary" id="detailPlanClose">とじる</button>
     </div>
   </div>
 </div>
@@ -1865,6 +1940,23 @@
       if (owner === sid) { localStorage.removeItem(k); feedDays[iso] = true; }
     });
     Object.keys(feedDays).forEach(rebuildFeed);
+    localStorage.removeItem(keyDetail(sid));
+  }
+
+  // ---- 細かい計画表（教材専用の目次/項目一覧。1〜10・11〜20のような行を自由に追加し、
+  // 何日おきに復習したか（1・2・4・7・14・30日）を行ごとに日付で記録する進捗表）----
+  var DETAIL_COLS = ['1', '2', '4', '7', '14', '30'];
+  function keyDetail(sid) { return 'pk:detail:' + sid; }
+  function readDetail(sid) {
+    try {
+      var d = JSON.parse(localStorage.getItem(keyDetail(sid)) || 'null');
+      if (!d || !Array.isArray(d.rows)) return { rows: [] };
+      d.rows.forEach(function (r) { if (!r.cells || typeof r.cells !== 'object') r.cells = {}; });
+      return d;
+    } catch (e) { return { rows: [] }; }
+  }
+  function writeDetail(sid, data) {
+    try { localStorage.setItem(keyDetail(sid), JSON.stringify(data)); } catch (e) {}
   }
 
   // ---- 保存の合図 ----
@@ -2430,6 +2522,10 @@
     document.getElementById('subjectModalTitle').textContent = subject ? tx('subjectEdit') : tx('subjectAdd');
     document.getElementById('subjectName').value = subject ? subject.name : '';
     document.getElementById('subjectDelete').style.display = subject ? '' : 'none';
+    // バーコードで入れるのは「新規追加」のときだけ（教材の身元が既に決まっている編集時は無意味）。
+    // 代わりに「既存の教材を編集」のときだけ、その教材専用の細かい計画表を開くボタンを出す
+    document.getElementById('scanOpenBtn').style.display = subject ? 'none' : '';
+    document.getElementById('detailPlanOpenBtn').style.display = subject ? '' : 'none';
     // 並び替えは「既存の教材を編集」かつ「2つ以上あるとき」だけ出す
     if (subject && readSubjects().length > 1) {
       reorderRow.style.display = 'flex';
@@ -2487,6 +2583,79 @@
   });
   document.getElementById('subjectCancel').addEventListener('click', closeSubjectModal);
   subjectModal.addEventListener('click', function (e) { if (e.target === subjectModal) closeSubjectModal(); });
+
+  // ---- 細かい計画表（教材専用の目次/項目一覧。行=通し番号の区切り、列=何日おきに復習したか） ----
+  var detailPlanModal = document.getElementById('detailPlanModal');
+  var detailTableBody = document.getElementById('detailTableBody');
+  var detailSubjectId = null;
+  function openDetailPlanModal(subject) {
+    detailSubjectId = subject.id;
+    document.getElementById('detailPlanTitle').textContent = subject.name;
+    renderDetailTable();
+    detailPlanModal.style.display = 'flex';
+  }
+  function closeDetailPlanModal() { detailPlanModal.style.display = 'none'; detailSubjectId = null; }
+  function renderDetailTable() {
+    var data = readDetail(detailSubjectId);
+    detailTableBody.innerHTML = '';
+    data.rows.forEach(function (row, idx) {
+      var tr = document.createElement('tr');
+      var tdLabel = document.createElement('td');
+      var labelInput = document.createElement('input');
+      labelInput.type = 'text';
+      labelInput.className = 'detail-label-input';
+      labelInput.maxLength = 20;
+      labelInput.placeholder = '1〜10';
+      labelInput.value = row.label || '';
+      labelInput.addEventListener('change', function () {
+        row.label = labelInput.value.trim();
+        writeDetail(detailSubjectId, data);
+      });
+      tdLabel.appendChild(labelInput);
+      tr.appendChild(tdLabel);
+      DETAIL_COLS.forEach(function (col) {
+        var td = document.createElement('td');
+        var inp = document.createElement('input');
+        inp.type = 'date';
+        inp.value = row.cells[col] || '';
+        inp.addEventListener('change', function () {
+          row.cells[col] = inp.value;
+          writeDetail(detailSubjectId, data);
+        });
+        td.appendChild(inp);
+        tr.appendChild(td);
+      });
+      var tdDel = document.createElement('td');
+      var rowDelBtn = document.createElement('button');
+      rowDelBtn.type = 'button';
+      rowDelBtn.className = 'detail-row-del';
+      rowDelBtn.textContent = '✕';
+      rowDelBtn.setAttribute('aria-label', 'この行をけす');
+      rowDelBtn.addEventListener('click', function () {
+        data.rows.splice(idx, 1);
+        writeDetail(detailSubjectId, data);
+        renderDetailTable();
+      });
+      tdDel.appendChild(rowDelBtn);
+      tr.appendChild(tdDel);
+      detailTableBody.appendChild(tr);
+    });
+  }
+  document.getElementById('detailPlanOpenBtn').addEventListener('click', function () {
+    if (editingSubject) openDetailPlanModal(editingSubject);
+  });
+  document.getElementById('detailAddRowBtn').addEventListener('click', function () {
+    if (!detailSubjectId) return;
+    var data = readDetail(detailSubjectId);
+    data.rows.push({ id: genItemId(), label: '', cells: {} });
+    writeDetail(detailSubjectId, data);
+    renderDetailTable();
+    var inputs = detailTableBody.querySelectorAll('.detail-label-input');
+    var last = inputs[inputs.length - 1];
+    if (last) last.focus();
+  });
+  document.getElementById('detailPlanClose').addEventListener('click', closeDetailPlanModal);
+  detailPlanModal.addEventListener('click', function (e) { if (e.target === detailPlanModal) closeDetailPlanModal(); });
 
   // ---- バーコードで教材を入れる（カメラ生スキャン → ISBNから書名を取得） ----
   // 書名取得は openBD（和書に強い）→ 見つからなければ Google Books。ISBNのみを送る。
