@@ -414,9 +414,18 @@
     .paper { border-radius: 0; }
     /* --countdown-hはJS(renderCountdown)が、試験日カウントダウンの実際の高さ（0px=非表示）を
        都度measureしてsetPropertyする。ダイナミックアイランド等の切り欠きに重ならないよう
-       カウントダウン自身にもsafe-area-inset-topぶんの余白を持たせ、その下に続く見出し・案内文・
-       グリッドは「基準位置＋safe-area＋カウントダウンの高さ」だけ下げて、両者が重ならないようにする */
-    .exam-countdown { padding-top: env(safe-area-inset-top, 0px); }
+       カウントダウン自身はposition:absoluteでtopをsafe-area-inset-topぶん下げ（＝offsetHeightは
+       純粋なコンテンツ高のみになりsafe-areaを含まない）、その下に続く見出し・案内文・グリッドは
+       「基準位置＋safe-area＋カウントダウンの高さ」だけ下げる。rightは右上のメニュー(☰)ボタン
+       （幅40px・right:10px）に文字が被らないよう56pxぶん空けている */
+    .exam-countdown {
+      position: absolute;
+      top: env(safe-area-inset-top, 0px);
+      left: 34px;
+      right: 56px;
+      margin: 2px 0 0;
+      padding-bottom: 6px;
+    }
     .page-date { top: calc(22px + env(safe-area-inset-top, 0px) + var(--countdown-h, 0px)); }
     .plan-sub { top: calc(84px + env(safe-area-inset-top, 0px) + var(--countdown-h, 0px)); }
     .grid-scroll {
