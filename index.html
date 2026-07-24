@@ -627,6 +627,43 @@
     border-radius: 8px;
     cursor: pointer;
   }
+
+  /* 詳細（手帳連携・自動バックアップ・データのひかえ）は既定で閉じる折りたたみ。
+     毎日触る設定（かみ・週の始まり・試験日）だけを開いた瞬間に見せて、
+     めったに触らない技術的な項目はここへ隠す */
+  .settings-adv {
+    margin-top: 18px;
+    border-top: 1px solid rgba(120, 100, 60, 0.22);
+  }
+  .settings-adv > summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 2px 12px;
+    font-size: 14px;
+    color: #6b6046;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .settings-adv > summary::-webkit-details-marker { display: none; }
+  /* 開閉の▶（閉じているとき→、開くと↓） */
+  .settings-adv > summary::before {
+    content: '›';
+    display: inline-block;
+    font-size: 18px;
+    line-height: 1;
+    color: #8a8d99;
+    transition: transform 0.15s ease;
+  }
+  .settings-adv[open] > summary::before { transform: rotate(90deg); }
+  .settings-adv-hint {
+    margin-left: auto;
+    font-size: 11px;
+    color: #a7a396;
+  }
+  .settings-adv-body { padding-top: 2px; }
   /* 書き込み欄（罫線つき。手帳の書く欄と同じ字＝明朝） */
   .write-input, .write-textarea {
     width: 100%;
@@ -1318,7 +1355,10 @@
       <input id="examDateInput" type="date" class="write-input">
       <button id="examClearBtn" type="button" class="settings-close" style="margin-top:0; width:auto; padding:8px 12px; color:#c4645c;">消す</button>
     </div>
-    <p class="settings-label" id="stLinkLabel" style="margin-top:16px;">手帳と連携</p>
+    <details class="settings-adv">
+      <summary>データと同期・バックアップ<span class="settings-adv-hint">手帳との連携・ひかえ</span></summary>
+      <div class="settings-adv-body">
+    <p class="settings-label" id="stLinkLabel" style="margin-top:8px;">手帳と連携</p>
     <p class="settings-note" id="stLinkNote" style="margin-top:0;"></p>
     <div id="linkOn" style="display:none;">
       <div class="link-code-row"><span id="linkCodeShow" class="link-code"></span><button id="linkCopyBtn" type="button" class="settings-close" style="margin-top:0; width:auto; padding:8px 12px;">コピー</button></div>
@@ -1350,6 +1390,8 @@
       <button id="backupImportBtn" type="button" class="settings-close" style="margin-top:0;">復元</button>
     </div>
     <input id="backupImportInput" type="file" accept="application/json" style="display:none;">
+      </div>
+    </details>
     <button id="settingsClose" type="button" class="settings-close">とじる</button>
   </div>
 </div>
