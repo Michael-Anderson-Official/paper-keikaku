@@ -756,8 +756,7 @@
   }
   /* 細かい計画表（教材専用の目次/進捗表） */
   .detail-table-wrap {
-    max-height: 48vh;
-    overflow: auto;
+    overflow-x: auto;
     margin-top: 10px;
     border: 1px solid rgba(120, 100, 60, 0.25);
     border-radius: 8px;
@@ -770,7 +769,6 @@
     white-space: nowrap;
   }
   .detail-table th {
-    position: sticky; top: 0;
     background: #f3ecd9;
     color: var(--ink-strong);
     font-weight: 600;
