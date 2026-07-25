@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>手ざわり計画表</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,25 +14,6 @@
 <link href="fonts/fonts.css" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  .sr-only {
-    position: absolute !important;
-    width: 1px !important;
-    height: 1px !important;
-    padding: 0 !important;
-    margin: -1px !important;
-    overflow: hidden !important;
-    clip: rect(0, 0, 0, 0) !important;
-    white-space: nowrap !important;
-    border: 0 !important;
-  }
-  button:focus-visible,
-  [role="button"]:focus-visible,
-  input:focus-visible,
-  textarea:focus-visible,
-  summary:focus-visible {
-    outline: 3px solid var(--sat);
-    outline-offset: 2px;
-  }
   html, body { height: 100%; overflow: hidden; }
   html { background: #2b251f; }
 
@@ -44,15 +25,15 @@
     --paper-back-3: #ebe4d0;
     --ink-strong: #454a58;
     --ink-text: #4a4e5c;
-    --ink-soft: #686b78;
-    --placeholder: #686b78;
+    --ink-soft: #8a8d99;
+    --placeholder: rgba(122, 126, 140, 0.4);
     --rule: rgba(122, 158, 196, 0.38);
     --rule-strong: rgba(122, 158, 196, 0.55);
     --margin-line: rgba(214, 130, 122, 0.55);
     --print: #5d6f93;
     --print-soft: #8291b0;
-    --sun: #a64f49;
-    --sat: #466b94;
+    --sun: #c4645c;
+    --sat: #5b7fa6;
     --today-ring: rgba(200, 80, 70, 0.75);
     --stitch: rgba(120, 100, 70, 0.4);
     --divider-label: #b08a84;
@@ -75,7 +56,7 @@
     --ink-strong: #e8e6df;
     --ink-text: #dfdcd2;
     --ink-soft: #9a9890;
-    --placeholder: #9a9890;
+    --placeholder: rgba(255, 255, 255, 0.28);
     --rule: rgba(255, 255, 255, 0.14);
     --rule-strong: rgba(255, 255, 255, 0.28);
     --margin-line: rgba(235, 140, 130, 0.55);
@@ -95,15 +76,15 @@
     --paper-back-3: #24413a;
     --ink-strong: #f0ede2;
     --ink-text: #e7e4d8;
-    --ink-soft: #c4ccc2;
-    --placeholder: #c4ccc2;
+    --ink-soft: #a8b3a5;
+    --placeholder: rgba(255, 255, 255, 0.3);
     --rule: rgba(255, 255, 255, 0.16);
     --rule-strong: rgba(255, 255, 255, 0.3);
     --margin-line: rgba(255, 190, 180, 0.5);
     --print: #b8cfe4;
     --print-soft: #93a9bd;
-    --sun: #ffc0b8;
-    --sat: #c4daf4;
+    --sun: #f0a8a0;
+    --sat: #a8c4e8;
     --today-ring: rgba(240, 168, 160, 0.85);
     --stitch: rgba(255, 255, 255, 0.25);
     --divider-label: #d8b8b2;
@@ -117,7 +98,7 @@
     --ink-strong: #ffb02e;
     --ink-text: #ffa41f;
     --ink-soft: #9a7b45;
-    --placeholder: #9a7b45;
+    --placeholder: rgba(255, 164, 31, 0.3);
     --rule: rgba(255, 176, 46, 0.12);
     --rule-strong: rgba(255, 176, 46, 0.3);
     --margin-line: rgba(255, 176, 46, 0.25);
@@ -137,15 +118,15 @@
     --paper-back-3: #f0d6de;
     --ink-strong: #5a4750;
     --ink-text: #5f4c54;
-    --ink-soft: #7a626c;
-    --placeholder: #7a626c;
+    --ink-soft: #a98d96;
+    --placeholder: rgba(150, 110, 125, 0.4);
     --rule: rgba(210, 150, 175, 0.35);
     --rule-strong: rgba(210, 150, 175, 0.5);
     --margin-line: rgba(224, 130, 150, 0.6);
     --print: #b06a86;
     --print-soft: #c28ba0;
-    --sun: #a94060;
-    --sat: #566aa6;
+    --sun: #d9607e;
+    --sat: #7f8fc4;
     --today-ring: rgba(220, 100, 130, 0.8);
     --stitch: rgba(180, 120, 140, 0.4);
     --divider-label: #c07d95;
@@ -158,15 +139,15 @@
     --paper-back-3: #d4e7db;
     --ink-strong: #3f4f48;
     --ink-text: #44544c;
-    --ink-soft: #60746b;
-    --placeholder: #60746b;
+    --ink-soft: #8aa197;
+    --placeholder: rgba(90, 130, 110, 0.4);
     --rule: rgba(120, 180, 150, 0.35);
     --rule-strong: rgba(120, 180, 150, 0.5);
     --margin-line: rgba(120, 190, 165, 0.55);
     --print: #4f8f78;
     --print-soft: #74a892;
-    --sun: #a54c42;
-    --sat: #3f7088;
+    --sun: #cf6f5f;
+    --sat: #5b8fa6;
     --today-ring: rgba(70, 160, 120, 0.8);
     --stitch: rgba(100, 140, 120, 0.4);
     --divider-label: #7ba491;
@@ -179,15 +160,15 @@
     --paper-back-3: #ddd3ec;
     --ink-strong: #4c4658;
     --ink-text: #514b5e;
-    --ink-soft: #71667f;
-    --placeholder: #71667f;
+    --ink-soft: #9a8fae;
+    --placeholder: rgba(120, 105, 145, 0.4);
     --rule: rgba(160, 140, 200, 0.32);
     --rule-strong: rgba(160, 140, 200, 0.48);
     --margin-line: rgba(180, 140, 205, 0.55);
     --print: #7a6aa0;
     --print-soft: #9587b5;
-    --sun: #9b4168;
-    --sat: #5566a6;
+    --sun: #c56b8f;
+    --sat: #6f7fc4;
     --today-ring: rgba(150, 110, 190, 0.8);
     --stitch: rgba(140, 120, 160, 0.4);
     --divider-label: #9a82b0;
@@ -271,51 +252,24 @@
     left: 0;
     right: 0;
     bottom: 0;
-    overflow: hidden;
-    overscroll-behavior: none;
-    touch-action: manipulation;
-    padding: 0 12px 8px 30px;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 12px 14px 30px;
   }
-  table.plan {
-    --plan-head-h: 44px;
-    border-collapse: separate;
-    border-spacing: 0;
-    width: 100%;
-    height: 100%;
-    table-layout: fixed;
-  }
-  table.plan.has-covers { --plan-head-h: 90px; }
-  table.plan .plan-head-row { height: var(--plan-head-h); }
-  table.plan .plan-day-row { height: calc((100% - var(--plan-head-h)) / 7); }
-  table.plan .plan-day-row > td { overflow: hidden; }
-  table.plan th, table.plan td {
-    border: 0;
-    border-right: 1px solid var(--rule);
-    border-bottom: 1px solid var(--rule);
-    vertical-align: top;
-  }
+  table.plan { border-collapse: collapse; width: 100%; table-layout: fixed; }
+  table.plan th, table.plan td { border: 1px solid var(--rule); vertical-align: top; }
   table.plan th { border-top: none; }
+  table.plan th:first-child, table.plan td:first-child { border-left: none; }
   table.plan tr:last-child td { border-bottom: none; }
 
   th.subject {
+    height: 44px;
     font-size: 14px;
     font-weight: 600;
     color: var(--ink-strong);
     vertical-align: middle;
-    padding: 0;
-    background-color: var(--paper);
-  }
-  .subject-button {
-    width: 100%;
-    height: 100%;
-    min-height: 44px;
-    padding: 3px 4px;
-    border: 0;
-    background: transparent;
-    color: inherit;
-    font: inherit;
-    font-weight: inherit;
     cursor: pointer;
+    padding: 3px 4px;
   }
   /* 教材の表紙（列見出しの上に小さく。本棚のように） */
   th.subject .subject-cover {
@@ -327,7 +281,7 @@
     border-radius: 3px;
     box-shadow: 1px 1px 2px rgba(60, 45, 25, 0.35);
   }
-  th.subject.has-cover { padding-top: 5px; }
+  th.subject.has-cover { height: 90px; padding-top: 5px; }
   /* 教材名は2行まで表示（はみ出したら…）。thは表セルのまま、内側spananだけをクランプ */
   th.subject .subject-name {
     display: -webkit-box;
@@ -339,38 +293,23 @@
     white-space: normal;
     word-break: break-word;
   }
-  th.corner {
-    width: 44px;
-    background-color: var(--paper);
-    box-shadow: 1px 0 0 var(--rule);
-  }
+  th.corner { width: 42px; }
   th.add-col {
-    width: 44px;
+    width: 38px;
     font-size: 19px;
     font-weight: 400;
     color: var(--ink-soft);
     vertical-align: middle;
-    background-color: var(--paper);
-  }
-  .add-subject-button {
-    width: 100%;
-    min-height: 44px;
-    border: 0;
-    background: transparent;
-    color: inherit;
-    font: inherit;
     cursor: pointer;
   }
 
   td.day-label {
-    width: 44px;
+    width: 42px;
     padding: 6px 3px 0 0;
     text-align: center;
     font-size: 11px;
     color: var(--ink-soft);
     position: relative;
-    background-color: var(--paper);
-    box-shadow: 1px 0 0 var(--rule);
   }
   td.day-label .date-num {
     display: block;
@@ -395,61 +334,20 @@
     pointer-events: none;
   }
 
-  td.cell { height: auto; padding: 0; position: relative; }
-  .cell-button {
-    display: block;
-    position: absolute;
-    inset: 0;
-    width: auto;
-    height: auto;
-    min-height: 44px;
-    padding: 5px 6px;
-    border: 0;
-    background: transparent;
-    color: inherit;
-    font: inherit;
-    text-align: left;
-    cursor: pointer;
-    overflow: hidden;
-  }
+  td.cell { height: 62px; padding: 5px 6px; cursor: pointer; position: relative; }
   td.cell .cell-text {
     /* 書いた計画は「自分の字」＝書く字（明朝）で。手帳の書き込みと字を揃える */
     font-family: 'Shippori Mincho', 'Klee One', serif;
     font-size: 13.5px;
     line-height: 1.4;
     color: var(--ink-text);
-    display: block;
-    overflow: hidden;
-  }
-  td.cell .cell-text.multi { max-height: 38px; }
-  td.cell .cell-text-item {
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  td.cell .cell-text.single .cell-text-item {
-    display: -webkit-box;
     word-break: break-word;
     white-space: pre-wrap;
+    display: -webkit-box;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
   }
-  td.cell .cell-text-item.is-done {
-    color: var(--ink-soft);
-    text-decoration: line-through;
-    text-decoration-thickness: 1px;
-  }
-  td.cell .cell-progress {
-    display: block;
-    margin-top: 1px;
-    color: var(--ink-soft);
-    font-size: 10.5px;
-    line-height: 1.2;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-  td.cell.partial .cell-progress { color: var(--sun); }
   /* できた＝赤鉛筆の○ */
   td.cell.done::after {
     content: '';
@@ -461,39 +359,24 @@
     pointer-events: none;
   }
   td.cell.done .cell-text { color: var(--ink-soft); }
-  /* 複数項目の一部だけ完了した場合は、項目ごとの取り消し線と「1/3 完了」で示す。 */
+  /* 一部だけできた＝角に小さな赤丸（全部できた＝周りの○と区別） */
+  td.cell.partial::after {
+    content: '';
+    position: absolute;
+    top: 4px; right: 6px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--today-ring);
+    pointer-events: none;
+  }
 
   .empty-note {
-    position: absolute;
-    z-index: 2;
-    top: 64px;
-    left: 78px;
-    right: 20px;
-    padding: 20px 18px;
-    border-radius: 10px;
-    background: var(--paper-back-2);
-    box-shadow: 0 3px 12px rgba(60, 45, 25, 0.12);
+    padding: 34px 20px 0 14px;
     font-size: 15px;
-    line-height: 1.75;
+    line-height: 2;
     color: var(--ink-soft);
   }
   .empty-note b { color: var(--ink-strong); font-weight: 600; }
-  .empty-add-button {
-    display: block;
-    min-width: min(100%, 220px);
-    min-height: 48px;
-    margin-top: 20px;
-    padding: 10px 18px;
-    border: 1px solid #4d6b4d;
-    border-radius: 9px;
-    background: #5a7d5a;
-    color: #fff;
-    font: inherit;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  .empty-add-button:active { transform: translateY(1px); }
 
   /* ---- 下部ツールバー（手ざわり手帳と同じ） ---- */
   .toolbar { display: flex; gap: 6px; margin-top: 14px; align-items: center; }
@@ -504,43 +387,12 @@
     background: linear-gradient(180deg, #f3ecd9, #e7dfc8);
     border: 1px solid rgba(120, 100, 60, 0.35);
     border-radius: 6px;
-    min-height: 44px;
-    padding: 9px 13px;
+    padding: 7px 11px;
     white-space: nowrap;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
     cursor: pointer;
   }
   .toolbar button:active { transform: translateY(1px); }
-  .toolbar button:disabled { opacity: 0.38; cursor: default; transform: none; }
-  .subject-pager {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    min-height: 44px;
-    padding: 0 2px;
-    border: 1px solid var(--rule-strong);
-    border-radius: 6px;
-    background: var(--paper-back-2);
-  }
-  .subject-pager[hidden] { display: none; }
-  .toolbar .subject-pager button,
-  body[data-paper] .toolbar .subject-pager button {
-    width: 44px;
-    min-height: 44px;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    box-shadow: none;
-    font-size: 16px;
-  }
-  .subject-page-label {
-    min-width: 44px;
-    color: var(--ink-soft);
-    font-size: 12px;
-    font-weight: 600;
-    text-align: center;
-    white-space: nowrap;
-  }
 
   /* ---- 縁なし（埋め込み）モード。スマホは画面のふちまで紙（手帳と同じ） ---- */
   @media (max-width: 600px) {
@@ -571,28 +423,14 @@
       position: fixed;
       left: 0; right: 0; bottom: 0;
       margin: 0;
-      gap: 4px;
       justify-content: center;
-      padding: 8px 4px calc(10px + env(safe-area-inset-bottom, 0px));
+      padding: 8px 8px calc(10px + env(safe-area-inset-bottom, 0px));
       z-index: 50;
-    }
-    .toolbar > button {
-      padding-right: 9px;
-      padding-left: 9px;
     }
     .toolbar button {
       background: linear-gradient(180deg, rgba(243, 236, 217, 0.92), rgba(231, 223, 200, 0.92));
       box-shadow: 0 2px 6px rgba(60, 45, 25, 0.25);
     }
-  }
-  @media (max-width: 360px) {
-    .toolbar > button { padding-right: 5px; padding-left: 5px; font-size: 12px; }
-  }
-  /* 背の低い端末では表紙より7日分の操作領域を優先する。教材編集画面では表紙を確認できる。 */
-  @media (max-height: 620px) {
-    table.plan.has-covers { --plan-head-h: 44px; }
-    table.plan.has-covers .subject-cover { display: none; }
-    th.subject.has-cover { padding-top: 0; }
   }
 
   /* ---- 右上のメニュー（手帳と同じ） ---- */
@@ -601,7 +439,7 @@
     top: calc(env(safe-area-inset-top, 0px) + 10px);
     right: 10px;
     z-index: 60;
-    width: 44px; height: 44px;
+    width: 40px; height: 40px;
     border: 1px solid rgba(120, 100, 60, 0.35);
     border-radius: 10px;
     background: linear-gradient(180deg, rgba(243, 236, 217, 0.92), rgba(231, 223, 200, 0.92));
@@ -632,7 +470,6 @@
     background: transparent;
     border: 0;
     padding: 12px 16px;
-    min-height: 44px;
     text-align: left;
     cursor: pointer;
   }
@@ -664,21 +501,16 @@
        ここで上書きし、中の文字（書きこみ欄など）がどのテーマでも読める濃さになるようにする */
     --ink-text: #4a4e5c;
     --ink-strong: #454a58;
-    --ink-soft: #686b78;
-    --placeholder: #686b78;
-    --sun: #a64f49;
-    --sat: #466b94;
-    --today-ring: rgba(166, 79, 73, 0.82);
+    --ink-soft: #8a8d99;
+    --placeholder: rgba(122, 126, 140, 0.4);
   }
-  .settings-card button { min-height: 44px; }
-  .settings-card input, .settings-card textarea { min-height: 44px; }
   .settings-card h2 { font-size: 20px; font-weight: 600; margin-bottom: 12px; }
   .settings-card h2 .sub { font-size: 13px; font-weight: 400; color: var(--ink-soft); margin-left: 8px; }
   .settings-label { font-size: 14px; color: #6b6046; margin-bottom: 8px; }
-  .settings-note { font-size: 12px; color: var(--ink-soft); margin-top: 10px; }
+  .settings-note { font-size: 12px; color: #8a8d99; margin-top: 10px; }
   .week-chips { display: flex; gap: 6px; flex-wrap: wrap; }
   .week-chips button {
-    width: 44px; height: 44px;
+    width: 40px; height: 40px;
     font-family: inherit;
     font-size: 15px;
     color: #4a4e5c;
@@ -747,7 +579,6 @@
   .backup-nudge-btns { display: flex; gap: 8px; justify-content: flex-end; }
   .backup-nudge-btns button {
     padding: 7px 12px;
-    min-height: 44px;
     font-family: inherit;
     font-size: 13px;
     border-radius: 8px;
@@ -759,18 +590,18 @@
     border: 1px solid rgba(120, 100, 60, 0.35);
   }
   .backup-nudge-later {
-    color: #686b78;
+    color: #8a8d99;
     background: transparent;
     border: 1px solid rgba(120, 100, 60, 0.2);
   }
 
-  /* カード右上の×（閉じる） */
+  /* カード右上の×（とじる） */
   .card-close-x {
     position: absolute;
     top: 6px;
     right: 6px;
-    width: 44px;
-    height: 44px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -779,7 +610,7 @@
     border-radius: 50%;
     font-size: 22px;
     line-height: 1;
-    color: var(--ink-soft);
+    color: #8a8d99;
     cursor: pointer;
   }
   .card-close-x:active { background: rgba(120, 100, 60, 0.12); }
@@ -797,7 +628,7 @@
     cursor: pointer;
   }
 
-  /* 詳細（手帳連携・自動バックアップ・ファイル保存）は既定で閉じる折りたたみ。
+  /* 詳細（手帳連携・自動バックアップ・データのひかえ）は既定で閉じる折りたたみ。
      毎日触る設定（かみ・週の始まり・試験日）だけを開いた瞬間に見せて、
      めったに触らない技術的な項目はここへ隠す */
   .settings-adv {
@@ -823,15 +654,14 @@
     display: inline-block;
     font-size: 18px;
     line-height: 1;
-    color: var(--ink-soft);
+    color: #8a8d99;
     transition: transform 0.15s ease;
   }
   .settings-adv[open] > summary::before { transform: rotate(90deg); }
   .settings-adv-hint {
     margin-left: auto;
     font-size: 11px;
-    color: var(--ink-soft);
-    white-space: nowrap;
+    color: #a7a396;
   }
   .settings-adv-body { padding-top: 2px; }
   /* 書き込み欄（罫線つき。手帳の書く欄と同じ字＝明朝） */
@@ -850,7 +680,7 @@
   }
   .write-input { border-bottom: 1px solid var(--rule-strong); background-image: none; }
   .write-textarea { height: 112px; }
-  .write-input::placeholder, .write-textarea::placeholder { color: var(--placeholder); opacity: 1; }
+  .write-input::placeholder, .write-textarea::placeholder { color: var(--placeholder); }
   /* できた○のトグル（設定内で完結する丸つけ） */
   .done-toggle {
     display: flex; align-items: center; gap: 8px;
@@ -877,122 +707,68 @@
   }
   /* セルの書き込み：1マスに複数行（計画ごとに○） */
   .cell-items { display: flex; flex-direction: column; gap: 8px; }
-  .cell-item-row {
-    display: grid;
-    grid-template-columns: 44px minmax(0, 1fr) 44px;
-    column-gap: 8px;
-    row-gap: 2px;
-    align-items: start;
-  }
+  .cell-item-row { display: flex; align-items: center; gap: 8px; }
   .cell-item-row .ring {
     flex: none;
-    width: 44px;
-    height: 44px;
-    border: 0;
-    background: transparent;
+    width: 22px; height: 22px;
+    border: 2px solid rgba(110, 130, 160, 0.4);
+    border-radius: 50%;
     position: relative;
     cursor: pointer;
   }
-  .cell-item-row .ring::before {
-    content: '';
-    position: absolute;
-    width: 22px;
-    height: 22px;
-    top: 11px;
-    left: 11px;
-    border: 2px solid rgba(110, 130, 160, 0.4);
-    border-radius: 50%;
-  }
-  .cell-item-row.done .ring::before { border-color: transparent; }
+  .cell-item-row.done .ring { border-color: transparent; }
   .cell-item-row.done .ring::after {
     content: '';
     position: absolute;
-    width: 22px;
-    height: 22px;
-    top: 9px;
-    left: 9px;
+    inset: -2px;
     border: 2.5px solid var(--today-ring);
     border-radius: 48% 52% 46% 54% / 54% 46% 52% 48%;
     transform: rotate(-4deg);
   }
-  .cell-item-row .item-text {
-    grid-column: 2;
-    grid-row: 1;
-    min-width: 0;
-    min-height: 44px;
-    max-height: 112px;
-    line-height: 22px;
-    padding: 10px 0 6px;
-    overflow-y: auto;
-  }
+  .cell-item-row .item-text { flex: 1; min-width: 0; }
   .cell-item-row.done .item-text { color: var(--ink-soft); text-decoration: line-through; text-decoration-color: rgba(138, 141, 153, 0.6); }
   /* 翌日へ繰り越し。意味の分かるチップに（未完了で文字がある行だけ表示）。
      繰り越しと削除が両方「×」で紛らわしかったのを解消するための表示 */
   .cell-item-row .carry {
+    flex: none;
     display: inline-flex;
     align-items: center;
     font-family: inherit;
     font-size: 11px;
     line-height: 1;
     white-space: nowrap;
-    min-height: 44px;
-    padding: 0 9px;
-    color: #95483f;
+    padding: 5px 8px;
+    color: #b06a5c;
     background: rgba(200, 100, 92, 0.09);
     border: 1px solid rgba(200, 100, 92, 0.3);
     border-radius: 12px;
     cursor: pointer;
   }
   .cell-item-row .carry:active { background: rgba(200, 100, 92, 0.18); }
-  .cell-item-actions {
-    grid-column: 2 / 4;
-    grid-row: 2;
-    display: flex;
-    justify-content: flex-end;
-    gap: 6px;
-  }
-  .cell-item-row .copy-other {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-    padding: 0 10px;
-    border: 1px solid rgba(90, 125, 90, 0.32);
-    border-radius: 12px;
-    background: rgba(90, 125, 90, 0.08);
-    color: #557255;
-    font: inherit;
-    font-size: 11px;
-    line-height: 1;
-    white-space: nowrap;
-    cursor: pointer;
-  }
-  .cell-item-row .copy-other:active { background: rgba(90, 125, 90, 0.16); }
   /* 削除は繰り越しと区別するため控えめなグレーの✕に（赤の重複をやめる） */
   .cell-item-row .item-del {
-    grid-column: 3;
-    grid-row: 1;
-    width: 44px; height: 44px;
+    flex: none;
+    width: 28px; height: 28px;
     font-family: inherit;
     font-size: 13px;
     color: var(--ink-soft);
-    opacity: 1;
+    opacity: 0.6;
     background: transparent;
     border: none;
     cursor: pointer;
   }
   .cell-item-row .item-del:active { opacity: 1; }
   .cell-item-row.lp-active { background: rgba(90, 125, 90, 0.14); border-radius: 8px; }
-  /* 「ほかの日へコピー」→複数の日にコピーする小さなカレンダー */
+  /* 長押し→複数の日にコピーの、小さなカレンダー */
   .copy-cal-head { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
   .copy-cal-head button {
-    min-width: 44px;
     font-family: inherit; font-size: 15px;
     background: none; border: none; color: #4a4030;
     padding: 6px 10px; cursor: pointer;
   }
   .copy-cal-head span { font-size: 14px; font-weight: 600; color: #4a4030; }
   .copy-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 8px; }
-  .copy-cal-dow { text-align: center; font-size: 11px; color: var(--ink-soft); padding-bottom: 2px; }
+  .copy-cal-dow { text-align: center; font-size: 11px; color: #8a8d99; padding-bottom: 2px; }
   .copy-cal-day {
     aspect-ratio: 1;
     font-family: inherit;
@@ -1248,13 +1024,11 @@
   .scan-manual-row { display: flex; gap: 8px; align-items: center; }
   .scan-manual-row .write-input {
     flex: 1;
-    min-height: 44px;
     color: #f4f1e8;
     border-bottom-color: rgba(255, 255, 255, 0.35);
   }
-  .scan-manual-row .write-input::placeholder { color: #b7b4ac; opacity: 1; }
+  .scan-manual-row .write-input::placeholder { color: rgba(255, 255, 255, 0.4); }
   .scan-manual-row button.primary {
-    min-height: 44px;
     font-family: inherit;
     font-size: 14px;
     padding: 9px 16px;
@@ -1266,7 +1040,6 @@
   }
   .scan-close {
     width: min(88vw, 360px);
-    min-height: 44px;
     margin: 12px 0 16px;
     padding: 12px;
     font-family: inherit;
@@ -1365,12 +1138,7 @@
     left: 50%;
     transform: translateX(-50%);
     font-size: 12px;
-    color: #fff;
-    background: rgba(35, 37, 42, 0.92);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 999px;
-    padding: 7px 12px;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+    color: #d8cdb4;
     opacity: 0;
     transition: opacity 0.25s;
     pointer-events: none;
@@ -1483,7 +1251,7 @@
   /* 電光掲示板はボタン文字もほのかに発光させて盤面と一体に */
   body[data-paper="led"] .menu-btn,
   body[data-paper="led"] .toolbar button { text-shadow: 0 0 5px; }
-  /* ---- 記録（教材ごとの達成率） ---- */
+  /* ---- きろく（教材ごとの達成率） ---- */
   .stats-list { display: flex; flex-direction: column; gap: 13px; margin: 10px 0 4px; }
   .stats-head { display: flex; align-items: baseline; gap: 8px; }
   .stats-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-strong); font-weight: 600; }
@@ -1533,54 +1301,49 @@
   <button id="prevWeek" type="button">◀ 前へ</button>
   <button id="todayBtn" type="button">今週</button>
   <button id="nextWeek" type="button">次へ ▶</button>
-  <span id="subjectPager" class="subject-pager" role="group" aria-label="教材の表示切り替え" hidden>
-    <button id="prevSubjectPage" type="button" aria-label="前の教材を表示" aria-controls="gridScroll">◀</button>
-    <span id="subjectPageLabel" class="subject-page-label" aria-live="polite"></span>
-    <button id="nextSubjectPage" type="button" aria-label="次の教材を表示" aria-controls="gridScroll">▶</button>
-  </span>
 </div>
 
-<div class="save-note" id="saveNote" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="save-note" id="saveNote">とじました</div>
 
 <!-- 右上のメニュー（☰）と設定（手帳と同じ） -->
-<button id="menuBtn" type="button" class="menu-btn" aria-label="メニュー" aria-controls="menuPanel" aria-expanded="false">☰</button>
-<div id="menuPanel" class="menu-panel" style="display:none;" role="group" aria-label="メニュー項目">
+<button id="menuBtn" type="button" class="menu-btn" aria-label="メニュー">☰</button>
+<div id="menuPanel" class="menu-panel" style="display:none;">
   <button id="menuSettings" type="button">⚙ 設定</button>
-  <button id="menuStats" type="button">📊 記録</button>
+  <button id="menuStats" type="button">📊 きろく</button>
   <button id="menuExport" type="button">📤 書き出す（AIに貼る）</button>
-  <button id="menuTecho" type="button">📖 手ざわり手帳を開く</button>
+  <button id="menuTecho" type="button">📖 手ざわり手帳をひらく</button>
 </div>
 
 <!-- 計画と○✕記録の書き出し（AIに貼って合格確率を計算させる用） -->
-<div id="exportModal" class="settings-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="exportTitle" data-close-button="exportClose">
+<div id="exportModal" class="settings-modal" style="display:none;">
   <div class="settings-card">
-    <button id="exportCloseX" type="button" class="card-close-x" aria-label="閉じる">×</button>
-    <h2 id="exportTitle">書き出す</h2>
+    <button id="exportCloseX" type="button" class="card-close-x" aria-label="とじる">×</button>
+    <h2>書き出す</h2>
     <p class="settings-note" style="margin-top:0;">計画と○✕の記録を全部テキストにします。「コピー」してAI（ChatGPTなど）に貼り、「この記録で試験に受かりそうか、確率を出して」と聞けます。</p>
     <textarea id="exportText" class="export-text" readonly spellcheck="false"></textarea>
     <div style="display:flex; gap:8px; margin-top:8px;">
       <button id="exportCopyBtn" type="button" class="primary" style="flex:1;">コピー</button>
       <button id="exportSaveBtn" type="button" class="settings-close" style="margin-top:0; flex:1;">ファイルに保存</button>
     </div>
-    <button id="exportClose" type="button" class="settings-close">閉じる</button>
+    <button id="exportClose" type="button" class="settings-close">とじる</button>
   </div>
 </div>
 
-<!-- 記録（教材ごとの達成率） -->
-<div id="statsModal" class="settings-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="statsTitle" data-close-button="statsClose">
+<!-- きろく（教材ごとの達成率） -->
+<div id="statsModal" class="settings-modal" style="display:none;">
   <div class="settings-card">
-    <h2 id="statsTitle">記録</h2>
-    <p class="settings-note" style="margin-top:0;">今日までに書き込んだマスが対象です（今後の予定は数えません）。</p>
+    <h2>きろく</h2>
+    <p class="settings-note" style="margin-top:0;">今日までに書きこんだマスが対象です（先の予定は数えません）。</p>
     <div id="statsList" class="stats-list"></div>
-    <button id="statsClose" type="button" class="settings-close">閉じる</button>
+    <button id="statsClose" type="button" class="settings-close">とじる</button>
   </div>
 </div>
 
-<div id="settingsModal" class="settings-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="stTitle" data-close-button="settingsClose">
+<div id="settingsModal" class="settings-modal" style="display:none;">
   <div class="settings-card">
-    <button id="settingsCloseX" type="button" class="card-close-x" aria-label="閉じる">×</button>
+    <button id="settingsCloseX" type="button" class="card-close-x" aria-label="とじる">×</button>
     <h2 id="stTitle">設定</h2>
-    <p class="settings-label" id="stThemeLabel">テーマ</p>
+    <p class="settings-label" id="stThemeLabel">かみ</p>
     <div id="themeChips" class="week-chips"></div>
     <p class="settings-note" id="stThemeNote"></p>
     <p class="settings-label" id="stWeekStartLabel" style="margin-top:16px;">週の始まり</p>
@@ -1593,37 +1356,37 @@
     </div>
     <div class="link-enter-row" style="margin-top:8px; align-items:center;">
       <input id="examDateInput" type="date" class="write-input">
-      <button id="examClearBtn" type="button" class="settings-close" style="margin-top:0; width:auto; padding:8px 12px; color:var(--sun);">削除</button>
+      <button id="examClearBtn" type="button" class="settings-close" style="margin-top:0; width:auto; padding:8px 12px; color:#c4645c;">消す</button>
     </div>
     <details class="settings-adv">
-      <summary>同期とバックアップ<span class="settings-adv-hint">手帳連携・復元</span></summary>
+      <summary>データと同期・バックアップ<span class="settings-adv-hint">手帳との連携・ひかえ</span></summary>
       <div class="settings-adv-body">
     <p class="settings-label" id="stLinkLabel" style="margin-top:8px;">手帳と連携</p>
     <p class="settings-note" id="stLinkNote" style="margin-top:0;"></p>
     <div id="linkOn" style="display:none;">
       <div class="link-code-row"><span id="linkCodeShow" class="link-code"></span><button id="linkCopyBtn" type="button" class="settings-close" style="margin-top:0; width:auto; padding:8px 12px;">コピー</button></div>
-      <button id="linkStopBtn" type="button" class="settings-close" style="margin-top:8px; color:var(--sun);">連携を停止</button>
+      <button id="linkStopBtn" type="button" class="settings-close" style="margin-top:8px; color:#c4645c;">連携をやめる</button>
     </div>
     <div id="linkOff">
-       <button id="linkStartBtn" type="button" class="settings-close" style="margin-top:0;">連携を開始（コードを作成）</button>
+      <button id="linkStartBtn" type="button" class="settings-close" style="margin-top:0;">連携をはじめる（コードを作る）</button>
       <div class="link-enter-row" style="margin-top:8px;">
-        <input id="linkCodeInput" type="text" class="write-input" placeholder="手帳のコードを入力" autocapitalize="off" autocorrect="off" spellcheck="false">
-        <button id="linkJoinBtn" type="button" class="primary">接続</button>
+        <input id="linkCodeInput" type="text" class="write-input" placeholder="手帳のコードを入れる" autocapitalize="off" autocorrect="off" spellcheck="false">
+        <button id="linkJoinBtn" type="button" class="primary">つなぐ</button>
       </div>
     </div>
-    <p class="settings-label" style="margin-top:16px;">自動バックアップ</p>
+    <p class="settings-label" style="margin-top:16px;">自動バックアップ（じぶんのひかえ）</p>
     <p id="vaultStatus" class="settings-note" style="margin-top:0;"></p>
     <div id="vaultOnBox">
       <div class="link-code-row"><span id="vaultCodeShow" class="link-code"></span><button id="vaultCopyBtn" type="button" class="settings-close" style="margin-top:0; width:auto; padding:8px 12px;">コピー</button></div>
-      <p class="settings-note" style="margin-top:6px;">↑この<b>復元コード</b>をスクリーンショットまたは紙に控えてください。アプリの削除後や機種変更後も、コードを入力すれば復元できます。</p>
+      <p class="settings-note" style="margin-top:6px;">↑この<b>復元コード</b>をスクショか紙にひかえてください。アプリを消しても機種変しても、コードを入れれば全部戻せます。</p>
     </div>
     <div class="link-enter-row" style="margin-top:8px;">
-      <input id="vaultRestoreInput" type="text" class="write-input" placeholder="復元コードを入力" autocapitalize="characters" autocorrect="off" spellcheck="false">
+      <input id="vaultRestoreInput" type="text" class="write-input" placeholder="復元コードを入れて戻す" autocapitalize="characters" autocorrect="off" spellcheck="false">
       <button id="vaultRestoreBtn" type="button" class="primary">復元</button>
     </div>
     <button id="vaultToggleBtn" type="button" class="settings-close" style="margin-top:8px;"></button>
 
-    <p class="settings-label" id="stBackupLabel" style="margin-top:16px;">データのバックアップ</p>
+    <p class="settings-label" id="stBackupLabel" style="margin-top:16px;">データのひかえ</p>
     <p class="settings-note" id="stBackupNote" style="margin-top:0;"></p>
     <div style="display:flex; gap:8px;">
       <button id="backupExportBtn" type="button" class="settings-close" style="margin-top:0;">ファイルに保存</button>
@@ -1632,29 +1395,29 @@
     <input id="backupImportInput" type="file" accept="application/json" style="display:none;">
       </div>
     </details>
-    <button id="settingsClose" type="button" class="settings-close">閉じる</button>
+    <button id="settingsClose" type="button" class="settings-close">とじる</button>
   </div>
 </div>
 
 <!-- セルの書き込み（手帳の予定エディタと同じ紙カード）。1マスに複数の計画を書け、○は計画ごと -->
-<div id="cellModal" class="settings-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="cellModalTitle" data-close-button="cellSave">
+<div id="cellModal" class="settings-modal" style="display:none;">
   <div class="settings-card">
     <h2 id="cellModalTitle"></h2>
-    <p class="settings-note" style="margin: -6px 0 10px;">書いた内容は自動で保存されます。</p>
     <div id="cellItemsList" class="cell-items"></div>
-    <button type="button" id="cellAddItem" class="cell-add-item">＋ <span id="cellAddItemLabel">項目を追加</span></button>
+    <button type="button" id="cellAddItem" class="cell-add-item">＋ <span id="cellAddItemLabel">もう1つ書く</span></button>
     <div class="modal-btns">
-      <button class="danger" id="cellClear">すべて削除</button>
+      <button class="danger" id="cellClear">けす</button>
       <span class="spacer"></span>
-      <button class="primary" id="cellSave">閉じる</button>
+      <button id="cellCancel">とじる</button>
+      <button class="primary" id="cellSave">保存</button>
     </div>
   </div>
 </div>
 
-<!-- 「ほかの日へコピー」→複数の日にコピー -->
-<div id="copyDatesModal" class="settings-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="copyDatesTitle" data-close-button="copyDatesClose">
+<!-- 行を長押し→複数の日にコピー -->
+<div id="copyDatesModal" class="settings-modal" style="display:none;">
   <div class="settings-card">
-    <h2 id="copyDatesTitle">日付を選んでコピー</h2>
+    <h2 id="copyDatesTitle">複数の日にコピー</h2>
     <p id="copyDatesSub" class="settings-note" style="margin-top:0;"></p>
     <div class="copy-cal-head">
       <button type="button" id="copyCalPrev">◀</button>
@@ -1664,27 +1427,27 @@
     <div id="copyCalGrid" class="copy-cal-grid"></div>
     <div class="modal-btns">
       <span class="spacer"></span>
-       <button class="primary" id="copyDatesClose">閉じる</button>
+      <button class="primary" id="copyDatesClose">とじる</button>
     </div>
   </div>
 </div>
 
 <!-- 教材の追加・改名 -->
-<div id="subjectModal" class="settings-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="subjectModalTitle" data-close-button="subjectCancel">
+<div id="subjectModal" class="settings-modal" style="display:none;">
   <div class="settings-card">
-    <h2 id="subjectModalTitle">教材を追加</h2>
+    <h2 id="subjectModalTitle">教材をふやす</h2>
     <input type="text" id="subjectName" class="write-input" maxlength="60">
     <div class="cover-row">
       <div id="coverPreview" class="cover-preview"><span id="coverPreviewEmpty">📖</span></div>
       <div class="cover-actions">
-        <button type="button" id="coverPickBtn" class="cover-pick">表紙を選択／撮影</button>
-        <button type="button" id="coverRemoveBtn" class="cover-remove" style="display:none;">外す</button>
+        <button type="button" id="coverPickBtn" class="cover-pick">表紙を選ぶ</button>
+        <button type="button" id="coverRemoveBtn" class="cover-remove" style="display:none;">はずす</button>
       </div>
     </div>
     <input type="file" id="coverFileInput" accept="image/*" style="display:none;">
-    <button type="button" id="scanOpenBtn" class="scan-open">📷 <span id="scanOpenLabel">本のバーコードから追加</span></button>
+    <button type="button" id="scanOpenBtn" class="scan-open">📷 <span id="scanOpenLabel">本のバーコードで入れる</span></button>
     <button type="button" id="detailPlanOpenBtn" class="scan-open" style="display:none;">📋 <span>細かい計画表を表示</span></button>
-    <button type="button" id="tocOpenBtn" class="scan-open">📑 <span id="tocOpenLabel">目次の写真から章を追加</span></button>
+    <button type="button" id="tocOpenBtn" class="scan-open">📑 <span id="tocOpenLabel">目次の写真から章を入れる</span></button>
     <input type="file" id="tocFileInput" accept="image/*" style="display:none;">
     <div id="subjectReorder" class="subject-reorder" style="display:none;">
       <span id="reorderLabel">並び替え</span>
@@ -1693,19 +1456,19 @@
       <button type="button" id="subjectMoveRight" aria-label="右へ">▶</button>
     </div>
     <div class="modal-btns">
-      <button class="danger" id="subjectDelete" style="display:none">この列を削除</button>
+      <button class="danger" id="subjectDelete" style="display:none">この列をけす</button>
       <span class="spacer"></span>
-      <button id="subjectCancel">閉じる</button>
+      <button id="subjectCancel">とじる</button>
       <button class="primary" id="subjectSave">保存</button>
     </div>
   </div>
 </div>
 
 <!-- 細かい計画表（教材専用の目次/項目一覧・進捗管理） -->
-<div id="detailPlanModal" class="settings-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="detailPlanTitle" data-close-button="detailPlanClose">
+<div id="detailPlanModal" class="settings-modal" style="display:none;">
   <div class="settings-card">
     <h2 id="detailPlanTitle"></h2>
-    <p class="settings-note" style="margin-top:0;">行は自由に追加できます。列は1〜5回目の復習（1回目の日付を入力すると、2〜5回目の日付を自動入力します。後から手動で変更できます）。</p>
+    <p class="settings-note" style="margin-top:0;">行は自由に追加できます。列は1〜5回目の復習（1回目の日付を入れると、2〜5回目の日付を自動で入れます。あとから手で直せます）。</p>
     <div class="detail-table-wrap">
       <table class="detail-table">
         <thead id="detailTableHead"></thead>
@@ -1715,48 +1478,48 @@
     <button type="button" id="detailAddRowBtn" class="cell-add-item">＋ 行を追加</button>
     <div class="modal-btns">
       <span class="spacer"></span>
-      <button class="primary" id="detailPlanClose">閉じる</button>
+      <button class="primary" id="detailPlanClose">とじる</button>
     </div>
   </div>
 </div>
 
 <!-- バーコード読み取り（カメラ生スキャン） -->
-<div id="scanModal" class="scan-modal" style="display:none;" role="dialog" aria-modal="true" aria-label="本のバーコードを読み取る" data-close-button="scanClose">
+<div id="scanModal" class="scan-modal" style="display:none;">
   <div class="scan-stage">
     <video id="scanVideo" playsinline muted></video>
     <div class="scan-reticle"><span></span></div>
-    <p id="scanStatus" class="scan-status" role="status" aria-live="polite"></p>
+    <p id="scanStatus" class="scan-status"></p>
   </div>
   <div class="scan-manual">
     <p id="scanManualLabel" class="scan-manual-label"></p>
     <div class="scan-manual-row">
       <input type="text" id="scanIsbnInput" class="write-input" inputmode="numeric" maxlength="13" placeholder="978…">
-      <button type="button" id="scanIsbnGo" class="primary">検索</button>
+      <button type="button" id="scanIsbnGo" class="primary">さがす</button>
     </div>
   </div>
-  <button type="button" id="scanClose" class="scan-close">閉じる</button>
+  <button type="button" id="scanClose" class="scan-close">とじる</button>
 </div>
 
 <!-- 目次OCRの進み具合 -->
-<div id="ocrModal" class="settings-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="ocrStatus" data-close-button="ocrCancel">
+<div id="ocrModal" class="settings-modal" style="display:none;">
   <div class="settings-card ocr-progress">
-    <p id="ocrStatus" class="ocr-status" role="status" aria-live="polite"></p>
+    <p id="ocrStatus" class="ocr-status"></p>
     <div class="ocr-bar"><span id="ocrBar"></span></div>
-    <button type="button" id="ocrCancel" class="settings-close">閉じる</button>
+    <button type="button" id="ocrCancel" class="settings-close">とじる</button>
   </div>
 </div>
 
 <!-- 目次の章えらび -->
-<div id="tocModal" class="settings-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="tocTitle" data-close-button="tocCancel">
+<div id="tocModal" class="settings-modal" style="display:none;">
   <div class="settings-card">
     <h2 id="tocTitle">読み取った章</h2>
     <p class="settings-note" id="tocNote" style="margin-top:0;"></p>
     <div id="tocList" class="toc-list"></div>
-    <button type="button" id="tocReread" class="toc-reread">↕ <span id="tocRereadLabel">縦書きとして再読取</span></button>
+    <button type="button" id="tocReread" class="toc-reread">↕ <span id="tocRereadLabel">縦書きの本？ 縦書きで読み直す</span></button>
     <div class="modal-btns">
-      <button id="tocCancel">閉じる</button>
+      <button id="tocCancel">とじる</button>
       <span class="spacer"></span>
-      <button class="primary" id="tocAdd">今日から追加</button>
+      <button class="primary" id="tocAdd">今日から入れる</button>
     </div>
   </div>
 </div>
@@ -1765,65 +1528,60 @@
 (function () {
   'use strict';
 
-  // ---- UI文言（大人向け。対象は中学生〜社会人のため固定） ----
+  // ---- ことばづかい（大人向け・漢字。対象は中学生〜社会人のため固定） ----
   var WORDS = {
-    emptyNote:      '最初の教材を追加すると、1週間の計画を書き始められます。<br><br>書いた計画は<b>手ざわり手帳</b>の同じ日のタスク欄にも表示されます。',
-    emptyAdd:       '最初の教材を追加',
-    subjectAdd:     '教材を追加',
-    subjectEdit:    '教材を編集',
-    subjectPlace:   '教材名または科目名（例：民法）',
-    subjectDelete:  'この列を削除',
+    emptyNote:      'まだ何もありません。<br>右上の「＋」から教材や科目をふやして、<br>1週間の計画を書きこもう。<br><br>書いた計画は<b>手ざわり手帳</b>の<br>その日のタスク欄に印刷されます。',
+    subjectAdd:     '教材をふやす',
+    subjectEdit:    '教材の名前をかえる',
+    subjectPlace:   '教材や科目の名前（例: 英語）',
+    subjectDelete:  'この列をけす',
     reorderLabel:   '列の並び替え',
     cellCarry:      '翌日へ繰り越す',
     carryDone:      '翌日へ繰り越しました',
-    scanOpen:       '本のバーコードから追加',
+    scanOpen:       '本のバーコードで入れる',
     scanManual:     'うまく読めないときは、本の裏の番号（978…）を入力',
     scanStarting:   'カメラを準備しています…',
     scanPoint:      '本の裏のバーコードを枠の中へ',
-    scanLooking:    '書名を検索しています…',
-    scanNotFound:   'この本は見つかりませんでした。名前を手入力してください。',
-    scanBadCode:    '本のバーコードではありません。978で始まるコードを読み取ってください。',
-    scanNoCamera:   'カメラを使用できません。下に番号を入力してください。',
-    scanBadIsbn:    '本の番号を13桁（978…）で入力してください。',
-    scanGo:         '検索',
-    tocOpen:        '目次の写真から章を追加',
+    scanLooking:    '書名をさがしています…',
+    scanNotFound:   'この本は見つかりませんでした。名前は手で入れてね。',
+    scanBadCode:    'これは本のバーコードではないみたい。978で始まる方をかざしてね。',
+    scanNoCamera:   'カメラが使えませんでした。下に番号を入力してね。',
+    scanBadIsbn:    '本の番号は13桁（978…）で入れてね。',
+    scanGo:         'さがす',
+    tocOpen:        '目次の写真から章を入れる',
     ocrPreparing:   '読み取りの準備をしています…（初回は少し時間がかかります）',
     ocrReading:     '文字を読んでいます…',
     ocrFailed:      '読み取れませんでした。目次がはっきり写った写真を、まっすぐ撮る／選ぶと読みやすいです。',
-    ocrNoLines:     '章が見つかりませんでした。別の写真を選ぶ／撮り直すか、手入力してください。',
+    ocrNoLines:     '章が見つかりませんでした。別の写真を選ぶ／撮り直すか、手で入力してね。',
     tocTitle:       '読み取った章',
-    tocNote:        '追加する章だけ○にして「今日から追加」を押すと、今日から1日ずつ計画に入ります。文字は編集できます。',
-    tocAdd:         '今日から追加',
-    tocReread:      '縦書きとして再読取',
-    tocAddedMsg:    '{n}件を計画に追加しました',
-    tocNonePicked:  '追加する章に○を付けてください。',
+    tocNote:        'いる章だけ○にして「今日から入れる」を押すと、今日から1日ずつ計画に入ります。文字は直せます。',
+    tocAdd:         '今日から入れる',
+    tocReread:      '縦書きの本？ 縦書きで読み直す',
+    tocAddedMsg:    '{n}個を計画に入れました',
+    tocNonePicked:  '入れる章に○を付けてね。',
     subjectUntitled:'教材',
-    coverPick:      '表紙を選択／撮影',
-    coverRemove:    '外す',
-    deleteConfirm:  '「{name}」の列と、書いた計画をすべて削除します。よろしいですか？',
-    cellPlace:      '計画を入力（例：長文2ページ）',
-    cellAddItem:    '項目を追加',
-    itemDelete:     'この行を削除',
-    copyDatesTitle: '日付を選んでコピー',
-    copyDatesSub:   '「{text}」を選択した日にコピーします。複数の日を選べます',
-    copyDatesOpen:  'ほかの日へコピー',
+    coverPick:      '表紙を選ぶ／撮る',
+    coverRemove:    'はずす',
+    deleteConfirm:  '「{name}」の列と、書いた計画をぜんぶ消します。よろしいですか？',
+    cellPlace:      'やることを書く（例: 長文2ページ）',
+    cellAddItem:    'もう1つ書く',
+    itemDelete:     'この行をけす',
+    copyDatesTitle: '複数の日にコピー',
+    copyDatesSub:   '「{text}」を、タップした日に次々とコピーします',
     copyDatesDone:  'コピーしました',
     copyDatesDup:   'この日にはもうあります',
-    doneLabel:      '完了にする',
-    undoneLabel:    '未完了に戻す',
-    cellClearConfirm:'「{subject}」{date}の計画をすべて削除しますか？',
-    clearBtn:       'すべて削除',
-    closeBtn:       '閉じる',
+    doneLabel:      'できた（○をつける）',
+    clearBtn:       'けす',
+    closeBtn:       'とじる',
     saveBtn:        '保存',
     prevBtn:        '◀ 前へ',
     nextBtn:        '次へ ▶',
     todayBtn:       '今週',
     menuSettings:   '⚙ 設定',
-    menuStats:      '📊 記録',
-    menuTecho:      '📖 手ざわり手帳を開く',
+    menuTecho:      '📖 手ざわり手帳をひらく',
     stTitle:        '設定',
-    stTheme:        'テーマ',
-    stThemeNote:    '紙の色や雰囲気を変更します。手ざわり手帳と共通の設定です。',
+    stTheme:        'かみ（テーマ）',
+    stThemeNote:    '紙の色やふんいきを変えます。手ざわり手帳と共通の設定です。',
     themeIvory:     'アイボリー',
     themeWhite:     '白',
     themeBlack:     '黒',
@@ -1835,19 +1593,19 @@
     stWeekStart:    '週の始まり',
     stWeekStartNote:'計画表の曜日の並びが変わります。手ざわり手帳と共通の設定です。',
     stLink:         '手帳と連携',
-    stLinkNoteOff:  '別々のアプリとして使うときは、連携コードで手ざわり手帳と接続します。「連携を開始」でコードを作成し、手帳の設定に同じコードを入力してください（計画がサーバー経由で手帳に届きます）。',
+    stLinkNoteOff:  '別々のアプリとして使うときは、この連携コードで手ざわり手帳とつなぎます。「はじめる」でコードを作り、手帳の設定に同じコードを入れてください（計画がサーバー経由で手帳に届きます）。',
     stLinkNoteOn:   'このコードを手ざわり手帳の設定に入れると、書いた計画が手帳の今日のページに出ます。同じコードなら別の端末ともつながります。',
     linkCopied:     'コピーしました',
-    linkBadCode:    'コードを8〜40文字の英数字で入力してください。',
-    linkStopConfirm:'連携を停止しますか？（手帳への同期は止まりますが、計画は削除されません）',
-    linkJoined:     '連携しました',
-    stBackup:       'データのバックアップ',
-    stBackupNote:   '計画表の中身をファイルに保存できます。機種変更や、アプリを削除する前のバックアップとして利用できます。',
+    linkBadCode:    'コードは8〜40文字の英数字で入れてね。',
+    linkStopConfirm:'連携をやめますか？（手帳への同期が止まります。計画そのものは消えません）',
+    linkJoined:     'つなぎました',
+    stBackup:       'データのひかえ',
+    stBackupNote:   '計画表の中身をファイルに保存できます。機種変や、アイコンを消す前のお守りに。',
     backupExport:   'ファイルに保存',
     backupImport:   '復元',
-    restoreConfirm: 'このファイルの内容で計画表を復元します。現在の同じ日の計画は上書きされます。よろしいですか？',
+    restoreConfirm: 'このファイルの中身で計画表を復元します。いま書いてある同じ日の計画は上書きされます。よろしいですか？',
     restoreDone:    '復元しました。開き直します。',
-    restoreBad:     '復元できませんでした。「手ざわり計画表のバックアップ」ファイルか確認してください。'
+    restoreBad:     '復元できませんでした。「手ざわり計画表のひかえ」ファイルか確認してください。'
   };
 
   // ---- テーマ（かみ）。手ざわり手帳と共有する。[id, 文言キー, 見本の背景色, 見本の文字色] ----
@@ -1886,14 +1644,13 @@
     if (vars) { for (var k in vars) s = s.replace('{' + k + '}', vars[k]); }
     return s;
   }
-  // 常に画面にある静的DOMへ共通文言を反映する
+  // 常に画面にある静的DOMの文言をことばづかいに合わせて更新する
   function applyWording() {
     function setText(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
     setText('prevWeek', tx('prevBtn'));
     setText('nextWeek', tx('nextBtn'));
     setText('todayBtn', tx('todayBtn'));
     setText('menuSettings', tx('menuSettings'));
-    setText('menuStats', tx('menuStats'));
     setText('menuTecho', tx('menuTecho'));
     setText('stTitle', tx('stTitle'));
     setText('stThemeLabel', tx('stTheme'));
@@ -1906,17 +1663,11 @@
     setText('backupExportBtn', tx('backupExport'));
     setText('backupImportBtn', tx('backupImport'));
     setText('settingsClose', tx('closeBtn'));
-    setText('exportClose', tx('closeBtn'));
-    setText('statsClose', tx('closeBtn'));
-    setText('cellClear', tx('clearBtn'));
-    setText('cellSave', tx('closeBtn'));
     setText('cellAddItemLabel', tx('cellAddItem'));
     setText('copyDatesTitle', tx('copyDatesTitle'));
     setText('copyDatesClose', tx('closeBtn'));
     document.getElementById('subjectName').placeholder = tx('subjectPlace');
     setText('subjectDelete', tx('subjectDelete'));
-    setText('subjectCancel', tx('closeBtn'));
-    setText('subjectSave', tx('saveBtn'));
     setText('coverPickBtn', tx('coverPick'));
     setText('coverRemoveBtn', tx('coverRemove'));
     setText('reorderLabel', tx('reorderLabel'));
@@ -1928,95 +1679,10 @@
     setText('tocRereadLabel', tx('tocReread'));
     setText('tocCancel', tx('closeBtn'));
     setText('ocrCancel', tx('closeBtn'));
-    setText('detailPlanClose', tx('closeBtn'));
-    setText('scanClose', tx('closeBtn'));
     setText('scanManualLabel', tx('scanManual'));
     setText('scanIsbnGo', tx('scanGo'));
-    document.getElementById('exportCloseX').setAttribute('aria-label', tx('closeBtn'));
-    document.getElementById('settingsCloseX').setAttribute('aria-label', tx('closeBtn'));
     document.title = '手ざわり計画表';
   }
-
-  // ---- ダイアログの共通操作 ----
-  // 開いた場所へフォーカスを戻し、キーボード操作が背後の画面へ抜けないようにする。
-  var dialogFocusBack = new WeakMap();
-  var dialogFocusSelector = [
-    'button:not([disabled])',
-    'input:not([disabled])',
-    'textarea:not([disabled])',
-    'select:not([disabled])',
-    'summary',
-    'a[href]',
-    '[tabindex]:not([tabindex="-1"])'
-  ].join(',');
-  function dialogFocusable(dialog) {
-    return Array.prototype.slice.call(dialog.querySelectorAll(dialogFocusSelector)).filter(function (el) {
-      return el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
-    });
-  }
-  function focusWithoutScroll(el) {
-    if (!el || !el.isConnected) return;
-    try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
-  }
-  function openDialog(dialog, firstFocus) {
-    var active = document.activeElement;
-    if (active && active !== document.body && !dialog.contains(active)) {
-      dialogFocusBack.set(dialog, { element: active, key: active.dataset.focusKey || '' });
-    }
-    dialog.style.display = 'flex';
-    setTimeout(function () {
-      var target = firstFocus && firstFocus.isConnected ? firstFocus : dialogFocusable(dialog)[0];
-      focusWithoutScroll(target);
-    }, 0);
-  }
-  function closeDialog(dialog) {
-    if (getComputedStyle(dialog).display === 'none') return;
-    dialog.style.display = 'none';
-    var back = dialogFocusBack.get(dialog);
-    dialogFocusBack.delete(dialog);
-    setTimeout(function () {
-      var target = back && back.element;
-      if ((!target || !target.isConnected) && back && back.key) {
-        target = Array.prototype.slice.call(document.querySelectorAll('[data-focus-key]')).filter(function (el) {
-          return el.dataset.focusKey === back.key;
-        })[0];
-      }
-      focusWithoutScroll(target);
-    }, 0);
-  }
-  function visibleDialog() {
-    var dialogs = Array.prototype.slice.call(document.querySelectorAll('[role="dialog"]'));
-    for (var i = dialogs.length - 1; i >= 0; i--) {
-      if (getComputedStyle(dialogs[i]).display !== 'none') return dialogs[i];
-    }
-    return null;
-  }
-  document.addEventListener('keydown', function (ev) {
-    var dialog = visibleDialog();
-    if (!dialog) return;
-    if (ev.key === 'Escape') {
-      var closeButton = document.getElementById(dialog.dataset.closeButton || '');
-      if (closeButton) {
-        ev.preventDefault();
-        closeButton.click();
-      }
-      return;
-    }
-    if (ev.key !== 'Tab') return;
-    var focusable = dialogFocusable(dialog);
-    if (!focusable.length) {
-      ev.preventDefault();
-      return;
-    }
-    var first = focusable[0], last = focusable[focusable.length - 1];
-    if (ev.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) {
-      ev.preventDefault();
-      focusWithoutScroll(last);
-    } else if (!ev.shiftKey && document.activeElement === last) {
-      ev.preventDefault();
-      focusWithoutScroll(first);
-    }
-  });
 
   // ---- 日付ユーティリティ ----
   var DOW = ['日', '月', '火', '水', '木', '金', '土'];
@@ -2291,7 +1957,7 @@
   var saveNoteTimer = 0;
   function flashSaved(msg) {
     var el = document.getElementById('saveNote');
-    el.textContent = msg || '保存しました';
+    el.textContent = msg || 'とじました';
     el.classList.add('show');
     clearTimeout(saveNoteTimer);
     saveNoteTimer = setTimeout(function () { el.classList.remove('show'); }, 900);
@@ -2299,28 +1965,6 @@
 
   // ---- 描画 ----
   var currentWeek = weekStartOf(toISO(new Date()));
-  var SUBJECTS_PER_PAGE = 3;
-  var subjectPage = 0;
-
-  function subjectPageCount(subjects) {
-    return Math.max(1, Math.ceil(subjects.length / SUBJECTS_PER_PAGE));
-  }
-  function clampSubjectPage(subjects) {
-    subjectPage = Math.max(0, Math.min(subjectPage, subjectPageCount(subjects) - 1));
-  }
-  function renderSubjectPager(subjects) {
-    var pager = document.getElementById('subjectPager');
-    clampSubjectPage(subjects);
-    pager.hidden = subjects.length <= SUBJECTS_PER_PAGE;
-    if (pager.hidden) return;
-    var count = subjectPageCount(subjects);
-    var visible = subjects.slice(subjectPage * SUBJECTS_PER_PAGE, (subjectPage + 1) * SUBJECTS_PER_PAGE);
-    var label = document.getElementById('subjectPageLabel');
-    label.textContent = '教材 ' + (subjectPage + 1) + '/' + count;
-    label.title = visible.map(function (s) { return s.name; }).join('、');
-    document.getElementById('prevSubjectPage').disabled = subjectPage === 0;
-    document.getElementById('nextSubjectPage').disabled = subjectPage === count - 1;
-  }
 
   // 試験日カウントダウン＋逆算ノルマ
   function examDate() { return localStorage.getItem('pk:examDate') || ''; }
@@ -2353,7 +1997,7 @@
     var left = daysBetween(todayIso, ed);
     box.style.display = 'block';
     if (left < 0) {
-      box.innerHTML = '<span class="ec-passed">🎯 ' + esc(examName()) + ' お疲れさまでした</span>';
+      box.innerHTML = '<span class="ec-passed">🎯 ' + esc(examName()) + ' おつかれさまでした</span>';
       updateCountdownHeight();
       return;
     }
@@ -2373,7 +2017,7 @@
   }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
-  // ---- 記録：教材ごとの「計画・完了・達成率」 ----
+  // ---- きろく：教材ごとの「書いた・できた○・達成率」 ----
   // 今日までのマスだけを数える（未来の予定を入れても達成率が下がらないように）
   function computeStats() {
     var todayIso = toISO(new Date());
@@ -2395,7 +2039,7 @@
     var row = document.createElement('div');
     row.className = 'stats-row' + (isTotal ? ' stats-total' : '');
     var pct = st.planned ? Math.round(st.done / st.planned * 100) : 0;
-    var sub = '完了 ' + st.done + ' ／ 計画 ' + st.planned;
+    var sub = 'できた○ ' + st.done + ' ／ 書いた ' + st.planned;
     row.innerHTML =
       '<div class="stats-head"><span class="stats-name">' + esc(name) + '</span>' +
       '<span class="stats-pct">' + pct + '%</span></div>' +
@@ -2416,10 +2060,10 @@
       shown++;
     });
     if (!shown) {
-      list.innerHTML = '<p class="stats-empty">まだ記録はありません。マスに計画を書き、完了にするとここへ集計されます。</p>';
+      list.innerHTML = '<p class="stats-empty">まだ記録がありません。マスに書いて「できた○」を付けると、ここに育っていきます。</p>';
       return;
     }
-    if (shown > 1) list.appendChild(buildStatsRow('全体', total, true));
+    if (shown > 1) list.appendChild(buildStatsRow('ぜんぶ', total, true));
   }
 
   // ---- 計画と○✕記録の全書き出し（AIに貼って合格確率を計算させる用） ----
@@ -2432,7 +2076,7 @@
     var lines = [];
     lines.push('# 手ざわり計画表 — 学習記録の書き出し');
     lines.push('書き出し日: ' + todayIso + '（' + DOW[fromISO(todayIso).getDay()] + '）');
-    lines.push('記号: [○]=完了  [✕]=未完了（予定日を経過）  [ ]=今後の予定');
+    lines.push('記号: [○]=できた  [✕]=まだ（予定日を過ぎた）  [ ]=これからの予定');
     lines.push('');
 
     // 試験情報
@@ -2456,11 +2100,11 @@
       anyStat = true;
       totalP += st.planned; totalD += st.done;
       var pct = st.planned ? Math.round(st.done / st.planned * 100) : 0;
-      lines.push('- ' + s.name + '：' + pct + '%（完了 ' + st.done + ' / 計画 ' + st.planned + '）');
+      lines.push('- ' + s.name + '：' + pct + '%（できた ' + st.done + ' / 予定 ' + st.planned + '）');
     });
     if (anyStat) {
       var totalPct = totalP ? Math.round(totalD / totalP * 100) : 0;
-      lines.push('- 全体：' + totalPct + '%（完了 ' + totalD + ' / 計画 ' + totalP + '）');
+      lines.push('- ぜんぶ：' + totalPct + '%（できた ' + totalD + ' / 予定 ' + totalP + '）');
     } else {
       lines.push('（まだ記録がありません）');
     }
@@ -2504,7 +2148,6 @@
 
   function render() {
     renderCountdown();
-    renderSubjectPager(readSubjects());
     renderWeekInto(document, currentWeek);
   }
 
@@ -2521,84 +2164,50 @@
     var scroll = root.querySelector('#gridScroll');
     scroll.innerHTML = '';
     var subjects = readSubjects();
-    clampSubjectPage(subjects);
-    scroll.classList.toggle('is-empty', !subjects.length);
     if (!subjects.length) {
       var note = document.createElement('div');
       note.className = 'empty-note';
       note.innerHTML = tx('emptyNote');
-      var addFirst = document.createElement('button');
-      addFirst.type = 'button';
-      addFirst.className = 'empty-add-button';
-      addFirst.dataset.focusKey = 'empty:add';
-      addFirst.textContent = tx('emptyAdd');
-      addFirst.addEventListener('click', function () { openSubjectModal(null); });
-      note.appendChild(addFirst);
       scroll.appendChild(buildTable([], null, weekIso));
       scroll.appendChild(note);
       return;
     }
-    var visibleSubjects = subjects.slice(subjectPage * SUBJECTS_PER_PAGE, (subjectPage + 1) * SUBJECTS_PER_PAGE);
-    scroll.appendChild(buildTable(visibleSubjects, toISO(new Date()), weekIso));
+    scroll.appendChild(buildTable(subjects, toISO(new Date()), weekIso));
   }
 
   function buildTable(subjects, todayIso, weekIso) {
     var table = document.createElement('table');
     table.className = 'plan';
-    if (subjects.some(function (s) { return !!s.cover; })) table.classList.add('has-covers');
-    var caption = document.createElement('caption');
-    caption.className = 'sr-only';
-    caption.textContent = '1週間の勉強計画。行が日付、列が教材です。';
-    table.appendChild(caption);
     var thead = document.createElement('tr');
-    thead.className = 'plan-head-row';
-    var corner = document.createElement('th');
-    corner.className = 'corner';
-    corner.setAttribute('aria-hidden', 'true');
-    thead.appendChild(corner);
+    var corner = document.createElement('th'); corner.className = 'corner'; thead.appendChild(corner);
     subjects.forEach(function (s) {
       var th = document.createElement('th');
       th.className = 'subject';
-      th.scope = 'col';
-      var subjectButton = document.createElement('button');
-      subjectButton.type = 'button';
-      subjectButton.className = 'subject-button';
-      subjectButton.dataset.focusKey = 'subject:' + s.id;
-      subjectButton.setAttribute('aria-label', '教材「' + s.name + '」を編集');
       if (s.cover) {
         th.classList.add('has-cover');
         var cimg = document.createElement('img');
         cimg.className = 'subject-cover';
         cimg.src = s.cover;
         cimg.alt = '';
-        subjectButton.appendChild(cimg);
+        th.appendChild(cimg);
       }
       var nameSpan = document.createElement('span');
       nameSpan.className = 'subject-name';
       nameSpan.textContent = s.name;
-      subjectButton.appendChild(nameSpan);
-      subjectButton.addEventListener('click', function () { openSubjectModal(s); });
-      th.appendChild(subjectButton);
+      th.appendChild(nameSpan);
+      th.addEventListener('click', function () { openSubjectModal(s); });
       thead.appendChild(th);
     });
     var addTh = document.createElement('th');
     addTh.className = 'add-col';
-    addTh.scope = 'col';
-    var addButton = document.createElement('button');
-    addButton.type = 'button';
-    addButton.className = 'add-subject-button';
-    addButton.dataset.focusKey = 'subject:add';
-    addButton.setAttribute('aria-label', '教材を追加');
-    addButton.textContent = '＋';
-    addButton.addEventListener('click', function () { openSubjectModal(null); });
-    addTh.appendChild(addButton);
+    addTh.textContent = '＋';
+    addTh.addEventListener('click', function () { openSubjectModal(null); });
     thead.appendChild(addTh);
     table.appendChild(thead);
 
     for (var i = 0; i < 7; i++) {
       var iso = addDays(weekIso, i), d = fromISO(iso);
       var tr = document.createElement('tr');
-      tr.className = 'plan-day-row';
       var label = document.createElement('td');
       label.className = 'day-label' +
         (d.getDay() === 0 ? ' dow-sun' : d.getDay() === 6 ? ' dow-sat' : '') +
@@ -2608,43 +2217,19 @@
       subjects.forEach(function (s) {
         var td = document.createElement('td');
         td.className = 'cell';
-        var cellButton = document.createElement('button');
-        cellButton.type = 'button';
-        cellButton.className = 'cell-button';
-        cellButton.dataset.focusKey = 'cell:' + iso + ':' + s.id;
         var items = cellItems(iso, s.id);
-        var doneCount = 0;
         if (items.length) {
-          doneCount = items.filter(function (it) { return it.done; }).length;
-          var textWrap = document.createElement('span');
-          textWrap.className = 'cell-text ' + (items.length === 1 ? 'single' : 'multi');
-          (items.length === 1 ? items : items.slice(0, 2)).forEach(function (it) {
-            var itemText = document.createElement('span');
-            itemText.className = 'cell-text-item' + (it.done ? ' is-done' : '');
-            itemText.textContent = it.text;
-            textWrap.appendChild(itemText);
-          });
-          cellButton.appendChild(textWrap);
-          if (items.length > 1) {
-            var progress = document.createElement('span');
-            progress.className = 'cell-progress';
-            progress.textContent = doneCount + '/' + items.length + ' 完了';
-            cellButton.appendChild(progress);
-          }
-          if (doneCount === items.length) td.classList.add('done');
-          else if (doneCount) td.classList.add('partial');
+          var span = document.createElement('span');
+          span.className = 'cell-text';
+          span.textContent = items.map(function (it) { return it.text; }).join('\n');
+          td.appendChild(span);
+          if (items.every(function (it) { return it.done; })) td.classList.add('done');
+          else if (items.some(function (it) { return it.done; })) td.classList.add('partial');
         }
-        var cellLabel = (d.getMonth() + 1) + '月' + d.getDate() + '日（' + DOW[d.getDay()] + '）・' + s.name;
-        cellButton.setAttribute('aria-label', items.length
-          ? cellLabel + 'の計画を編集。全' + items.length + '件中' + doneCount + '件完了'
-          : cellLabel + 'に計画を書く');
-        (function (iso2, s2) { cellButton.addEventListener('click', function () { openCellModal(iso2, s2); }); })(iso, s);
-        td.appendChild(cellButton);
+        (function (iso2, s2) { td.addEventListener('click', function () { openCellModal(iso2, s2); }); })(iso, s);
         tr.appendChild(td);
       });
-      var filler = document.createElement('td');
-      filler.className = 'cell';
-      filler.setAttribute('aria-hidden', 'true');
+      var filler = document.createElement('td'); filler.className = 'cell'; filler.style.cursor = 'default';
       tr.appendChild(filler);
       table.appendChild(tr);
     }
@@ -2652,111 +2237,55 @@
   }
 
   // ---- セルの書き込み（1マスに複数の計画を書け、○は計画ごとに付く） ----
-  var editing = null, editingItems = [], editingDirty = false, cellAutoSaveTimer = 0;
+  var editing = null, editingItems = [];
   var cellModal = document.getElementById('cellModal');
   var cellItemsList = document.getElementById('cellItemsList');
   function openCellModal(iso, subject) {
     editing = { iso: iso, subject: subject };
-    editingDirty = false;
-    clearTimeout(cellAutoSaveTimer);
     var d = fromISO(iso);
     document.getElementById('cellModalTitle').innerHTML =
       subject.name + '<span class="sub">' + (d.getMonth() + 1) + '月' + d.getDate() + '日（' + DOW[d.getDay()] + '）</span>';
     editingItems = cellItems(iso, subject.id).map(function (it) { return { id: it.id, text: it.text, done: !!it.done }; });
     if (!editingItems.length) editingItems.push({ id: null, text: '', done: false });
     renderCellItemsList();
-    openDialog(cellModal);
-    setTimeout(function () {
-      cellItemsList.querySelectorAll('.item-text').forEach(resizeItemText);
+    cellModal.style.display = 'flex';
+    if (!editingItems[0].text) setTimeout(function () {
       var first = cellItemsList.querySelector('.item-text');
-      if (first && editingItems[0] && !editingItems[0].text && getComputedStyle(cellModal).display !== 'none') first.focus();
+      if (first) first.focus();
     }, 50);
   }
-  function resizeItemText(el) {
-    el.style.height = '0';
-    el.style.height = Math.min(112, Math.max(44, el.scrollHeight)) + 'px';
-  }
-  function saveEditingCell() {
-    if (!editing || !editingDirty) return false;
-    clearTimeout(cellAutoSaveTimer);
-    var iso = editing.iso, sid = editing.subject.id, now = Date.now(), kept = [];
-    editingItems.forEach(function (it) {
-      var text = it.text.trim();
-      if (!text) return;
-      if (!it.id) it.id = genItemId();
-      kept.push({ id: it.id, text: text, done: !!it.done, u: now });
-    });
-    writeCellItems(iso, sid, kept);
-    editingDirty = false;
-    return true;
-  }
-  function scheduleCellAutosave() {
-    editingDirty = true;
-    clearTimeout(cellAutoSaveTimer);
-    cellAutoSaveTimer = setTimeout(saveEditingCell, 350);
-  }
-  // 紙に書いたものは、閉じ方にかかわらず残す。変更があれば閉じる前に必ず確定する。
-  function closeCellModal(showSaved) {
-    var saved = saveEditingCell();
-    clearTimeout(cellAutoSaveTimer);
-    closeDialog(cellModal);
-    editing = null;
-    editingItems = [];
-    editingDirty = false;
-    render();
-    if (showSaved && saved) flashSaved();
-  }
-  // 行ごとの書き込み欄を組み立てる（完了・文字・繰り越し・コピー・行削除）。
+  // 長押しコピー・行ごとの繰り越しはSaveを待たずその場で確定するので、とじる時は常にグリッドを描き直す
+  function closeCellModal() { cellModal.style.display = 'none'; editing = null; editingItems = []; render(); }
+  // 行ごとの書き込み欄を組み立てる（○・×・文字・この行をけす。×は「できなかった」印で、押すと自動で翌日へ繰り越す）
   function renderCellItemsList() {
     cellItemsList.innerHTML = '';
     editingItems.forEach(function (item, idx) {
       var row = document.createElement('div');
       row.className = 'cell-item-row' + (item.done ? ' done' : '');
-      var ring = document.createElement('button');
-      ring.type = 'button';
+      var ring = document.createElement('span');
       ring.className = 'ring';
-      ring.setAttribute('aria-label', item.done ? tx('undoneLabel') : tx('doneLabel'));
-      ring.setAttribute('aria-pressed', item.done ? 'true' : 'false');
+      ring.setAttribute('role', 'button');
+      ring.setAttribute('aria-label', tx('doneLabel'));
       var carry = document.createElement('button');
       carry.type = 'button';
       carry.className = 'carry';
       carry.textContent = '→明日';
       carry.title = tx('cellCarry');
       carry.setAttribute('aria-label', tx('cellCarry'));
-      var copyBtn = document.createElement('button');
-      copyBtn.type = 'button';
-      copyBtn.className = 'copy-other';
-      copyBtn.textContent = tx('copyDatesOpen');
-      copyBtn.setAttribute('aria-label', 'ほかの日へコピー');
-      var actions = document.createElement('div');
-      actions.className = 'cell-item-actions';
-      var input = document.createElement('textarea');
-      input.rows = 1;
+      var input = document.createElement('input');
+      input.type = 'text';
       input.className = 'write-input item-text';
       input.maxLength = 200;
       input.value = item.text;
       input.placeholder = tx('cellPlace');
-      function updateCrossVisibility() {
-        var hasText = !!item.text.trim();
-        carry.style.display = (hasText && !item.done) ? 'inline-flex' : 'none';
-        copyBtn.style.display = hasText ? 'inline-flex' : 'none';
-        actions.style.display = hasText ? 'flex' : 'none';
-      }
+      function updateCrossVisibility() { carry.style.display = (item.text.trim() && !item.done) ? 'inline-flex' : 'none'; }
       updateCrossVisibility();
       ring.addEventListener('click', function () {
         item.done = !item.done;
         row.classList.toggle('done', item.done);
-        ring.setAttribute('aria-label', item.done ? tx('undoneLabel') : tx('doneLabel'));
-        ring.setAttribute('aria-pressed', item.done ? 'true' : 'false');
         updateCrossVisibility();
-        scheduleCellAutosave();
       });
-      input.addEventListener('input', function () {
-        item.text = input.value;
-        updateCrossVisibility();
-        resizeItemText(input);
-        scheduleCellAutosave();
-      });
+      input.addEventListener('input', function () { item.text = input.value; updateCrossVisibility(); });
       // ×＝できなかった印（翌日へ自動で繰り越す）: この行を消して、翌日の同じ教材へ新しい行として入れる。
       // 今日側もこの場で確定保存する（そのままモーダルを閉じても今日と翌日で二重に残らないように）
       carry.addEventListener('click', function () {
@@ -2777,16 +2306,8 @@
           kept.push({ id: it.id, text: t, done: it.done, u: now });
         });
         writeCellItems(iso, sid, kept);
-        clearTimeout(cellAutoSaveTimer);
-        editingDirty = false;
         renderCellItemsList();
         flashSaved(tx('carryDone'));
-      });
-      copyBtn.addEventListener('click', function () {
-        var text = item.text.trim();
-        if (!text) return;
-        saveEditingCell();
-        openCopyDatesModal(editing.subject.id, text);
       });
       var delBtn = document.createElement('button');
       delBtn.type = 'button';
@@ -2798,28 +2319,20 @@
         editingItems.splice(idx, 1);
         if (!editingItems.length) editingItems.push({ id: null, text: '', done: false });
         renderCellItemsList();
-        scheduleCellAutosave();
       });
-      actions.appendChild(carry);
-      actions.appendChild(copyBtn);
-      row.appendChild(ring);
-      row.appendChild(input);
-      row.appendChild(delBtn);
-      row.appendChild(actions);
+      row.appendChild(ring); row.appendChild(input); row.appendChild(carry); row.appendChild(delBtn);
       cellItemsList.appendChild(row);
-      resizeItemText(input);
-      // 長押しもコピーのショートカットとして残す（各ボタンの上では発動させない）
+      // 長押し→複数の日にコピー（文字入力欄・×／けすボタンの上では発動させない）
       (function () {
         var lpTimer = null, lpX = null, lpY = null;
         function cancel() { if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; } row.classList.remove('lp-active'); }
         row.addEventListener('pointerdown', function (ev) {
-          if (ev.target === input || ev.target.closest('.item-del, .ring, .carry, .copy-other')) return;
+          if (ev.target === input || ev.target.closest('.item-del, .ring, .carry')) return;
           if (!item.text.trim()) return;
           lpX = ev.clientX; lpY = ev.clientY;
           row.classList.add('lp-active');
           lpTimer = setTimeout(function () {
             cancel();
-            saveEditingCell();
             openCopyDatesModal(editing.subject.id, item.text.trim());
           }, 500);
         });
@@ -2833,7 +2346,7 @@
     });
   }
 
-  // ---- 複数の日にコピー（ミニカレンダーでタップした日へ次々とコピー） ----
+  // ---- 行を長押し→複数の日にコピー（ミニカレンダーでタップした日へ次々とコピー） ----
   var copyDatesModal = document.getElementById('copyDatesModal');
   var copyCalGrid = document.getElementById('copyCalGrid');
   var copySource = null, copyCalMonth = null, copiedTo = {};
@@ -2844,9 +2357,9 @@
     copyCalMonth.setDate(1);
     document.getElementById('copyDatesSub').textContent = tx('copyDatesSub', { text: text });
     renderCopyCal();
-    openDialog(copyDatesModal, copyCalGrid.querySelector('.copy-cal-day'));
+    copyDatesModal.style.display = 'flex';
   }
-  function closeCopyDatesModal() { closeDialog(copyDatesModal); copySource = null; }
+  function closeCopyDatesModal() { copyDatesModal.style.display = 'none'; copySource = null; }
   function renderCopyCal() {
     document.getElementById('copyCalMonthLabel').textContent = copyCalMonth.getFullYear() + '年' + (copyCalMonth.getMonth() + 1) + '月';
     copyCalGrid.innerHTML = '';
@@ -2899,19 +2412,23 @@
     if (last) last.focus();
   });
   document.getElementById('cellSave').addEventListener('click', function () {
-    closeCellModal(true);
+    if (!editing) return;
+    var iso = editing.iso, sid = editing.subject.id, now = Date.now();
+    var kept = [];
+    editingItems.forEach(function (it) {
+      var text = it.text.trim();
+      if (text) kept.push({ id: it.id || genItemId(), text: text, done: it.done, u: now });
+    });
+    writeCellItems(iso, sid, kept);
+    closeCellModal(); flashSaved();
   });
   document.getElementById('cellClear').addEventListener('click', function () {
     if (!editing) return;
-    var d = fromISO(editing.iso);
-    var dateLabel = (d.getMonth() + 1) + '月' + d.getDate() + '日';
-    if (!confirm(tx('cellClearConfirm', { subject: editing.subject.name, date: dateLabel }))) return;
-    clearTimeout(cellAutoSaveTimer);
-    editingDirty = false;
     writeCellItems(editing.iso, editing.subject.id, []);
-    closeCellModal(false); flashSaved('削除しました');
+    closeCellModal(); flashSaved();
   });
-  cellModal.addEventListener('click', function (e) { if (e.target === cellModal) closeCellModal(true); });
+  document.getElementById('cellCancel').addEventListener('click', closeCellModal);
+  cellModal.addEventListener('click', function (e) { if (e.target === cellModal) closeCellModal(); });
 
   // ---- 教材モーダル ----
   var editingSubject = null;
@@ -2979,7 +2496,8 @@
     } else {
       reorderRow.style.display = 'none';
     }
-    openDialog(subjectModal, document.getElementById('subjectName'));
+    subjectModal.style.display = 'flex';
+    if (!subject) setTimeout(function () { document.getElementById('subjectName').focus(); }, 50);
   }
   function updateReorderButtons(sid) {
     var subjects = readSubjects();
@@ -2994,14 +2512,13 @@
     if (i < 0 || j < 0 || j >= subjects.length) return;
     var tmp = subjects[i]; subjects[i] = subjects[j]; subjects[j] = tmp;
     writeSubjects(subjects);
-    subjectPage = Math.floor(j / SUBJECTS_PER_PAGE);
     render();                    // 列が動くのが見える（モーダルは開いたまま）
     updateReorderButtons(sid);
     flashSaved();
   }
   document.getElementById('subjectMoveLeft').addEventListener('click', function () { if (editingSubject) moveSubject(editingSubject.id, -1); });
   document.getElementById('subjectMoveRight').addEventListener('click', function () { if (editingSubject) moveSubject(editingSubject.id, 1); });
-  function closeSubjectModal() { closeDialog(subjectModal); editingSubject = null; }
+  function closeSubjectModal() { subjectModal.style.display = 'none'; editingSubject = null; }
   document.getElementById('subjectSave').addEventListener('click', function () {
     var name = document.getElementById('subjectName').value.trim();
     if (!name) { closeSubjectModal(); return; }
@@ -3017,7 +2534,6 @@
       if (pendingCover) obj.cover = pendingCover;
       subjects.push(obj);
       writeSubjects(subjects);
-      subjectPage = Math.floor((subjects.length - 1) / SUBJECTS_PER_PAGE);
     }
     closeSubjectModal(); render(); flashSaved();
   });
@@ -3041,9 +2557,9 @@
     detailSubjectId = subject.id;
     document.getElementById('detailPlanTitle').textContent = subject.name;
     renderDetailTable();
-    openDialog(detailPlanModal, document.getElementById('detailPlanClose'));
+    detailPlanModal.style.display = 'flex';
   }
-  function closeDetailPlanModal() { closeDialog(detailPlanModal); detailSubjectId = null; }
+  function closeDetailPlanModal() { detailPlanModal.style.display = 'none'; detailSubjectId = null; }
   function renderDetailTable() {
     var data = readDetail(detailSubjectId);
 
@@ -3093,7 +2609,7 @@
       rowDelBtn.type = 'button';
       rowDelBtn.className = 'detail-row-del';
       rowDelBtn.textContent = '✕';
-      rowDelBtn.setAttribute('aria-label', 'この行を削除');
+      rowDelBtn.setAttribute('aria-label', 'この行をけす');
       rowDelBtn.addEventListener('click', function () {
         unlinkDetailRow(detailSubjectId, row);
         data.rows.splice(idx, 1);
@@ -3149,7 +2665,7 @@
   function openScanner() {
     scanBusy = false;
     document.getElementById('scanIsbnInput').value = '';
-    openDialog(scanModal, document.getElementById('scanClose'));
+    scanModal.style.display = 'flex';
     setScanStatus('scanStarting');
     loadZxing().then(startCamera).catch(function () { setScanStatus('scanNoCamera'); });
   }
@@ -3183,7 +2699,7 @@
       scanVideo.srcObject = null;
     }
   }
-  function closeScanner() { stopCamera(); closeDialog(scanModal); }
+  function closeScanner() { stopCamera(); scanModal.style.display = 'none'; }
 
   // ISBN → 書名
   function fetchOpenBD(isbn) {
@@ -3241,7 +2757,7 @@
       if (title) {
         stopCamera();
         document.getElementById('subjectName').value = title.slice(0, 60);
-        closeDialog(scanModal);             // 教材モーダルへ戻る（名前が入った状態で確認・編集できる）
+        scanModal.style.display = 'none';   // 教材モーダルへ戻る（名前が入った状態で確認・編集できる）
         flashSaved();
       } else {
         setScanStatus('scanNotFound');
@@ -3381,7 +2897,7 @@
     ocrCancelled = false;
     document.getElementById('ocrBar').style.width = '0%';
     setOcr('ocrPreparing');
-    openDialog(ocrModal, document.getElementById('ocrCancel'));
+    ocrModal.style.display = 'flex';
     var getW = vert ? getOcrWorkerVert() : getOcrWorker();
     return getW.then(function (worker) {
       if (ocrCancelled) return null;
@@ -3389,13 +2905,13 @@
       return worker.recognize(canvas);
     }).then(function (res) {
       if (ocrCancelled || !res) return;
-      closeDialog(ocrModal);
+      ocrModal.style.display = 'none';
       var lines = parseTocLines(res.data && res.data.text || '');
       if (!lines.length) { alert(tx('ocrNoLines')); return; }
       openTocModal(lines);
     }).catch(function () {
       if (ocrCancelled) return;
-      closeDialog(ocrModal);
+      ocrModal.style.display = 'none';
       alert(tx('ocrFailed'));
     });
   }
@@ -3404,21 +2920,21 @@
   tocFileInput.addEventListener('change', function (e) {
     var file = e.target.files && e.target.files[0];
     if (!file) return;
-    openDialog(ocrModal, document.getElementById('ocrCancel'));
+    ocrModal.style.display = 'flex';
     setOcr('ocrPreparing');
     preprocessImage(file).then(function (canvas) {
       lastOcrCanvas = canvas;       // 縦書きで読み直せるよう保持
       return runOcr(canvas, false);
     }).catch(function () {
-      closeDialog(ocrModal);
+      ocrModal.style.display = 'none';
       alert(tx('ocrFailed'));
     });
   });
-  document.getElementById('ocrCancel').addEventListener('click', function () { ocrCancelled = true; closeDialog(ocrModal); });
+  document.getElementById('ocrCancel').addEventListener('click', function () { ocrCancelled = true; ocrModal.style.display = 'none'; });
   // 縦書きで読み直す（同じ写真を縦書きワーカーで）
   document.getElementById('tocReread').addEventListener('click', function () {
     if (!lastOcrCanvas) return;
-    closeDialog(tocModal);
+    tocModal.style.display = 'none';
     runOcr(lastOcrCanvas, true);
   });
 
@@ -3431,28 +2947,21 @@
       row.className = 'toc-item on';
       var toggle = document.createElement('button');
       toggle.type = 'button'; toggle.className = 'toc-toggle';
-      toggle.setAttribute('aria-label', 'この章を追加しない');
-      toggle.setAttribute('aria-pressed', 'true');
       var ring = document.createElement('span'); ring.className = 'ring';
-      ring.setAttribute('aria-hidden', 'true');
       toggle.appendChild(ring);
       var input = document.createElement('input');
       input.type = 'text'; input.className = 'toc-text'; input.value = line; input.maxLength = 60;
-      input.setAttribute('aria-label', '章名');
       // ○の切り替えは左のボタンだけ（テキストは編集用に触れる）
       toggle.addEventListener('click', function () {
         row.classList.toggle('on'); row.classList.toggle('off');
-        var on = row.classList.contains('on');
-        toggle.setAttribute('aria-label', on ? 'この章を追加しない' : 'この章を追加する');
-        toggle.setAttribute('aria-pressed', on ? 'true' : 'false');
       });
       row.appendChild(toggle); row.appendChild(input);
       list.appendChild(row);
     });
-    openDialog(tocModal, list.querySelector('.toc-toggle'));
+    tocModal.style.display = 'flex';
   }
-  document.getElementById('tocCancel').addEventListener('click', function () { closeDialog(tocModal); });
-  tocModal.addEventListener('click', function (e) { if (e.target === tocModal) closeDialog(tocModal); });
+  document.getElementById('tocCancel').addEventListener('click', function () { tocModal.style.display = 'none'; });
+  tocModal.addEventListener('click', function (e) { if (e.target === tocModal) tocModal.style.display = 'none'; });
   document.getElementById('tocAdd').addEventListener('click', function () {
     var chapters = [];
     document.querySelectorAll('#tocList .toc-item.on').forEach(function (r) {
@@ -3472,7 +2981,6 @@
       if (pendingCover) obj.cover = pendingCover;
       subjects.push(obj);
       writeSubjects(subjects);
-      subjectPage = Math.floor((subjects.length - 1) / SUBJECTS_PER_PAGE);
     }
     // 今日から1日ずつ（既に書いてあれば1つの項目として追加）
     var startIso = toISO(new Date());
@@ -3482,11 +2990,9 @@
       items.push({ id: genItemId(), text: ch, done: false, u: Date.now() });
       writeCellItems(iso, sid, items);
     });
-    closeDialog(tocModal);
+    tocModal.style.display = 'none';
     closeSubjectModal();
     currentWeek = weekStartOf(startIso);
-    var subjectIndex = readSubjects().map(function (s) { return s.id; }).indexOf(sid);
-    if (subjectIndex >= 0) subjectPage = Math.floor(subjectIndex / SUBJECTS_PER_PAGE);
     render();
     flashSaved(tx('tocAddedMsg', { n: chapters.length }));
   });
@@ -3571,47 +3077,25 @@
   document.getElementById('prevWeek').addEventListener('click', function () { goWeek(-1); });
   document.getElementById('nextWeek').addEventListener('click', function () { goWeek(1); });
   document.getElementById('todayBtn').addEventListener('click', function () { goWeek(0); });
-  document.getElementById('prevSubjectPage').addEventListener('click', function () {
-    if (subjectPage <= 0) return;
-    subjectPage--;
-    render();
-  });
-  document.getElementById('nextSubjectPage').addEventListener('click', function () {
-    if (subjectPage >= subjectPageCount(readSubjects()) - 1) return;
-    subjectPage++;
-    render();
-  });
 
   // ---- メニュー・設定 ----
   var menuBtn = document.getElementById('menuBtn'), menuPanel = document.getElementById('menuPanel');
   var settingsModal = document.getElementById('settingsModal');
-  function setMenuOpen(open, moveFocus) {
-    menuPanel.style.display = open ? 'flex' : 'none';
-    menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    if (open && moveFocus) setTimeout(function () { focusWithoutScroll(menuPanel.querySelector('button')); }, 0);
-  }
   menuBtn.addEventListener('click', function (ev) {
     ev.stopPropagation();
-    setMenuOpen(menuPanel.style.display === 'none', true);
+    menuPanel.style.display = menuPanel.style.display === 'none' ? 'flex' : 'none';
   });
   document.addEventListener('pointerdown', function (ev) {
     if (menuPanel.style.display !== 'none' && !menuPanel.contains(ev.target) && ev.target !== menuBtn) {
-      setMenuOpen(false);
-    }
-  });
-  document.addEventListener('keydown', function (ev) {
-    if (ev.key === 'Escape' && !visibleDialog() && menuPanel.style.display !== 'none') {
-      ev.preventDefault();
-      setMenuOpen(false);
-      focusWithoutScroll(menuBtn);
+      menuPanel.style.display = 'none';
     }
   });
   document.getElementById('menuSettings').addEventListener('click', function () {
-    setMenuOpen(false);
+    menuPanel.style.display = 'none';
     renderThemeChips(); renderWeekStartChips(); renderLinkSection();
     document.getElementById('examNameInput').value = localStorage.getItem('pk:examName') || '';
     document.getElementById('examDateInput').value = examDate();
-    openDialog(settingsModal, document.getElementById('settingsCloseX'));
+    settingsModal.style.display = 'flex';
   });
   // 試験日・試験名の入力
   document.getElementById('examDateInput').addEventListener('change', function () {
@@ -3630,25 +3114,23 @@
     document.getElementById('examNameInput').value = '';
     renderCountdown(); flashSaved();
   });
-  // 記録（達成率）
-  var statsModal = document.getElementById('statsModal');
+  // きろく（達成率）
   document.getElementById('menuStats').addEventListener('click', function () {
-    setMenuOpen(false);
+    menuPanel.style.display = 'none';
     renderStats();
-    openDialog(statsModal, document.getElementById('statsClose'));
+    document.getElementById('statsModal').style.display = 'flex';
   });
   document.getElementById('statsClose').addEventListener('click', function () {
-    closeDialog(statsModal);
+    document.getElementById('statsModal').style.display = 'none';
   });
-  statsModal.addEventListener('click', function (e) { if (e.target === statsModal) closeDialog(statsModal); });
   // 書き出す（AIに貼る）
   var exportModal = document.getElementById('exportModal');
   document.getElementById('menuExport').addEventListener('click', function () {
-    setMenuOpen(false);
+    menuPanel.style.display = 'none';
     document.getElementById('exportText').value = buildExportText();
-    openDialog(exportModal, document.getElementById('exportText'));
+    exportModal.style.display = 'flex';
   });
-  function closeExport() { closeDialog(exportModal); }
+  function closeExport() { exportModal.style.display = 'none'; }
   document.getElementById('exportClose').addEventListener('click', closeExport);
   document.getElementById('exportCloseX').addEventListener('click', closeExport);
   exportModal.addEventListener('click', function (ev) { if (ev.target === exportModal) closeExport(); });
@@ -3673,10 +3155,9 @@
     // 同じオリジンの姉妹アプリへ。GitHub Pages（/paper-keikaku/→/paper-techo/）でもローカルでも効く相対パス
     location.href = '../paper-techo/';
   });
-  function closeSettings() { closeDialog(settingsModal); }
-  document.getElementById('settingsClose').addEventListener('click', closeSettings);
-  document.getElementById('settingsCloseX').addEventListener('click', closeSettings);
-  settingsModal.addEventListener('click', function (e) { if (e.target === settingsModal) closeSettings(); });
+  document.getElementById('settingsClose').addEventListener('click', function () { settingsModal.style.display = 'none'; });
+  document.getElementById('settingsCloseX').addEventListener('click', function () { settingsModal.style.display = 'none'; });
+  settingsModal.addEventListener('click', function (e) { if (e.target === settingsModal) settingsModal.style.display = 'none'; });
 
   // テーマ（かみ）のチップ（ボタン自体が紙見本。手帳と共有の設定）
   function renderThemeChips() {
@@ -3766,14 +3247,14 @@
     flashSaved(tx('linkCopied'));
   });
 
-  // ---- ファイルへのバックアップ／復元（pk:キーのみ対象） ----
+  // ---- データのひかえ（バックアップ／復元。pk:キーのみ対象） ----
   document.getElementById('backupExportBtn').addEventListener('click', function () {
     var items = {};
     forEachStoredKey('pk:', function (k) { items[k] = localStorage.getItem(k); });
     var blob = new Blob([JSON.stringify({ app: 'tezawari-keikaku', v: 1, savedAt: new Date().toISOString(), items: items }, null, 0)], { type: 'application/json' });
     var url = URL.createObjectURL(blob), a = document.createElement('a');
     a.href = url;
-    a.download = '手ざわり計画表のバックアップ-' + toISO(new Date()) + '.json';
+    a.download = '手ざわり計画表のひかえ-' + toISO(new Date()) + '.json';
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
     localStorage.setItem('pk:backupAt', String(Date.now()));   // ひかえ促しの抑止に使う
@@ -3824,23 +3305,6 @@
   applyWording();
   applyTheme();
   render();
-  // カウントダウンの高さ(--countdown-h)は、自前フォント（チョーク等）の読み込み前に測ると
-  // フォールバック字の高さで実際より高く出て、日付「M/D〜D」との間に余計な余白が残る。
-  // 「いつ測り直すか」を列挙する方式（フォント確定・テーマ変更・回転…）は取りこぼすので、
-  // 高さが実際に変わった瞬間をResizeObserverで直接拾う。フォント確定・テーマごとの
-  // 書体変更（黒板=Yomogi／電光掲示板=DotGothic16）・文言変更・折り返しを一括で拾える。
-  if ('ResizeObserver' in window) {
-    new ResizeObserver(updateCountdownHeight).observe(document.getElementById('examCountdown'));
-  } else {
-    // ResizeObserver非対応環境向けの保険（古いSafariはfonts.readyが実フォントより先に
-    // 解決することがあるため、loadingdoneも併せて拾う）
-    if (document.fonts) {
-      if (document.fonts.ready) document.fonts.ready.then(updateCountdownHeight).catch(function () {});
-      document.fonts.addEventListener && document.fonts.addEventListener('loadingdone', updateCountdownHeight);
-    }
-    window.addEventListener('resize', updateCountdownHeight);
-    window.addEventListener('orientationchange', updateCountdownHeight);
-  }
   wsConnect();       // 連携中なら即時同期を開始（接続時に最新スナップショットを受信）
   syncPushAll();     // 手元の計画も上げておく（マージはu基準なので新しい方が残る）
 
@@ -3859,7 +3323,7 @@
     navigator.storage.persist().catch(function () {});
   }
 
-  // ---- 自動バックアップ: 変更のたびに全データをサーバーへ保存する ----
+  // ---- 自動バックアップ（じぶんのひかえ）: 書くたびに全データをサーバーへ預ける ----
   // 手帳と同じ仕組み（worker/worker.jsの/vault）。復元コードは同一オリジンなら手帳と共用する。
   (function () {
     var VAULT_META = { 'pk:vaultCode': 1, 'pk:vaultAt': 1, 'pk:vaultOff': 1, 'pk:vaultNoticed': 1, 'pk:backupAt': 1, 'pk:backupNudgeAt': 1 };  // 管理用。預けない・変更してもpushしない
@@ -3890,19 +3354,6 @@
         items[k] = localStorage.getItem(k);
       }
       return items;
-    }
-    function hasSavedPlan() {
-      for (var i = 0; i < localStorage.length; i++) {
-        var k = localStorage.key(i);
-        if (!k || k.indexOf('pk:cell:') !== 0) continue;
-        try {
-          var rows = JSON.parse(localStorage.getItem(k) || '[]');
-          if (Array.isArray(rows) && rows.some(function (row) {
-            return row && typeof row.text === 'string' && row.text.trim();
-          })) return true;
-        } catch (e) {}
-      }
-      return false;
     }
     var vPushTimer = 0, vPushing = false, vQueued = false;
     function vaultPushSoon() {
@@ -3938,7 +3389,7 @@
 
     function fmtAgo(t) {
       var m = Math.floor((Date.now() - t) / 60000);
-      if (m < 1) return '今';
+      if (m < 1) return 'たった今';
       if (m < 60) return m + '分前';
       var h = Math.floor(m / 60);
       if (h < 24) return h + '時間前';
@@ -3950,18 +3401,18 @@
       var onBox = document.getElementById('vaultOnBox');
       var toggle = document.getElementById('vaultToggleBtn');
       if (!vaultOn()) {
-        st.textContent = '現在はオフです。オンにすると、変更のたびにデータをサーバーへ自動保存し、アプリの削除後も復元コードで戻せます。';
+        st.textContent = 'いまはオフです。オンにすると、書くたびに中身をサーバーへ自動で預け、アプリを消しても復元コードで戻せます。';
         onBox.style.display = 'none';
-        toggle.textContent = '自動バックアップを開始';
+        toggle.textContent = '自動バックアップをはじめる';
         return;
       }
       var at = parseInt(localStorage.getItem('pk:vaultAt') || '0', 10);
       st.textContent = at
-        ? '変更のたびにサーバーへ自動保存しています（最終: ' + fmtAgo(at) + '）。'
-        : '変更のたびにサーバーへ自動保存します（計画を入力すると開始します）。';
+        ? '書くたびに自動でサーバーへ預けています（最終: ' + fmtAgo(at) + '）。'
+        : '書くたびに自動でサーバーへ預けます（まだ預けていません。何か書くと始まります）。';
       onBox.style.display = '';
       document.getElementById('vaultCodeShow').textContent = vaultCode();
-      toggle.textContent = '自動バックアップを停止';
+      toggle.textContent = '自動バックアップをやめる';
     }
     document.getElementById('vaultCopyBtn').addEventListener('click', function () {
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(vaultCode()).catch(function () {});
@@ -3969,7 +3420,7 @@
     });
     document.getElementById('vaultToggleBtn').addEventListener('click', function () {
       if (vaultOn()) {
-        if (!confirm('自動バックアップを停止しますか？\nサーバーに保存済みのデータは残りますが、以後は更新されません。')) return;
+        if (!confirm('自動バックアップをやめますか？\nサーバーに預けた分は残りますが、以後は更新されません。')) return;
         localStorage.setItem('pk:vaultOff', '1');
       } else {
         localStorage.removeItem('pk:vaultOff');
@@ -3986,7 +3437,7 @@
         .then(function (j) {
           if (!j || !j.items) throw new Error('bad');
           var when = j.savedAt ? new Date(j.savedAt).toLocaleString('ja-JP') : '不明';
-          if (!confirm('バックアップ（' + when + ' 時点）の内容で、現在の計画表を置き換えます。よろしいですか？')) return;
+          if (!confirm('ひかえ（' + when + ' 時点）の内容で、今の計画表の中身を置き換えます。よろしいですか？')) return;
           var doomed = [];
           for (var i = 0; i < localStorage.length; i++) {
             var k = localStorage.key(i);
@@ -3998,22 +3449,20 @@
           });
           vOrigSet.call(localStorage, 'pk:vaultCode', v);
           vOrigSet.call(localStorage, 'pk:vaultNoticed', '1');
-          alert('復元しました。');
+          alert('戻しました。');
           location.reload();
         })
-        .catch(function () { alert('バックアップが見つかりませんでした。コードを確認してください。'); });
+        .catch(function () { alert('ひかえが見つかりませんでした。コードを確かめてください。'); });
     });
     function maybeNoticeCode() {
-      // 空の初回起動では説明を重ねない。最初の計画が実際に預けられた後でだけ案内する。
-      if (!hasSavedPlan()) return;
       if (localStorage.getItem('pk:vaultNoticed')) return;
       localStorage.setItem('pk:vaultNoticed', '1');
       if (localStorage.getItem('pt:vaultNoticed')) return;   // 手帳側で案内済みなら二重に出さない
       var bar = document.createElement('div');
       bar.className = 'backup-nudge';
       bar.innerHTML =
-        '<span class="backup-nudge-text">🔒 自動バックアップを開始しました。復元コード <b>' + vaultCode() + '</b> をスクリーンショットまたは紙に控えておくと、アプリの削除後や機種変更後も復元できます。</span>' +
-        '<span class="backup-nudge-btns"><button type="button" class="backup-nudge-open">設定で確認</button><button type="button" class="backup-nudge-later">確認しました</button></span>';
+        '<span class="backup-nudge-text">🔒 自動バックアップを始めました。復元コード <b>' + vaultCode() + '</b> をスクショか紙にひかえておくと、アプリを消しても機種変でも戻せます。</span>' +
+        '<span class="backup-nudge-btns"><button type="button" class="backup-nudge-open">設定で見る</button><button type="button" class="backup-nudge-later">わかった</button></span>';
       document.body.appendChild(bar);
       bar.querySelector('.backup-nudge-later').addEventListener('click', function () { bar.remove(); });
       bar.querySelector('.backup-nudge-open').addEventListener('click', function () {
@@ -4063,8 +3512,8 @@
       var bar = document.createElement('div');
       bar.className = 'backup-nudge';
       bar.innerHTML =
-        '<span class="backup-nudge-text">自動バックアップが最近完了していません。データをファイルにも保存しておくと、機種変更や万一の消失時に復元できます。</span>' +
-        '<span class="backup-nudge-btns"><button type="button" class="backup-nudge-open">設定を開く</button><button type="button" class="backup-nudge-later">後で</button></span>';
+        '<span class="backup-nudge-text">計画はこの端末の中だけにあります。ときどき「ひかえ」をファイルに保存しておくと、機種変や万一の消失でも戻せます。</span>' +
+        '<span class="backup-nudge-btns"><button type="button" class="backup-nudge-open">設定をひらく</button><button type="button" class="backup-nudge-later">あとで</button></span>';
       document.body.appendChild(bar);
       function dismiss() {
         localStorage.setItem('pk:backupNudgeAt', String(Date.now()));
