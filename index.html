@@ -254,10 +254,11 @@
     bottom: 0;
     overflow: auto;
     -webkit-overflow-scrolling: touch;
-    /* 左は綴じのステッチ(.paper::before: left:10px + 2.5px)をよけるぶんだけ。
-       以前は30pxあったが、手帳と違って赤い罫線を引いていないため、意匠ではなく
-       ただの空白に見えて邪魔だった（2026-07-25にユーザー指摘）。マスを広く使う */
-    padding: 0 12px 14px 16px;
+    /* 左は余白なし。手ざわり手帳は罫線が画面の左端まで伸びていて、その上に綴じの
+       ステッチが重なる作りなので「空白の帯」ができない。計画表も同じにするため表を
+       端まで伸ばす（16px空けても帯として見えて邪魔だと指摘された。2026-07-25）。
+       ステッチ(.paper::before, z-index:3)は表の上に重なって描かれる＝手帳と同じ */
+    padding: 0 12px 14px 0;
   }
   /* 下へスクロールしても何の教材か分かるよう、教材の見出し行は上に貼り付けたままにする。
      position:stickyはborder-collapse:collapseだと罫線が一緒に流れて消えるので、
@@ -310,7 +311,7 @@
     white-space: normal;
     word-break: break-word;
   }
-  th.corner { width: 42px; }
+  th.corner { width: 48px; }   /* td.day-labelと揃える（ステッチをよける14pxを含む） */
   th.add-col {
     width: 38px;
     font-size: 19px;
@@ -321,8 +322,10 @@
   }
 
   td.day-label {
-    width: 42px;
-    padding: 6px 3px 0 0;
+    width: 48px;
+    /* 左は綴じのステッチ(left:10px+2.5px)に日付が食われないぶんだけ空ける。
+       罫線自体は画面の端まで伸ばしたまま（手帳と同じ作り） */
+    padding: 6px 3px 0 14px;
     text-align: center;
     font-size: 11px;
     color: var(--ink-soft);
