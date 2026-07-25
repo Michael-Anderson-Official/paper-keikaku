@@ -3824,6 +3824,23 @@
   applyWording();
   applyTheme();
   render();
+  // カウントダウンの高さ(--countdown-h)は、自前フォント（チョーク等）の読み込み前に測ると
+  // フォールバック字の高さで実際より高く出て、日付「M/D〜D」との間に余計な余白が残る。
+  // 「いつ測り直すか」を列挙する方式（フォント確定・テーマ変更・回転…）は取りこぼすので、
+  // 高さが実際に変わった瞬間をResizeObserverで直接拾う。フォント確定・テーマごとの
+  // 書体変更（黒板=Yomogi／電光掲示板=DotGothic16）・文言変更・折り返しを一括で拾える。
+  if ('ResizeObserver' in window) {
+    new ResizeObserver(updateCountdownHeight).observe(document.getElementById('examCountdown'));
+  } else {
+    // ResizeObserver非対応環境向けの保険（古いSafariはfonts.readyが実フォントより先に
+    // 解決することがあるため、loadingdoneも併せて拾う）
+    if (document.fonts) {
+      if (document.fonts.ready) document.fonts.ready.then(updateCountdownHeight).catch(function () {});
+      document.fonts.addEventListener && document.fonts.addEventListener('loadingdone', updateCountdownHeight);
+    }
+    window.addEventListener('resize', updateCountdownHeight);
+    window.addEventListener('orientationchange', updateCountdownHeight);
+  }
   wsConnect();       // 連携中なら即時同期を開始（接続時に最新スナップショットを受信）
   syncPushAll();     // 手元の計画も上げておく（マージはu基準なので新しい方が残る）
 
