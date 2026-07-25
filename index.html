@@ -847,14 +847,36 @@
     text-align: center;
     padding: 6px 2px;
   }
+  /* 日付は「7/22」と短く出して1〜5回目の5列が画面に収まるようにする。
+     入力欄（ネイティブの日付ピッカー）は端末のロケール書式（iOSだと「Jul 22, 2026」）で
+     描かれて幅を押し広げるので、透明にしてマスいっぱいに重ねる。position:absolute で
+     幅の計算からも外れるため、マスの横幅は下の短い文字だけで決まる。タップの挙動は今までどおり。
+     min-width:34px は「12/22」（11pxで約25px）が入る最小幅。
+     行名67px＋34px×5＋✕34px＝271px で、カードの内寸300pxに収まる */
+  .detail-table .detail-date {
+    position: relative;
+    display: block;
+    min-width: 34px;
+    padding: 6px 1px;
+    font-size: 11px;
+    line-height: 1.25;
+    color: var(--ink-text);
+  }
+  .detail-table .detail-date-text { pointer-events: none; }
+  .detail-table .detail-date-text.is-empty::before { content: '－'; opacity: 0.3; }
   .detail-table input[type="date"] {
-    width: 100px;
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%;
+    height: 100%;
     font-family: inherit;
     font-size: 11px;
-    color: var(--ink-text);
+    opacity: 0;
     border: none;
     background: transparent;
-    padding: 6px 1px;
+    padding: 0;
+    -webkit-appearance: none;
+    appearance: none;
   }
   .detail-table .detail-row-del {
     border: none;
@@ -3033,6 +3055,13 @@
     detailSubjectId = null;
     render();
   }
+  // 日付のマスに出す短い文字（「7/22」）を作る。年は入れない代わりに5列とも画面に収まる。
+  // 空のときは「－」を出して、マスがつぶれてタップしにくくならないようにする
+  function setDetailDateText(span, value) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || '');
+    span.textContent = m ? (Number(m[2]) + '/' + Number(m[3])) : '';
+    span.classList.toggle('is-empty', !m);
+  }
   function renderDetailTable() {
     var data = readDetail(detailSubjectId);
 
@@ -3074,9 +3103,14 @@
       tr.appendChild(tdLabel);
       DETAIL_COLS.forEach(function (col) {
         var td = document.createElement('td');
+        var dateWrap = document.createElement('label');
+        dateWrap.className = 'detail-date';
+        var dateText = document.createElement('span');
+        dateText.className = 'detail-date-text';
         var inp = document.createElement('input');
         inp.type = 'date';
         inp.value = (row.cells[col.id] && row.cells[col.id].date) || '';
+        setDetailDateText(dateText, inp.value);
         inp.addEventListener('change', function () {
           // 計画表の保存はapplyDetailCellの中で先に行う（失敗時はメインを触らない）
           var ok = applyDetailCell(detailSubjectId, row, col, inp.value, data, function () {
@@ -3087,9 +3121,12 @@
             renderDetailTable();   // 画面を保存済みの内容に戻す
             return;
           }
+          setDetailDateText(dateText, inp.value);   // 重ねてある表示用の文字も更新する
           render();   // メイン側のグリッドにも即反映する
         });
-        td.appendChild(inp);
+        dateWrap.appendChild(dateText);
+        dateWrap.appendChild(inp);
+        td.appendChild(dateWrap);
         tr.appendChild(td);
       });
       var tdDel = document.createElement('td');
