@@ -256,11 +256,25 @@
     -webkit-overflow-scrolling: touch;
     padding: 0 12px 14px 30px;
   }
-  table.plan { border-collapse: collapse; width: 100%; table-layout: fixed; }
-  table.plan th, table.plan td { border: 1px solid var(--rule); vertical-align: top; }
-  table.plan th { border-top: none; }
-  table.plan th:first-child, table.plan td:first-child { border-left: none; }
+  /* 下へスクロールしても何の教材か分かるよう、教材の見出し行は上に貼り付けたままにする。
+     position:stickyはborder-collapse:collapseだと罫線が一緒に流れて消えるので、
+     separate＋「右と下だけ引く」方式で同じ見た目を作る（左端と上端は元から線なし） */
+  table.plan { border-collapse: separate; border-spacing: 0; width: 100%; table-layout: fixed; }
+  table.plan th, table.plan td {
+    border-right: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  table.plan th:last-child, table.plan td:last-child { border-right: none; }
   table.plan tr:last-child td { border-bottom: none; }
+  table.plan thead th {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    /* 貼り付いた見出しの下を計画のマスが透けて通らないよう、紙と同じ地色を敷く */
+    background: var(--paper);
+  }
 
   th.subject {
     height: 44px;
@@ -1158,11 +1172,12 @@
   body[data-paper="board"] .page-date,
   body[data-paper="board"] .exam-countdown,
   body[data-paper="board"] .empty-note,
+  /* 見出し行(thead)のセル自体にはマスクを掛けない。マスクは背景にも穴を開けるので、
+     上に貼り付けた見出しの下を計画のマスが透けて通ってしまう。
+     チョークのかすれは中の文字（.subject-name / .add-col-mark）に掛ける */
   body[data-paper="board"] table.plan td,
-  body[data-paper="board"] table.plan th.corner,
-  body[data-paper="board"] table.plan th.add-col,
-  body[data-paper="board"] th.subject:not(.has-cover),
-  body[data-paper="board"] th.subject.has-cover .subject-name,
+  body[data-paper="board"] th.subject .subject-name,
+  body[data-paper="board"] th.add-col .add-col-mark,
   body[data-paper="board"] .paper::before {
     -webkit-mask-image: url('chalk-mask.png');
     mask-image: url('chalk-mask.png');
@@ -2637,10 +2652,18 @@
     });
     var addTh = document.createElement('th');
     addTh.className = 'add-col';
-    addTh.textContent = '＋';
+    // ＋はspanで包む（黒板テーマのチョークのかすれを、セルではなく文字だけに掛けるため。
+    // セルにマスクを掛けると背景に穴が開き、貼り付けた見出しの下が透けてしまう）
+    var addMark = document.createElement('span');
+    addMark.className = 'add-col-mark';
+    addMark.textContent = '＋';
+    addTh.appendChild(addMark);
     addTh.addEventListener('click', function () { openSubjectModal(null); });
     thead.appendChild(addTh);
-    table.appendChild(thead);
+    // 見出し行は本物の<thead>に入れる（position:stickyで上に貼り付けるため）
+    var theadEl = document.createElement('thead');
+    theadEl.appendChild(thead);
+    table.appendChild(theadEl);
 
     for (var i = 0; i < 7; i++) {
       var iso = addDays(weekIso, i), d = fromISO(iso);
