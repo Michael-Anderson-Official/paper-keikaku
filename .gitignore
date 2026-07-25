@@ -4,3 +4,4 @@ ios/App/App/public/
 ios/App/output/
 .DS_Store
 .claude/settings.local.json
+.codex-review-input.md

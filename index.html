@@ -1738,24 +1738,37 @@
     try { var a = JSON.parse(localStorage.getItem(keyCell(iso, sid)) || '[]'); return Array.isArray(a) ? a : []; }
     catch (e) { return []; }
   }
+  // 書けたかを返す（容量不足で失敗したとき、呼び出し側が「消してから入れ直す」途中で
+  // 項目を失わないよう順序を選べるようにするため）。フィードの組み立て直しも同じtryに含める
+  // ——ここで例外が漏れると「戻り値を見れば安全」という前提が崩れ、セルだけ消えた状態になる
   function writeCellItems(iso, sid, items) {
-    if (items.length) localStorage.setItem(keyCell(iso, sid), JSON.stringify(items));
-    else localStorage.removeItem(keyCell(iso, sid));
-    rebuildFeed(iso);
+    try {
+      if (items.length) localStorage.setItem(keyCell(iso, sid), JSON.stringify(items));
+      else localStorage.removeItem(keyCell(iso, sid));
+      rebuildFeed(iso);
+    } catch (e) { return false; }
+    return true;
   }
   function keyFeed(iso) { return 'pk:feed:' + iso; }
   function readFeed(iso) {
     try { var f = JSON.parse(localStorage.getItem(keyFeed(iso)) || 'null'); return (f && f.v === 1 && Array.isArray(f.items)) ? f : null; }
     catch (e) { return null; }
   }
-  // セルの中身（各項目のtext/done/u）からフィードを組み立て直す。項目ごとに手帳へ渡す
-  function rebuildFeed(iso) {
+  // セルの中身（各項目のtext/done/u）からフィードの項目一覧を作る（書き込みはしない）
+  function computeFeedItems(iso) {
     var items = [];
     readSubjects().forEach(function (s) {
       cellItems(iso, s.id).forEach(function (it) {
-        items.push({ id: s.id + '#' + it.id, subject: s.name, text: it.text, done: !!it.done, u: it.u || Date.now() });
+        // uが無い項目に Date.now() を入れると、呼ぶたびに値が変わって「変化あり」と誤判定し、
+        // 送信が止まらなくなる。欠損は0で固定する（比較が安定する）
+        items.push({ id: s.id + '#' + it.id, subject: s.name, text: it.text, done: !!it.done, u: it.u || 0 });
       });
     });
+    return items;
+  }
+  // セルの中身からフィードを組み立て直す。項目ごとに手帳へ渡す
+  function rebuildFeed(iso) {
+    var items = computeFeedItems(iso);
     if (items.length) localStorage.setItem(keyFeed(iso), JSON.stringify({ v: 1, updated: new Date().toISOString(), items: items }));
     else localStorage.removeItem(keyFeed(iso));
     syncPush(iso);
@@ -1767,8 +1780,22 @@
   var LINK_WS = LINK_BASE.replace(/^http/, 'ws');
   function linkCode() { return localStorage.getItem('pk:linkCode') || ''; }
   var applyingRemote = false, pushTimers = {};
+  // 照合中はここに日付を溜め、終わってからまとめて送る（中間状態を送らない・push増幅を防ぐ）
+  var deferredPushDays = null;
+  function withDeferredPush(fn) {
+    if (deferredPushDays) return fn();          // 入れ子のときは外側にまとめる
+    deferredPushDays = {};
+    var days;
+    try { return fn(); }
+    finally {
+      days = deferredPushDays; deferredPushDays = null;
+      Object.keys(days).forEach(syncPush);
+    }
+  }
   function syncPush(iso) {
     if (applyingRemote) return;                 // リモート適用中は押し返さない
+    // 照合中は中間状態を送らない。溜めておいて、終わってから対象日を1回ずつ送る
+    if (deferredPushDays) { deferredPushDays[iso] = true; return; }
     var code = linkCode();
     if (!code) return;
     clearTimeout(pushTimers[iso]);
@@ -1785,7 +1812,30 @@
     forEachStoredKey('pk:feed:', function (k) { syncPush(k.slice('pk:feed:'.length)); });
   }
   // サーバーから届いたフィードをローカルへ適用（セルへ書き戻す・pushはしない）
-  function applyRemoteFeed(iso, feed) {
+  // 途中で例外が出ても、照合と再描画は必ず行う（部分適用のまま画面と食い違わせない）。
+  // deferReconcile=trueのときは呼び出し側（snapshot）がまとめて面倒を見る。
+  function applyRemoteFeed(iso, feed, deferReconcile) {
+    try { applyRemoteFeedInner(iso, feed); }
+    finally { if (!deferReconcile) flushRemoteDays(); }
+  }
+  // 溜まった日ぶんの照合と再描画。照合が失敗した日はキューへ戻して次回やり直す
+  // （握り潰して捨てると、その日の食い違いが直らないまま残る）。
+  // renderの例外でここが落ちて元の例外を上書きしないよう、renderも囲む。
+  // 控え(pk:feedRetryDays)は**始める前に消さない**。先に消すと、やり直しが失敗して
+  // 積み直そうとしたときに、その保存自体も容量不足で失敗する（＝容量不足はまさに
+  // やり直しの主原因）ため、控えを失ってしまう。成功して不要になってから消す。
+  function flushRemoteDays() {
+    var days = pendingRemoteDays; pendingRemoteDays = [];
+    try {
+      var failed = reconcileAfterRemote(days) || [];
+      // フィードを組み立て直せなかった日は次回やり直す（食い違いを残さない）
+      if (failed.length) queueRemoteDays(failed);
+    }
+    catch (e) { queueRemoteDays(days); }
+    saveRetryDays();               // 残った分だけを控える（空になったらここで削除される）
+    try { render(); } catch (e) {}
+  }
+  function applyRemoteFeedInner(iso, feed) {
     applyingRemote = true;
     try {
       var subjects = readSubjects(), byId = {}; subjects.forEach(function (s) { byId[s.id] = s; });
@@ -1819,9 +1869,89 @@
       });
       if (serverItems.length) localStorage.setItem(keyFeed(iso), JSON.stringify(feed));
       else localStorage.removeItem(keyFeed(iso));
-    } finally { applyingRemote = false; }
-    render();
+    } finally {
+      applyingRemote = false;
+      // 途中で例外が出ても、この日を照合対象から漏らさない（部分適用のまま放置しない）
+      queueRemoteDays([iso]);
+    }
   }
+  // 同じ日を二重に積まない。積み増すと、容量不足が続く間に再試行回数が
+  // [iso] → [iso, iso] → ... と増えていき、処理量と書き込み試行が膨らむ。
+  // やり直し待ちの日は端末に控える——メモリだけだとアプリを閉じた時点で消え、
+  // 容量が空いても食い違いが直らないまま残ってしまう
+  var KEY_RETRY_DAYS = 'pk:feedRetryDays';
+  function queueRemoteDays(days) {
+    days.forEach(function (iso) {
+      if (pendingRemoteDays.indexOf(iso) < 0) pendingRemoteDays.push(iso);
+    });
+    saveRetryDays();   // 控えを更新（消すのではなく上書き。失敗しても自己点検が拾う）
+  }
+  function saveRetryDays() {
+    try {
+      if (pendingRemoteDays.length) localStorage.setItem(KEY_RETRY_DAYS, JSON.stringify(pendingRemoteDays));
+      else localStorage.removeItem(KEY_RETRY_DAYS);
+    } catch (e) { /* 控えられなくても動作は続ける */ }
+  }
+  function loadRetryDays() {
+    try {
+      var a = JSON.parse(localStorage.getItem(KEY_RETRY_DAYS) || '[]');
+      if (Array.isArray(a)) a.forEach(function (iso) {
+        if (typeof iso === 'string' && pendingRemoteDays.indexOf(iso) < 0) pendingRemoteDays.push(iso);
+      });
+    } catch (e) {}
+  }
+  // 起動時の自己点検。マス(pk:cell:)とフィード(pk:feed:)が食い違っている日を自力で見つけて
+  // 組み立て直す。再試行の控え(pk:feedRetryDays)は、端末の容量が尽きているとそれ自体を
+  // 保存できないため当てにできない。控えに頼らず毎回見直すことで、容量が空いたあとに
+  // 必ず修復できるようにする。中身が同じ日は何もしない（無駄なpushを出さない）。
+  function repairFeedMismatches() {
+    var days = {};
+    forEachStoredKey('pk:cell:', function (k) { days[k.slice('pk:cell:'.length, 'pk:cell:'.length + 10)] = true; });
+    forEachStoredKey('pk:feed:', function (k) { days[k.slice('pk:feed:'.length)] = true; });
+    var failed = [];
+    withDeferredPush(function () {
+      Object.keys(days).forEach(function (iso) {
+        var cur = readFeed(iso), want = computeFeedItems(iso);
+        if (feedItemsEqual((cur && cur.items) || [], want)) return;
+        try { rebuildFeed(iso); } catch (e) { failed.push(iso); }
+      });
+    });
+    if (failed.length) queueRemoteDays(failed);
+  }
+  // サーバーの内容でマスを置き換えた結果、細かい計画表の中身と食い違うことがある
+  // （計画表で入れた項目がサーバー側に無くて消える等）。applyingRemoteを戻した後に照合し、
+  // 直した分はサーバーへも上げ直す。対象教材を絞らず全教材を1回だけ見るのは、
+  // 「サーバー側で教材の最後の1件が欠けた」ような、フィードに現れない食い違いも拾うため。
+  // さらに、受け取ったフィードをそのまま保存すると「サーバー側で教材の最後の1件が欠けていた」
+  // 場合にローカルのマス（残っている）とフィード（欠けている）が食い違い、以後その欠落を
+  // 手帳や他端末へ配り続ける。ローカルのマスを正としてフィードを組み立て直し、上げ直す。
+  // ただし**中身が本当に変わったときだけ**書き直す。無条件にrebuildFeedすると必ずpushが走り、
+  // サーバーは送信元にもupdateを配信するので update→push→update の無限ループになる。
+  // 組み立て直しに失敗した日（容量不足でpk:feed:が保存できない等）は、そのままだと
+  // セルとフィードの食い違いが残るので、失敗した日だけ返して呼び出し側で再試行キューへ戻す。
+  function reconcileAfterRemote(days) {
+    reconcileDetailsToMain(null);
+    var failed = [];
+    days.forEach(function (iso) {
+      var cur = readFeed(iso), want = computeFeedItems(iso);
+      var curItems = (cur && cur.items) || [];
+      if (feedItemsEqual(curItems, want)) return;   // 同じなら何もしない（ループを断つ）
+      try { rebuildFeed(iso); }                     // 中でsyncPushされる
+      catch (e) { failed.push(iso); }
+    });
+    return failed;
+  }
+  // 項目の集合として同じか（updatedのような毎回変わる値は見ない）
+  function feedItemsEqual(a, b) {
+    if (a.length !== b.length) return false;
+    var key = function (it) {
+      return [it.id, it.subject, it.text, it.done ? 1 : 0, it.u == null ? '' : it.u].join('');
+    };
+    var sa = a.map(key).sort(), sb = b.map(key).sort();
+    for (var i = 0; i < sa.length; i++) if (sa[i] !== sb[i]) return false;
+    return true;
+  }
+  var pendingRemoteDays = [];
   // WebSocket（開いている間つなぎ、変更を即受信）
   var ws = null, wsRetry = 0, wsWant = false;
   function wsConnect() {
@@ -1833,7 +1963,16 @@
     catch (e) { wsSchedule(); return; }
     ws.onmessage = function (ev) {
       var msg; try { msg = JSON.parse(ev.data); } catch (e) { return; }
-      if (msg.type === 'snapshot') { Object.keys(msg.feeds).forEach(function (iso) { applyRemoteFeed(iso, msg.feeds[iso]); }); }
+      if (msg.type === 'snapshot') {
+        // 全日ぶん適用してから、照合と再pushを1回だけ行う（日数×全走査を避ける）。
+        // 配列は空にしない——前回の単発updateが失敗して積まれた日を捨てないため
+        try {
+          Object.keys(msg.feeds).forEach(function (iso) { applyRemoteFeed(iso, msg.feeds[iso], true); });
+        } finally {
+          // 途中で失敗しても、適用できた日ぶんの照合と描画は必ず行う（部分適用のまま放置しない）
+          flushRemoteDays();
+        }
+      }
       else if (msg.type === 'update') { applyRemoteFeed(msg.date, msg.feed); }
     };
     ws.onclose = function () { ws = null; if (wsWant) wsSchedule(); };
@@ -1907,28 +2046,141 @@
       return d;
     } catch (e) { return { rows: [] }; }
   }
+  // 保存できたかを返す（容量不足等で失敗したとき、呼び出し側がメインを触らずに済むように）
   function writeDetail(sid, data) {
-    try { localStorage.setItem(keyDetail(sid), JSON.stringify(data)); } catch (e) {}
+    try { localStorage.setItem(keyDetail(sid), JSON.stringify(data)); return true; }
+    catch (e) { return false; }
   }
   // 細かい計画表のセルに日付を書く／変える／消すと、メイン(日別グリッド)の該当日のマスにも
-  // 「行ラベル（列ラベル回目）」という項目として書き込む・移動する・消す。書いた時点でできた
-  // はず（過去の記録を入れる用途のため）なので、○（done）を最初から付けた状態にする
-  function applyDetailCell(sid, row, col, newDateValue) {
+  // 「行ラベル（列ラベル回目）」という項目として書き込む・移動する・消す。初めて書くときは
+  // 書いた時点でできたはず（過去の記録を入れる用途のため）なので○を付けた状態にするが、
+  // 日付を変えるだけのときは、ユーザーが付け外しした○と更新時刻をそのまま持ち運ぶ。
+  //
+  // 【順序について】計画表を先に保存し、そのあとメインを触る。計画表が正なので、
+  // メイン側の書き込みが容量不足などで途中失敗しても、次回の照合(reconcile)で必ず
+  // 計画表の内容へ揃え直される。逆順（メインを先に触る）だと、計画表の保存に失敗した時点で
+  // 「メインには新しい項目、計画表には古い情報」が残り、照合で重複を生む。
+  // saveDetail は data 全体を保存する関数（呼び出し側から渡す）。
+  // 【削除予定(pending)について】古い項目をメインから消す前に、その {date,itemId} を
+  // 計画表側のpendingへ書き留めてから消す。こうすると、メイン側の削除が容量不足などで
+  // 失敗しても「これは計画表が作った消し残し」と後から識別できる（照合が片付ける）。
+  // pendingに入れずに所有情報だけ消すと、消し残りが手書き項目と区別できなくなり、
+  // 恒久的な重複として残ってしまう。
+  // toは「この項目の引っ越し先のid」（単純な削除ならnull）。処理が途中で終わっても、
+  // 照合が引っ越し先へ○と更新時刻を引き継げるようにするために持たせる。
+  // stateは「引っ越し先へ引き継ぐべき最新の○と更新時刻」。メイン側を読み直すと、
+  // 途中で○を付け替えた場合に古い状態を拾ってしまうため、予定自体に持たせる。
+  function addPendingDelete(data, date, itemId, to, state) {
+    if (!date || !itemId) return;
+    if (!Array.isArray(data.pending)) data.pending = [];
+    for (var i = 0; i < data.pending.length; i++) {
+      if (data.pending[i].date === date && data.pending[i].itemId === itemId) {
+        if (to && !data.pending[i].to) data.pending[i].to = to;
+        if (state) data.pending[i].state = state;
+        return;
+      }
+    }
+    data.pending.push({ date: date, itemId: itemId, to: to || null, state: state || null });
+  }
+  function dropPendingDelete(data, date, itemId) {
+    if (!Array.isArray(data.pending)) return;
+    data.pending = data.pending.filter(function (p) { return !(p.date === date && p.itemId === itemId); });
+  }
+  // 引っ越し先がさらに別の日へ移された（連続して日付を変えた）とき、古い予定の行き先を
+  // 最新のidへ付け替える。付け替えないと、○の引き継ぎが途中で切れ、
+  // 行き先を見失った予定が消えずに残り続ける。
+  // stateも一緒に最新化する。しないと、連鎖の途中で○を付け替えた場合に
+  // 古い項目から読んだ状態が復元に使われてしまう（最新の状態が失われる）。
+  function retargetPending(data, oldTo, newTo, state) {
+    if (!Array.isArray(data.pending) || !oldTo) return;
+    data.pending.forEach(function (p) {
+      if (p.to !== oldTo) return;
+      p.to = newTo || null;
+      if (state) p.state = state;
+    });
+  }
+  // itemId の「前の持ち主」を削除予定の連鎖でさかのぼり、実体が残っている項目の
+  // ○と更新時刻を返す。前回の移動がメインへ書き込む前に終わっていても状態を拾えるようにする。
+  function findStateViaPending(data, sid, itemId) {
+    var pending = Array.isArray(data.pending) ? data.pending : [];
+    var seen = {}, cur = itemId;
+    for (var hop = 0; hop < 50 && cur && !seen[cur]; hop++) {
+      seen[cur] = true;
+      var src = null;
+      for (var i = 0; i < pending.length; i++) if (pending[i].to === cur) { src = pending[i]; break; }
+      if (!src) return null;
+      if (src.state) return { done: !!src.state.done, u: src.state.u };   // 保存された最新状態を優先
+      var found = null;
+      cellItems(src.date, sid).forEach(function (it) {
+        if (it.id === src.itemId) found = { done: !!it.done, u: it.u };
+      });
+      if (found) return found;
+      cur = src.itemId;                 // さらに前の持ち主へ
+    }
+    return null;
+  }
+  function applyDetailCell(sid, row, col, newDateValue, data, saveDetail) {
     var cell = row.cells[col.id] || { date: '', itemId: null };
-    if (cell.itemId && cell.date) {
-      var oldItems = cellItems(cell.date, sid);
-      var kept = oldItems.filter(function (it) { return it.id !== cell.itemId; });
-      if (kept.length !== oldItems.length) writeCellItems(cell.date, sid, kept);
+    var text = ((row.label || '').trim() || '（無題）') + '（' + col.label + '回目）';
+    var sameDay = !!(newDateValue && cell.itemId && cell.date === newDateValue);
+    // 同じ日のまま書き直したとき（日付欄は入力確定で二重に発火することがある）は、
+    // 既存の項目をそのまま使い回す。作り直すと同じ日に二重に増えてしまう
+    var newItemId = sameDay ? cell.itemId : (newDateValue ? genItemId() : null);
+    var before = { date: cell.date, itemId: cell.itemId };
+    var moving = !!(before.itemId && before.date && !sameDay);
+    // 1) 別の日へ移す／消す場合、○と更新時刻を先に読んでおく（メインを触る前に）
+    var prev = null;
+    if (moving) {
+      cellItems(before.date, sid).forEach(function (it) {
+        if (it.id === before.itemId) prev = { done: !!it.done, u: it.u };
+      });
+      // 移動元に実体が無いことがある——前回の移動がメインへの書き込み前に終わった場合。
+      // そのときは削除予定の連鎖をさかのぼって、本来の○と更新時刻を探す。
+      // ここで探さないと、続けて日付を変えた瞬間に○を外した状態が既定値へ戻ってしまう。
+      if (!prev) prev = findStateViaPending(data, sid, before.itemId);
     }
-    var newItemId = null;
-    if (newDateValue) {
-      var label = (row.label || '').trim() || '（無題）';
-      var items = cellItems(newDateValue, sid);
-      newItemId = genItemId();
-      items.push({ id: newItemId, text: label + '（' + col.label + '回目）', done: true, u: Date.now() });
-      writeCellItems(newDateValue, sid, items);
-    }
+    // 2) まず計画表を保存する（新しい状態＋古い項目の削除予定）。失敗したらメインは触らない
     row.cells[col.id] = { date: newDateValue, itemId: newItemId };
+    // 巻き戻せるように、予定の中身まで複製して控える（sliceだけだと中の to を書き換えてしまう）
+    var pendingBefore = Array.isArray(data.pending)
+      ? data.pending.map(function (p) { return { date: p.date, itemId: p.itemId, to: p.to, state: p.state }; }) : null;
+    if (moving) {
+      // 行き先と一緒に、引き継ぐべき最新の状態(prev)も連鎖へ書き込む
+      retargetPending(data, before.itemId, newItemId, prev);
+      addPendingDelete(data, before.date, before.itemId, newItemId, prev);
+    }
+    if (!saveDetail()) {
+      row.cells[col.id] = before;
+      if (pendingBefore) data.pending = pendingBefore; else delete data.pending;
+      return false;
+    }
+    // 3) メインへ反映（失敗しても計画表が正なので次回の照合で直る）
+    return withDeferredPush(function () {
+      var placedOk = true;
+      if (newDateValue) {
+        var items = cellItems(newDateValue, sid), found = null, dirty = false, seen = false;
+        items = items.filter(function (it) {
+          if (it.id !== newItemId) return true;
+          if (seen) { dirty = true; return false; }   // 同一idが二重にあれば1件へ寄せる
+          seen = true; found = it; return true;
+        });
+        if (found) {
+          if (found.text !== text) { found.text = text; dirty = true; }
+          if (dirty) placedOk = writeCellItems(newDateValue, sid, items);
+        } else {
+          items.push({ id: newItemId, text: text, done: prev ? prev.done : true, u: (prev && prev.u) || Date.now() });
+          placedOk = writeCellItems(newDateValue, sid, items);
+        }
+      }
+      // 移動先へ置けたことを確認できてから、古い日の項目を消す（○と更新時刻を失わないため）
+      if (moving && placedOk) {
+        var oldItems = cellItems(before.date, sid);
+        var kept = oldItems.filter(function (it) { return it.id !== before.itemId; });
+        var removed = (kept.length === oldItems.length) || writeCellItems(before.date, sid, kept);
+        if (removed) { dropPendingDelete(data, before.date, before.itemId); saveDetail(); }
+      }
+      return true;
+    });
   }
   // 行のラベルを変えたとき、既にメインへ反映済みの全セルのテキストも更新する
   function relabelDetailRow(sid, row) {
@@ -1943,16 +2195,201 @@
       writeCellItems(cell.date, sid, items);
     });
   }
-  // 行を消すとき、メインへ反映済みだった項目も一緒に消す
-  function unlinkDetailRow(sid, row) {
-    DETAIL_COLS.forEach(function (col) {
-      var cell = row.cells[col.id];
-      if (!cell || !cell.itemId || !cell.date) return;
-      var items = cellItems(cell.date, sid);
-      var kept = items.filter(function (it) { return it.id !== cell.itemId; });
-      if (kept.length !== items.length) writeCellItems(cell.date, sid, kept);
+  // 行を消すとき、メインへ反映済みだった項目も一緒に消す。
+  // 呼び出し側が「削除予定をdataへ書いて保存してから」ここを呼ぶ前提（消し残しを識別できるように）。
+  function unlinkDetailRow(sid, row, data, saveDetail) {
+    withDeferredPush(function () {
+      DETAIL_COLS.forEach(function (col) {
+        var cell = row.cells[col.id];
+        if (!cell || !cell.itemId || !cell.date) return;
+        var items = cellItems(cell.date, sid);
+        var kept = items.filter(function (it) { return it.id !== cell.itemId; });
+        var removed = (kept.length === items.length) || writeCellItems(cell.date, sid, kept);
+        if (removed && data) dropPendingDelete(data, cell.date, cell.itemId);
+      });
     });
+    if (data && saveDetail) saveDetail();   // 片付いた削除予定を反映（失敗しても照合が拾う）
   }
+  // 教材idごとに「計画表が持っている項目」の正解表を作る。itemIdが無いセルには採番し、
+  // 万一idが重複していたら（データ破損・コピー）2件目以降へ採番し直して衝突を解く。
+  // 採番したときは detailChanged=true を返し、呼び出し側が「メインを触る前に」計画表を保存する。
+  // pending（削除予定）に載っているidは「消す途中のもの」なので所有表には入れない。
+  function buildDetailOwnership(sid) {
+    var data = readDetail(sid);
+    var pending = Array.isArray(data.pending) ? data.pending : [];
+    if (!data.rows.length && !pending.length) return null;
+    var owned = {}, detailChanged = false;
+    // 削除予定に載っているidの集合。生きているセルがこれと同じidを持っていると、
+    // 手順3で正しい項目として置いた直後に手順5が消してしまう。衝突したら採番し直す
+    var pendingIds = {};
+    pending.forEach(function (d) { if (d.itemId) pendingIds[d.itemId] = true; });
+    data.rows.forEach(function (row) {
+      var label = (row.label || '').trim() || '（無題）';
+      DETAIL_COLS.forEach(function (col) {
+        var cell = row.cells[col.id];
+        if (!cell || !cell.date) return;
+        if (!cell.itemId || owned[cell.itemId] || pendingIds[cell.itemId]) {
+          var old = cell.itemId;
+          cell.itemId = genItemId();
+          if (old) retargetPending(data, old, cell.itemId);   // 引き継ぎの連鎖を切らない
+          detailChanged = true;
+        }
+        owned[cell.itemId] = { date: cell.date, text: label + '（' + col.label + '回目）' };
+      });
+    });
+    return { data: data, owned: owned, pending: pending, detailChanged: detailChanged };
+  }
+  // 細かい計画表の中身を、メイン（日別グリッド）へ丸ごと反映し直す。
+  // 日付の書き込み時点では都度反映しているが、メイン側でその項目を消す／別端末との同期で
+  // 落ちるなどで一度ズレると、以後は自動で戻らなかった。ここで計画表を正として作り直す。
+  // 触るのは「計画表が作った項目」だけ（itemIdが計画表に記録されているもの）。マスに直接
+  // 手で書いた項目には一切触れない。○(done)も、移動のときは元の状態を持ち運ぶ。
+  // sids省略時は全教材。pk:cell:の走査は全教材まとめて1回だけ行う。
+  function reconcileDetailsToMain(sids) {
+    return withDeferredPush(function () { return reconcileDetailsToMainInner(sids); });
+  }
+  function reconcileDetailsToMainInner(sids) {
+    var subjects = readSubjects();
+    var targets = sids ? subjects.filter(function (s) { return sids.indexOf(s.id) >= 0; }) : subjects;
+    if (!targets.length) return false;
+    // 1) 正解表を作り、採番が必要なら「メインを触る前に」計画表を保存する。
+    //    保存できなかった教材は、次回起動で別idを採番して項目が重複するのを防ぐため見送る。
+    var plans = [];
+    targets.forEach(function (s) {
+      var p = buildDetailOwnership(s.id);
+      if (!p) return;
+      if (p.detailChanged && !writeDetail(s.id, p.data)) return;   // 保存できなければこの教材は見送る
+      p.sid = s.id;
+      plans.push(p);
+    });
+    if (!plans.length) return false;
+    var changed = false;
+    // 2) 計画表の項目が「間違った日」に残っていたら外す。○と更新時刻は退避して移動先へ持ち運ぶ。
+    //    ここでは消さずに「外す予定」だけ集める。先に消してから入れ直す順だと、途中で
+    //    書き込みが失敗（容量不足など）したときに項目そのものを失うため、
+    //    「正しい日へ入れてから、間違った日から外す」順で書き込む。
+    var carried = {};   // itemId -> {done, u}（○を外した状態などを移動先へ持ち運ぶ）
+    // itemId から「計画表のどのセル（＝どの日）に属するか」を引ける索引。
+    // 削除予定の行き先を探すのに毎回全行を総当たりしないため
+    var cellByItemId = {};
+    plans.forEach(function (p) {
+      p.data.rows.forEach(function (row) {
+        DETAIL_COLS.forEach(function (col) {
+          var c = row.cells[col.id];
+          if (c && c.itemId) cellByItemId[p.sid + '::' + c.itemId] = c;
+        });
+      });
+    });
+    // 1.5) 削除予定(pending)は**まだ消さない**。先に消すと、引っ越し先へ置く前に元を失い、
+    //      ○と更新時刻が既定値へ戻ってしまう。ここでは引っ越し先へ引き継ぐ状態だけ読み取り、
+    //      実際の削除は「置き直し」が終わったあと（手順5）に行う。
+    plans.forEach(function (p) {
+      p.pending.forEach(function (d) {
+        if (!d.to) return;
+        // 予定に保存された状態を優先する。メイン側を読み直すと、連鎖の途中で○を
+        // 付け替えていた場合に古い状態を拾ってしまう
+        if (d.state) { carried[p.sid + '::' + d.to] = { done: !!d.state.done, u: d.state.u }; return; }
+        cellItems(d.date, p.sid).forEach(function (it) {
+          if (it.id === d.itemId) carried[p.sid + '::' + d.to] = { done: !!it.done, u: it.u };
+        });
+      });
+    });
+    var pendingRemoval = [];   // {iso, sid, kept}
+    var ownedBySid = {};
+    plans.forEach(function (p) { ownedBySid[p.sid] = p.owned; });
+    forEachStoredKey('pk:cell:', function (k) {
+      var rest = k.slice('pk:cell:'.length), iso = rest.slice(0, 10), owner = rest.slice(11);
+      var owned = ownedBySid[owner];
+      if (!owned) return;                     // 対象外の教材のマスには触らない
+      var items = cellItems(iso, owner), kept = [];
+      items.forEach(function (it) {
+        if (owned[it.id] && owned[it.id].date !== iso) {
+          carried[owner + '::' + it.id] = { done: !!it.done, u: it.u };   // 教材ごとに分ける（別教材の同一idと混ざらないように）
+          return;
+        }
+        kept.push(it);
+      });
+      if (kept.length !== items.length) pendingRemoval.push({ iso: iso, sid: owner, kept: kept });
+    });
+    // 3) 正しい日に入れ直す／文字が古ければ直す（先にこちらを確定させる）
+    var placed = {};   // itemId -> true（正しい日に存在することを確認できたもの）
+    plans.forEach(function (p) {
+      var byDate = {};
+      Object.keys(p.owned).forEach(function (itemId) {
+        var want = p.owned[itemId];
+        (byDate[want.date] || (byDate[want.date] = [])).push({ id: itemId, text: want.text });
+      });
+      Object.keys(byDate).forEach(function (iso) {
+        var items = cellItems(iso, p.sid), dirty = false;
+        byDate[iso].forEach(function (want) {
+          var found = null;
+          for (var i = 0; i < items.length; i++) if (items[i].id === want.id) { found = items[i]; break; }
+          if (!found) {
+            // 別の日から移してきたなら○と更新時刻を引き継ぐ。初めて作るなら済み扱い（過去の記録を入れる用途）
+            var c = carried[p.sid + '::' + want.id];
+            items.push({ id: want.id, text: want.text, done: c ? c.done : true, u: (c && c.u) || Date.now() });
+            dirty = true;
+          } else {
+            if (found.text !== want.text) { found.text = want.text; dirty = true; }
+            // 同じ日に同じidが二重に入っていたら1件に寄せる
+            var seen = false;
+            var uniq = items.filter(function (it) {
+              if (it.id !== want.id) return true;
+              if (seen) return false;
+              seen = true; return true;
+            });
+            if (uniq.length !== items.length) { items = uniq; dirty = true; }
+          }
+        });
+        if (dirty) {
+          if (!writeCellItems(iso, p.sid, items)) return;   // 書けなかった日はここで諦める（元は消さない）
+          changed = true;
+        }
+        byDate[iso].forEach(function (want) { placed[p.sid + '::' + want.id] = true; });
+      });
+    });
+    // 4) 正しい日へ置けたことを確認できた項目だけ、間違った日から外す
+    pendingRemoval.forEach(function (r) {
+      var items = cellItems(r.iso, r.sid), kept = [];
+      items.forEach(function (it) {
+        var owned = ownedBySid[r.sid];
+        var misplaced = owned && owned[it.id] && owned[it.id].date !== r.iso;
+        if (misplaced && placed[r.sid + '::' + it.id]) return;   // 移動先に置けたので、この日からは外す
+        kept.push(it);
+      });
+      if (kept.length !== items.length) { if (writeCellItems(r.iso, r.sid, kept)) changed = true; }
+    });
+    // 5) 削除予定(pending)を片付ける。置き直しが済んだこの段階でようやく消す。
+    //    引っ越し先(to)がある場合は、そこに置けたことを確認できてから消す（元を先に失わない）。
+    plans.forEach(function (p) {
+      if (!p.pending.length) return;
+      var stillPending = [];
+      p.pending.forEach(function (d) {
+        // 引っ越し先が指定されているのに、まだそこへ置けていないなら消さずに次回へ回す。
+        // ただし引っ越し先が計画表のどこにも無いなら、行き先が消えた（さらに動かされた・
+        // 行ごと消された）ということなので、待たずにこの場で消す（予定の残留を防ぐ）
+        if (d.to) {
+          var target = cellByItemId[p.sid + '::' + d.to];
+          if (target) {
+            var arrived = cellItems(target.date, p.sid).some(function (it) { return it.id === d.to; });
+            if (!arrived) { stillPending.push(d); return; }
+          }
+        }
+        var items = cellItems(d.date, p.sid);
+        var kept2 = items.filter(function (it) { return it.id !== d.itemId; });
+        if (kept2.length === items.length) return;                  // すでに無い＝片付け済み
+        if (writeCellItems(d.date, p.sid, kept2)) changed = true;
+        else stillPending.push(d);                                  // 消せなかったので次回へ
+      });
+      if (stillPending.length !== p.pending.length) {
+        p.data.pending = stillPending;
+        p.pending = stillPending;
+        writeDetail(p.sid, p.data);
+      }
+    });
+    return changed;
+  }
+  function reconcileAllDetails() { return reconcileDetailsToMain(null); }
   // ---- 保存の合図 ----
   var saveNoteTimer = 0;
   function flashSaved(msg) {
@@ -2559,7 +2996,12 @@
     renderDetailTable();
     detailPlanModal.style.display = 'flex';
   }
-  function closeDetailPlanModal() { detailPlanModal.style.display = 'none'; detailSubjectId = null; }
+  function closeDetailPlanModal() {
+    if (detailSubjectId) reconcileDetailsToMain([detailSubjectId]);   // 閉じる時点の中身をメインへ揃える
+    detailPlanModal.style.display = 'none';
+    detailSubjectId = null;
+    render();
+  }
   function renderDetailTable() {
     var data = readDetail(detailSubjectId);
 
@@ -2585,9 +3027,17 @@
       labelInput.placeholder = '1〜10';
       labelInput.value = row.label || '';
       labelInput.addEventListener('change', function () {
+        // 計画表を先に保存してからメインの文字を直す（失敗したらメインは触らない）
+        var beforeLabel = row.label;
         row.label = labelInput.value.trim();
+        if (!writeDetail(detailSubjectId, data)) {
+          row.label = beforeLabel;
+          alert('この端末の空き容量が足りず、保存できませんでした。\n写真やアプリを整理してから、もう一度お試しください。');
+          renderDetailTable();
+          return;
+        }
         relabelDetailRow(detailSubjectId, row);
-        writeDetail(detailSubjectId, data);
+        render();
       });
       tdLabel.appendChild(labelInput);
       tr.appendChild(tdLabel);
@@ -2597,8 +3047,15 @@
         inp.type = 'date';
         inp.value = (row.cells[col.id] && row.cells[col.id].date) || '';
         inp.addEventListener('change', function () {
-          applyDetailCell(detailSubjectId, row, col, inp.value);
-          writeDetail(detailSubjectId, data);
+          // 計画表の保存はapplyDetailCellの中で先に行う（失敗時はメインを触らない）
+          var ok = applyDetailCell(detailSubjectId, row, col, inp.value, data, function () {
+            return writeDetail(detailSubjectId, data);
+          });
+          if (!ok) {
+            alert('この端末の空き容量が足りず、保存できませんでした。\n写真やアプリを整理してから、もう一度お試しください。');
+            renderDetailTable();   // 画面を保存済みの内容に戻す
+            return;
+          }
           render();   // メイン側のグリッドにも即反映する
         });
         td.appendChild(inp);
@@ -2611,9 +3068,23 @@
       rowDelBtn.textContent = '✕';
       rowDelBtn.setAttribute('aria-label', 'この行をけす');
       rowDelBtn.addEventListener('click', function () {
-        unlinkDetailRow(detailSubjectId, row);
-        data.rows.splice(idx, 1);
-        writeDetail(detailSubjectId, data);
+        // 行を消す前に、その行がメインに作った項目を「削除予定」として書き留めてから
+        // 計画表を保存する。こうすればメイン側の削除が失敗しても消し残しを識別でき、
+        // 次回の照合が片付けられる（手書き項目と区別がつかなくなるのを防ぐ）
+        var pendingBefore = Array.isArray(data.pending) ? data.pending.slice() : null;
+        DETAIL_COLS.forEach(function (col) {
+          var cell = row.cells[col.id];
+          if (cell && cell.date && cell.itemId) addPendingDelete(data, cell.date, cell.itemId);
+        });
+        var removed = data.rows.splice(idx, 1)[0];
+        if (!writeDetail(detailSubjectId, data)) {
+          data.rows.splice(idx, 0, removed);                        // 元に戻す
+          if (pendingBefore) data.pending = pendingBefore; else delete data.pending;
+          alert('この端末の空き容量が足りず、保存できませんでした。\n写真やアプリを整理してから、もう一度お試しください。');
+          renderDetailTable();
+          return;
+        }
+        unlinkDetailRow(detailSubjectId, row, data, function () { return writeDetail(detailSubjectId, data); });
         renderDetailTable();
         render();   // メイン側のグリッドにも即反映する
       });
@@ -2622,6 +3093,14 @@
       detailTableBody.appendChild(tr);
     });
   }
+  // 計画表の保存に失敗（端末の容量不足など）したときは黙って進めず知らせる。
+  // メイン側だけ変わって計画表が古いまま残っても、次に開いたときの照合で計画表を正として
+  // 戻すので食い違いは残らない。ユーザーには「保存できていない」ことを伝える。
+  function saveDetailOrWarn(sid, data) {
+    if (writeDetail(sid, data)) return true;
+    alert('この端末の空き容量が足りず、計画表を保存できませんでした。\n写真やアプリを整理してから、もう一度お試しください。');
+    return false;
+  }
   document.getElementById('detailPlanOpenBtn').addEventListener('click', function () {
     if (editingSubject) openDetailPlanModal(editingSubject);
   });
@@ -2629,7 +3108,7 @@
     if (!detailSubjectId) return;
     var data = readDetail(detailSubjectId);
     data.rows.push({ id: genItemId(), label: '', cells: {} });
-    writeDetail(detailSubjectId, data);
+    if (!saveDetailOrWarn(detailSubjectId, data)) return;
     renderDetailTable();
     var inputs = detailTableBody.querySelectorAll('.detail-label-input');
     var last = inputs[inputs.length - 1];
@@ -3292,6 +3771,11 @@
     applyTheme();                            // 手帳でテーマを変えていたら追従
     currentWeek = weekStartOf(currentWeek);  // 週の始まり設定が手帳側で変わっていることもある
     render();
+    // 前回フィードを組み立て直せなかった日（容量不足など）をここでやり直す。
+    // リモート受信を待つだけだと、受信が来ないまま食い違いが残ってしまう。
+    // 控え自体が保存できていなかった場合に備え、食い違いの自己点検も毎回行う
+    repairFeedMismatches();
+    if (pendingRemoteDays.length) flushRemoteDays();
     wsConnect();                             // 復帰したら即時同期をつなぎ直す
   }
   document.addEventListener('visibilitychange', function () {
@@ -3302,9 +3786,13 @@
   window.addEventListener('pageshow', foregroundRefresh);
 
   migrateCellsToItems();
+  reconcileAllDetails();   // 細かい計画表の中身とメインのマスがズレていたら、計画表を正として直す
+  loadRetryDays();         // 前回フィードを組み立て直せなかった日を引き継ぐ（控えられていれば）
+  repairFeedMismatches();  // 控えが失われていても、食い違っている日を自力で見つけて直す
   applyWording();
   applyTheme();
   render();
+  if (pendingRemoteDays.length) flushRemoteDays();   // それでも直せなかった日はここでやり直す
   wsConnect();       // 連携中なら即時同期を開始（接続時に最新スナップショットを受信）
   syncPushAll();     // 手元の計画も上げておく（マージはu基準なので新しい方が残る）
 
