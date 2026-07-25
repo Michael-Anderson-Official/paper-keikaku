@@ -271,18 +271,23 @@
     left: 0;
     right: 0;
     bottom: 0;
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
-    padding: 0 12px 14px 30px;
-    /* 横スクロールした教材名が、綴じしろ（左30px）へはみ出して見えないようにする */
-    clip-path: inset(0 0 0 30px);
+    overflow: hidden;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+    padding: 0 12px 8px 30px;
   }
   table.plan {
+    --plan-head-h: 44px;
     border-collapse: separate;
     border-spacing: 0;
     width: 100%;
+    height: 100%;
     table-layout: fixed;
   }
+  table.plan.has-covers { --plan-head-h: 90px; }
+  table.plan .plan-head-row { height: var(--plan-head-h); }
+  table.plan .plan-day-row { height: calc((100% - var(--plan-head-h)) / 7); }
+  table.plan .plan-day-row > td { overflow: hidden; }
   table.plan th, table.plan td {
     border: 0;
     border-right: 1px solid var(--rule);
@@ -293,19 +298,16 @@
   table.plan tr:last-child td { border-bottom: none; }
 
   th.subject {
-    height: 44px;
     font-size: 14px;
     font-weight: 600;
     color: var(--ink-strong);
     vertical-align: middle;
     padding: 0;
-    position: sticky;
-    top: 0;
-    z-index: 4;
     background-color: var(--paper);
   }
   .subject-button {
     width: 100%;
+    height: 100%;
     min-height: 44px;
     padding: 3px 4px;
     border: 0;
@@ -325,7 +327,7 @@
     border-radius: 3px;
     box-shadow: 1px 1px 2px rgba(60, 45, 25, 0.35);
   }
-  th.subject.has-cover { height: 90px; padding-top: 5px; }
+  th.subject.has-cover { padding-top: 5px; }
   /* 教材名は2行まで表示（はみ出したら…）。thは表セルのまま、内側spananだけをクランプ */
   th.subject .subject-name {
     display: -webkit-box;
@@ -339,10 +341,6 @@
   }
   th.corner {
     width: 44px;
-    position: sticky;
-    top: 0;
-    left: 0;
-    z-index: 6;
     background-color: var(--paper);
     box-shadow: 1px 0 0 var(--rule);
   }
@@ -352,9 +350,6 @@
     font-weight: 400;
     color: var(--ink-soft);
     vertical-align: middle;
-    position: sticky;
-    top: 0;
-    z-index: 4;
     background-color: var(--paper);
   }
   .add-subject-button {
@@ -373,9 +368,7 @@
     text-align: center;
     font-size: 11px;
     color: var(--ink-soft);
-    position: sticky;
-    left: 0;
-    z-index: 3;
+    position: relative;
     background-color: var(--paper);
     box-shadow: 1px 0 0 var(--rule);
   }
@@ -402,11 +395,14 @@
     pointer-events: none;
   }
 
-  td.cell { height: 62px; padding: 0; position: relative; }
+  td.cell { height: auto; padding: 0; position: relative; }
   .cell-button {
     display: block;
-    width: 100%;
-    min-height: 61px;
+    position: absolute;
+    inset: 0;
+    width: auto;
+    height: auto;
+    min-height: 44px;
     padding: 5px 6px;
     border: 0;
     background: transparent;
@@ -414,6 +410,7 @@
     font: inherit;
     text-align: left;
     cursor: pointer;
+    overflow: hidden;
   }
   td.cell .cell-text {
     /* 書いた計画は「自分の字」＝書く字（明朝）で。手帳の書き込みと字を揃える */
@@ -436,7 +433,7 @@
     word-break: break-word;
     white-space: pre-wrap;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
   }
   td.cell .cell-text-item.is-done {
     color: var(--ink-soft);
@@ -467,7 +464,15 @@
   /* 複数項目の一部だけ完了した場合は、項目ごとの取り消し線と「1/3 完了」で示す。 */
 
   .empty-note {
-    padding: 34px 20px 0 14px;
+    position: absolute;
+    z-index: 2;
+    top: 64px;
+    left: 78px;
+    right: 20px;
+    padding: 20px 18px;
+    border-radius: 10px;
+    background: var(--paper-back-2);
+    box-shadow: 0 3px 12px rgba(60, 45, 25, 0.12);
     font-size: 15px;
     line-height: 1.75;
     color: var(--ink-soft);
@@ -506,6 +511,36 @@
     cursor: pointer;
   }
   .toolbar button:active { transform: translateY(1px); }
+  .toolbar button:disabled { opacity: 0.38; cursor: default; transform: none; }
+  .subject-pager {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-height: 44px;
+    padding: 0 2px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 6px;
+    background: var(--paper-back-2);
+  }
+  .subject-pager[hidden] { display: none; }
+  .toolbar .subject-pager button,
+  body[data-paper] .toolbar .subject-pager button {
+    width: 44px;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    font-size: 16px;
+  }
+  .subject-page-label {
+    min-width: 44px;
+    color: var(--ink-soft);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+  }
 
   /* ---- 縁なし（埋め込み）モード。スマホは画面のふちまで紙（手帳と同じ） ---- */
   @media (max-width: 600px) {
@@ -536,14 +571,28 @@
       position: fixed;
       left: 0; right: 0; bottom: 0;
       margin: 0;
+      gap: 4px;
       justify-content: center;
-      padding: 8px 8px calc(10px + env(safe-area-inset-bottom, 0px));
+      padding: 8px 4px calc(10px + env(safe-area-inset-bottom, 0px));
       z-index: 50;
+    }
+    .toolbar > button {
+      padding-right: 9px;
+      padding-left: 9px;
     }
     .toolbar button {
       background: linear-gradient(180deg, rgba(243, 236, 217, 0.92), rgba(231, 223, 200, 0.92));
       box-shadow: 0 2px 6px rgba(60, 45, 25, 0.25);
     }
+  }
+  @media (max-width: 360px) {
+    .toolbar > button { padding-right: 5px; padding-left: 5px; font-size: 12px; }
+  }
+  /* 背の低い端末では表紙より7日分の操作領域を優先する。教材編集画面では表紙を確認できる。 */
+  @media (max-height: 620px) {
+    table.plan.has-covers { --plan-head-h: 44px; }
+    table.plan.has-covers .subject-cover { display: none; }
+    th.subject.has-cover { padding-top: 0; }
   }
 
   /* ---- 右上のメニュー（手帳と同じ） ---- */
@@ -1484,6 +1533,11 @@
   <button id="prevWeek" type="button">◀ 前へ</button>
   <button id="todayBtn" type="button">今週</button>
   <button id="nextWeek" type="button">次へ ▶</button>
+  <span id="subjectPager" class="subject-pager" role="group" aria-label="教材の表示切り替え" hidden>
+    <button id="prevSubjectPage" type="button" aria-label="前の教材を表示" aria-controls="gridScroll">◀</button>
+    <span id="subjectPageLabel" class="subject-page-label" aria-live="polite"></span>
+    <button id="nextSubjectPage" type="button" aria-label="次の教材を表示" aria-controls="gridScroll">▶</button>
+  </span>
 </div>
 
 <div class="save-note" id="saveNote" role="status" aria-live="polite" aria-atomic="true"></div>
@@ -2245,6 +2299,28 @@
 
   // ---- 描画 ----
   var currentWeek = weekStartOf(toISO(new Date()));
+  var SUBJECTS_PER_PAGE = 3;
+  var subjectPage = 0;
+
+  function subjectPageCount(subjects) {
+    return Math.max(1, Math.ceil(subjects.length / SUBJECTS_PER_PAGE));
+  }
+  function clampSubjectPage(subjects) {
+    subjectPage = Math.max(0, Math.min(subjectPage, subjectPageCount(subjects) - 1));
+  }
+  function renderSubjectPager(subjects) {
+    var pager = document.getElementById('subjectPager');
+    clampSubjectPage(subjects);
+    pager.hidden = subjects.length <= SUBJECTS_PER_PAGE;
+    if (pager.hidden) return;
+    var count = subjectPageCount(subjects);
+    var visible = subjects.slice(subjectPage * SUBJECTS_PER_PAGE, (subjectPage + 1) * SUBJECTS_PER_PAGE);
+    var label = document.getElementById('subjectPageLabel');
+    label.textContent = '教材 ' + (subjectPage + 1) + '/' + count;
+    label.title = visible.map(function (s) { return s.name; }).join('、');
+    document.getElementById('prevSubjectPage').disabled = subjectPage === 0;
+    document.getElementById('nextSubjectPage').disabled = subjectPage === count - 1;
+  }
 
   // 試験日カウントダウン＋逆算ノルマ
   function examDate() { return localStorage.getItem('pk:examDate') || ''; }
@@ -2428,6 +2504,7 @@
 
   function render() {
     renderCountdown();
+    renderSubjectPager(readSubjects());
     renderWeekInto(document, currentWeek);
   }
 
@@ -2444,6 +2521,8 @@
     var scroll = root.querySelector('#gridScroll');
     scroll.innerHTML = '';
     var subjects = readSubjects();
+    clampSubjectPage(subjects);
+    scroll.classList.toggle('is-empty', !subjects.length);
     if (!subjects.length) {
       var note = document.createElement('div');
       note.className = 'empty-note';
@@ -2459,22 +2538,20 @@
       scroll.appendChild(note);
       return;
     }
-    scroll.appendChild(buildTable(subjects, toISO(new Date()), weekIso));
+    var visibleSubjects = subjects.slice(subjectPage * SUBJECTS_PER_PAGE, (subjectPage + 1) * SUBJECTS_PER_PAGE);
+    scroll.appendChild(buildTable(visibleSubjects, toISO(new Date()), weekIso));
   }
 
   function buildTable(subjects, todayIso, weekIso) {
     var table = document.createElement('table');
     table.className = 'plan';
+    if (subjects.some(function (s) { return !!s.cover; })) table.classList.add('has-covers');
     var caption = document.createElement('caption');
     caption.className = 'sr-only';
     caption.textContent = '1週間の勉強計画。行が日付、列が教材です。';
     table.appendChild(caption);
-    // 3教材までは画面幅を均等に使う。4教材以上は1列96pxを守って横スクロールにし、
-    // 「一覧性を保とうとして文字が読めなくなる」状態を避ける。
-    if (subjects.length > 3) {
-      table.style.minWidth = (88 + subjects.length * 96) + 'px';
-    }
     var thead = document.createElement('tr');
+    thead.className = 'plan-head-row';
     var corner = document.createElement('th');
     corner.className = 'corner';
     corner.setAttribute('aria-hidden', 'true');
@@ -2521,6 +2598,7 @@
     for (var i = 0; i < 7; i++) {
       var iso = addDays(weekIso, i), d = fromISO(iso);
       var tr = document.createElement('tr');
+      tr.className = 'plan-day-row';
       var label = document.createElement('td');
       label.className = 'day-label' +
         (d.getDay() === 0 ? ' dow-sun' : d.getDay() === 6 ? ' dow-sat' : '') +
@@ -2916,6 +2994,7 @@
     if (i < 0 || j < 0 || j >= subjects.length) return;
     var tmp = subjects[i]; subjects[i] = subjects[j]; subjects[j] = tmp;
     writeSubjects(subjects);
+    subjectPage = Math.floor(j / SUBJECTS_PER_PAGE);
     render();                    // 列が動くのが見える（モーダルは開いたまま）
     updateReorderButtons(sid);
     flashSaved();
@@ -2938,6 +3017,7 @@
       if (pendingCover) obj.cover = pendingCover;
       subjects.push(obj);
       writeSubjects(subjects);
+      subjectPage = Math.floor((subjects.length - 1) / SUBJECTS_PER_PAGE);
     }
     closeSubjectModal(); render(); flashSaved();
   });
@@ -3392,6 +3472,7 @@
       if (pendingCover) obj.cover = pendingCover;
       subjects.push(obj);
       writeSubjects(subjects);
+      subjectPage = Math.floor((subjects.length - 1) / SUBJECTS_PER_PAGE);
     }
     // 今日から1日ずつ（既に書いてあれば1つの項目として追加）
     var startIso = toISO(new Date());
@@ -3404,6 +3485,8 @@
     closeDialog(tocModal);
     closeSubjectModal();
     currentWeek = weekStartOf(startIso);
+    var subjectIndex = readSubjects().map(function (s) { return s.id; }).indexOf(sid);
+    if (subjectIndex >= 0) subjectPage = Math.floor(subjectIndex / SUBJECTS_PER_PAGE);
     render();
     flashSaved(tx('tocAddedMsg', { n: chapters.length }));
   });
@@ -3488,6 +3571,16 @@
   document.getElementById('prevWeek').addEventListener('click', function () { goWeek(-1); });
   document.getElementById('nextWeek').addEventListener('click', function () { goWeek(1); });
   document.getElementById('todayBtn').addEventListener('click', function () { goWeek(0); });
+  document.getElementById('prevSubjectPage').addEventListener('click', function () {
+    if (subjectPage <= 0) return;
+    subjectPage--;
+    render();
+  });
+  document.getElementById('nextSubjectPage').addEventListener('click', function () {
+    if (subjectPage >= subjectPageCount(readSubjects()) - 1) return;
+    subjectPage++;
+    render();
+  });
 
   // ---- メニュー・設定 ----
   var menuBtn = document.getElementById('menuBtn'), menuPanel = document.getElementById('menuPanel');
