@@ -1303,7 +1303,7 @@
   <button id="nextWeek" type="button">次へ ▶</button>
 </div>
 
-<div class="save-note" id="saveNote">とじました</div>
+<div class="save-note" id="saveNote">保存しました</div>
 
 <!-- 右上のメニュー（☰）と設定（手帳と同じ） -->
 <button id="menuBtn" type="button" class="menu-btn" aria-label="メニュー">☰</button>
@@ -1957,7 +1957,7 @@
   var saveNoteTimer = 0;
   function flashSaved(msg) {
     var el = document.getElementById('saveNote');
-    el.textContent = msg || 'とじました';
+    el.textContent = msg || '保存しました';
     el.classList.add('show');
     clearTimeout(saveNoteTimer);
     saveNoteTimer = setTimeout(function () { el.classList.remove('show'); }, 900);
@@ -2425,7 +2425,7 @@
   document.getElementById('cellClear').addEventListener('click', function () {
     if (!editing) return;
     writeCellItems(editing.iso, editing.subject.id, []);
-    closeCellModal(); flashSaved();
+    closeCellModal(); flashSaved('消しました');
   });
   document.getElementById('cellCancel').addEventListener('click', closeCellModal);
   cellModal.addEventListener('click', function (e) { if (e.target === cellModal) closeCellModal(); });
@@ -2514,7 +2514,7 @@
     writeSubjects(subjects);
     render();                    // 列が動くのが見える（モーダルは開いたまま）
     updateReorderButtons(sid);
-    flashSaved();
+    flashSaved('並べ替えました');
   }
   document.getElementById('subjectMoveLeft').addEventListener('click', function () { if (editingSubject) moveSubject(editingSubject.id, -1); });
   document.getElementById('subjectMoveRight').addEventListener('click', function () { if (editingSubject) moveSubject(editingSubject.id, 1); });
@@ -2542,7 +2542,7 @@
     if (!confirm(tx('deleteConfirm', { name: editingSubject.name }))) return;
     writeSubjects(readSubjects().filter(function (s) { return s.id !== editingSubject.id; }));
     deleteSubjectEverywhere(editingSubject.id);
-    closeSubjectModal(); render(); flashSaved();
+    closeSubjectModal(); render(); flashSaved('消しました');
   });
   document.getElementById('subjectCancel').addEventListener('click', closeSubjectModal);
   subjectModal.addEventListener('click', function (e) { if (e.target === subjectModal) closeSubjectModal(); });
@@ -2758,7 +2758,7 @@
         stopCamera();
         document.getElementById('subjectName').value = title.slice(0, 60);
         scanModal.style.display = 'none';   // 教材モーダルへ戻る（名前が入った状態で確認・編集できる）
-        flashSaved();
+        flashSaved('読み取りました');
       } else {
         setScanStatus('scanNotFound');
         scanBusy = false;            // カメラは動いたまま。別の本を試せる
@@ -3112,7 +3112,7 @@
     localStorage.removeItem('pk:examDate'); localStorage.removeItem('pk:examName');
     document.getElementById('examDateInput').value = '';
     document.getElementById('examNameInput').value = '';
-    renderCountdown(); flashSaved();
+    renderCountdown(); flashSaved('消しました');
   });
   // きろく（達成率）
   document.getElementById('menuStats').addEventListener('click', function () {
