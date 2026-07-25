@@ -236,7 +236,7 @@
   .page-date {
     position: absolute;
     top: 22px;
-    left: 34px;
+    left: 20px;   /* グリッドの左(16px)と揃える。以前は34px */
     right: 18px;
     color: var(--ink-strong);
     line-height: 1.15;
@@ -254,7 +254,10 @@
     bottom: 0;
     overflow: auto;
     -webkit-overflow-scrolling: touch;
-    padding: 0 12px 14px 30px;
+    /* 左は綴じのステッチ(.paper::before: left:10px + 2.5px)をよけるぶんだけ。
+       以前は30pxあったが、手帳と違って赤い罫線を引いていないため、意匠ではなく
+       ただの空白に見えて邪魔だった（2026-07-25にユーザー指摘）。マスを広く使う */
+    padding: 0 12px 14px 16px;
   }
   /* 下へスクロールしても何の教材か分かるよう、教材の見出し行は上に貼り付けたままにする。
      position:stickyはborder-collapse:collapseだと罫線が一緒に流れて消えるので、
@@ -423,7 +426,7 @@
     .exam-countdown {
       position: absolute;
       top: env(safe-area-inset-top, 0px);
-      left: 34px;
+      left: 20px;   /* 見出し・グリッドと左を揃える。以前は34px */
       right: 56px;
       margin: 2px 0 0;
       padding-bottom: 6px;
