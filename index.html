@@ -1468,7 +1468,7 @@
 <div id="detailPlanModal" class="settings-modal" style="display:none;">
   <div class="settings-card">
     <h2 id="detailPlanTitle"></h2>
-    <p class="settings-note" style="margin-top:0;">行は自由に追加できます。列は1〜5回目の復習で、日付はすべて自分で入れます。入れた日付は、その日のマスにも入ります。</p>
+    <p class="settings-note" style="margin-top:0;">行は自由に追加できます。列は1〜5回目の復習で、日付はすべて自分で入れます。日付を入れると、その日のマスに「行名（○回目）」が済んだ項目として入ります。</p>
     <div class="detail-table-wrap">
       <table class="detail-table">
         <thead id="detailTableHead"></thead>
@@ -3239,7 +3239,7 @@
     localStorage.removeItem('pk:linkCode');
     wsDisconnect();
     renderLinkSection();
-    flashSaved();
+    flashSaved('連携をやめました');
   });
   document.getElementById('linkCopyBtn').addEventListener('click', function () {
     var code = linkCode();
@@ -3419,7 +3419,8 @@
       flashSaved('コピーしました');
     });
     document.getElementById('vaultToggleBtn').addEventListener('click', function () {
-      if (vaultOn()) {
+      var wasOn = vaultOn();   // 切替後は状態が変わるので、押す前の状態で合図の文言を決める
+      if (wasOn) {
         if (!confirm('自動バックアップをやめますか？\nサーバーに預けた分は残りますが、以後は更新されません。')) return;
         localStorage.setItem('pk:vaultOff', '1');
       } else {
@@ -3427,7 +3428,7 @@
         vaultPushSoon();
       }
       renderVaultSection();
-      flashSaved();
+      flashSaved(wasOn ? '自動バックアップをやめました' : '自動バックアップを始めました');
     });
     document.getElementById('vaultRestoreBtn').addEventListener('click', function () {
       var v = (document.getElementById('vaultRestoreInput').value || '').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
