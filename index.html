@@ -419,7 +419,9 @@
     html, body { background: var(--paper); }
     .book { position: fixed; inset: 0; width: auto; height: auto; }
     .book::before { display: none; }
-    .paper { border-radius: 0; }
+    /* 綴じ側の内側の影は切る。紙が画面いっぱいで「本のページ」に見えないうえ、
+       表を左端まで伸ばしたので影が表に乗って汚れのように見えていた（2026-07-25指摘） */
+    .paper { border-radius: 0; box-shadow: none; }
     /* --countdown-hはJS(renderCountdown)が、試験日カウントダウンの実際の高さ（0px=非表示）を
        都度measureしてsetPropertyする。ダイナミックアイランド等の切り欠きに重ならないよう
        カウントダウン自身はposition:absoluteでtopをsafe-area-inset-topぶん下げ（＝offsetHeightは
