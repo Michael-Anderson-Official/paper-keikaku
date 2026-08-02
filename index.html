@@ -916,6 +916,22 @@
   /* 「＋行を追加」と「編集」を横に並べる */
   .detail-plan-tools { display: flex; gap: 8px; }
   .detail-plan-tools .cell-add-item { flex: 1; width: auto; }
+  /* 行が300もある教材があるので、カードの高さを画面に収めて表だけをスクロールさせる。
+     こうしないと「＋行を追加」「編集」「閉じる」「保存」が表の一番下に押し出され、
+     押すたびに延々とスクロールすることになる */
+  #detailPlanModal .settings-card {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 48px);
+    max-height: calc(100dvh - 48px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  }
+  /* 見出し・説明・ボタン類は縮めず、表だけが伸び縮みする。
+     min-height:0 がないと、flexの子は中身の高さより縮めず表がはみ出す */
+  #detailPlanModal .settings-card > h2,
+  #detailPlanModal .settings-card > .settings-note,
+  #detailPlanModal .detail-plan-tools,
+  #detailPlanModal .modal-btns { flex-shrink: 0; }
+  #detailPlanModal .detail-table-wrap { flex: 1; min-height: 0; overflow-y: auto; }
   .cell-add-item.is-on {
     background: linear-gradient(180deg, #e0d4ae, #cfc199);
     border-color: rgba(120, 100, 60, 0.5);
