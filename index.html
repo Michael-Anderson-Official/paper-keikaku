@@ -882,8 +882,10 @@
     border: none;
     background: none;
     color: var(--sun);
-    font-size: 13px;
-    padding: 6px 6px;
+    font-size: 16px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
     cursor: pointer;
   }
   /* 並べ替え（▲▼）と ✕ は「編集」を押しているあいだだけ出す。
@@ -892,18 +894,23 @@
   .detail-table .detail-row-del-cell { display: none; }
   .detail-table.is-editing .detail-row-ops,
   .detail-table.is-editing .detail-row-del-cell { display: table-cell; }
+  /* 逆に、編集しているあいだは日付の列を隠す。並べ替えと削除に日付は要らないし、
+     ▲▼の列を足したままだと表が枠(300px)からはみ出して横スクロールになる。
+     空いた幅で▲▼と✕を44px確保し、指で押せる大きさにする */
+  .detail-table.is-editing .detail-date-cell { display: none; }
   .detail-table .detail-row-move {
-    width: 22px;
-    padding: 5px 0;
+    width: 44px;
+    min-height: 44px;
+    padding: 0;
     font-family: inherit;
-    font-size: 10px;
+    font-size: 12px;
     color: #4a4030;
     background: linear-gradient(180deg, #f3ecd9, #e7dfc8);
     border: 1px solid rgba(120, 100, 60, 0.35);
     border-radius: 6px;
     cursor: pointer;
   }
-  .detail-table .detail-row-move + .detail-row-move { margin-left: 2px; }
+  .detail-table .detail-row-move + .detail-row-move { margin-left: 4px; }
   .detail-table .detail-row-move:active { transform: translateY(1px); }
   .detail-table .detail-row-move:disabled { opacity: 0.3; cursor: default; }
   /* 「＋行を追加」と「編集」を横に並べる */
@@ -3110,6 +3117,7 @@
     headTr.appendChild(document.createElement('th'));
     DETAIL_COLS.forEach(function (col) {
       var th = document.createElement('th');
+      th.className = 'detail-date-cell';   // 編集中は隠す列
       th.textContent = col.label;
       headTr.appendChild(th);
     });
@@ -3149,6 +3157,7 @@
       tr.appendChild(tdLabel);
       DETAIL_COLS.forEach(function (col) {
         var td = document.createElement('td');
+        td.className = 'detail-date-cell';   // 編集中は隠す列
         var dateWrap = document.createElement('label');
         dateWrap.className = 'detail-date';
         var dateText = document.createElement('span');
@@ -3184,6 +3193,8 @@
         b.className = 'detail-row-move';
         b.textContent = m[0];
         b.setAttribute('aria-label', 'この行を' + m[2]);
+        b.dataset.moveIdx = idx;      // 並べ替えのあと、動かした行のボタンを探し直すための目印
+        b.dataset.moveDir = m[1];
         b.disabled = (m[1] < 0) ? (idx === 0) : (idx === data.rows.length - 1);
         b.addEventListener('click', function () { moveDetailRow(idx, m[1]); });
         tdOps.appendChild(b);
@@ -3229,13 +3240,33 @@
   // （結び付きは cell.itemId と日付なので）ため、計画表だけ保存すれば済む
   function moveDetailRow(idx, dir) {
     if (!detailSubjectId) return;
+    // 読み直す前に、入力中の欄を確定させる。ボタンを押しても input の change が
+    // 発火しない環境（iOSのSafari等はボタンのタップでフォーカスが移らないことがある）が
+    // あり、そのまま readDetail すると書きかけの行名が保存前の値に巻き戻ってしまう。
+    // blur() の中で change ハンドラが同期的に走り、保存まで終わってから読み直す
+    var active = document.activeElement;
+    var fromMoveBtn = !!(active && active.classList && active.classList.contains('detail-row-move'));
+    if (active && active !== document.body && typeof active.blur === 'function') active.blur();
     var data = readDetail(detailSubjectId);
     var j = idx + dir;
     if (idx < 0 || idx >= data.rows.length || j < 0 || j >= data.rows.length) return;
     var tmp = data.rows[idx]; data.rows[idx] = data.rows[j]; data.rows[j] = tmp;
     if (!saveDetailOrWarn(detailSubjectId, data)) { renderDetailTable(); return; }   // 保存済みの内容に戻す
     renderDetailTable();
+    // 動いた行を追いかけてフォーカスを戻す。戻さないと、行だけ動いてボタンは同じ場所に
+    // 残るので、続けて押したときに別の行を動かしてしまう
+    if (fromMoveBtn) focusDetailMoveBtn(j, dir);
     flashSaved('並べ替えました');
+  }
+  // 並べ替えたあとの行の▲▼へフォーカスを移す。端に着いて押せなくなったときは
+  // 反対向きのボタンへ逃がして、フォーカスが表の外へ飛ばないようにする
+  function focusDetailMoveBtn(idx, dir) {
+    function pick(d) {
+      return detailTableBody.querySelector('.detail-row-move[data-move-idx="' + idx + '"][data-move-dir="' + d + '"]');
+    }
+    var btn = pick(dir);
+    if (!btn || btn.disabled) btn = pick(-dir);
+    if (btn && !btn.disabled) btn.focus();
   }
   // 計画表の保存に失敗（端末の容量不足など）したときは黙って進めず知らせる。
   // メイン側だけ変わって計画表が古いまま残っても、次に開いたときの照合で計画表を正として
