@@ -2782,6 +2782,23 @@
   var editing = null, editingItems = [];
   var cellModal = document.getElementById('cellModal');
   var cellItemsList = document.getElementById('cellItemsList');
+  // 開いた時点の中身。これと違えば「保存」を出す。
+  // 空行は「まだ書いていない」置き場なので、比べるときは落とす
+  // （「＋もう1つ書く」で行を足しただけでは、まだ何も変わっていない）
+  var cellBaseline = null;
+  function cellItemsSnapshot() {
+    return JSON.stringify(editingItems.map(function (it) {
+      return { id: it.id, text: (it.text || '').trim(), done: !!it.done };
+    }).filter(function (it) { return it.text; }));
+  }
+  function cellDirty() {
+    if (!editing || cellBaseline === null) return false;
+    return cellItemsSnapshot() !== cellBaseline;
+  }
+  function updateCellSaveBtn() {
+    var btn = document.getElementById('cellSave');
+    if (btn) btn.style.display = cellDirty() ? '' : 'none';
+  }
   function openCellModal(iso, subject) {
     editing = { iso: iso, subject: subject };
     var d = fromISO(iso);
@@ -2789,6 +2806,7 @@
       subject.name + '<span class="sub">' + (d.getMonth() + 1) + '月' + d.getDate() + '日（' + DOW[d.getDay()] + '）</span>';
     editingItems = cellItems(iso, subject.id).map(function (it) { return { id: it.id, text: it.text, done: !!it.done }; });
     if (!editingItems.length) editingItems.push({ id: null, text: '', done: false });
+    cellBaseline = cellItemsSnapshot();   // 中身を並べる前に、開いた時点を控える
     renderCellItemsList();
     cellModal.style.display = 'flex';
     if (!editingItems[0].text) setTimeout(function () {
@@ -2797,7 +2815,11 @@
     }, 50);
   }
   // 長押しコピー・行ごとの繰り越しはSaveを待たずその場で確定するので、とじる時は常にグリッドを描き直す
-  function closeCellModal() { cellModal.style.display = 'none'; editing = null; editingItems = []; render(); }
+  function closeCellModal() {
+    cellModal.style.display = 'none'; editing = null; editingItems = [];
+    cellBaseline = null; updateCellSaveBtn();
+    render();
+  }
   // 行ごとの書き込み欄を組み立てる（○・×・文字・この行をけす。×は「できなかった」印で、押すと自動で翌日へ繰り越す）
   function renderCellItemsList() {
     cellItemsList.innerHTML = '';
@@ -2826,8 +2848,11 @@
         item.done = !item.done;
         row.classList.toggle('done', item.done);
         updateCrossVisibility();
+        updateCellSaveBtn();   // ○の付け外しも変更のうち
       });
-      input.addEventListener('input', function () { item.text = input.value; updateCrossVisibility(); });
+      input.addEventListener('input', function () {
+        item.text = input.value; updateCrossVisibility(); updateCellSaveBtn();
+      });
       // ×＝できなかった印（翌日へ自動で繰り越す）: この行を消して、翌日の同じ教材へ新しい行として入れる。
       // 今日側もこの場で確定保存する（そのままモーダルを閉じても今日と翌日で二重に残らないように）
       carry.addEventListener('click', function () {
@@ -2848,6 +2873,7 @@
           kept.push({ id: it.id, text: t, done: it.done, u: now });
         });
         writeCellItems(iso, sid, kept);
+        cellBaseline = cellItemsSnapshot();   // ここで確定保存したので、比べる基準を取り直す
         renderCellItemsList();
         flashSaved(tx('carryDone'));
       });
@@ -2886,6 +2912,8 @@
         row.addEventListener('pointercancel', cancel);
       })();
     });
+    // 行の追加・削除など、並べ直しを伴う変更はここを通る
+    updateCellSaveBtn();
   }
 
   // ---- 行を長押し→複数の日にコピー（ミニカレンダーでタップした日へ次々とコピー） ----
