@@ -37,6 +37,14 @@
     --today-ring: rgba(200, 80, 70, 0.75);
     --stitch: rgba(120, 100, 70, 0.4);
     --divider-label: #b08a84;
+    /* モーダルのカード。かみの色に合わせて変わる。
+       card-paper=カードの地 / card-edge=枠と仕切り / card-fill=入力欄やチップの塗り。
+       暗いかみでは地より明るくして、カードが背景に沈まないようにする */
+    --card-paper: #f8f3e6;
+    --card-edge: rgba(120, 100, 60, 0.35);
+    --card-fill: rgba(255, 255, 255, 0.5);
+    --card-btn-bg: linear-gradient(180deg, #f3ecd9, #e7dfc8);
+    --card-btn-ink: #4a4030;
   }
 
   /* ---- テーマ（かみ）。手ざわり手帳と共有する。data-paperで切り替え、既定=アイボリー（:root） ---- */
@@ -46,6 +54,11 @@
     --paper-back-1: #f1f0ed;
     --paper-back-2: #f8f7f5;
     --paper-back-3: #e8e7e3;
+    --card-paper: #fbfbfa;
+    --card-edge: rgba(90, 90, 90, 0.28);
+    --card-fill: rgba(255, 255, 255, 0.75);
+    --card-btn-bg: linear-gradient(180deg, #f2f2f0, #e6e6e3);
+    --card-btn-ink: #3f3f3f;
   }
   /* 黒いノート（白ペンで書く） */
   body[data-paper="black"] {
@@ -67,6 +80,11 @@
     --today-ring: rgba(235, 130, 120, 0.8);
     --stitch: rgba(255, 255, 255, 0.22);
     --divider-label: #c9a49e;
+    --card-paper: #2e3138;
+    --card-edge: rgba(255, 255, 255, 0.2);
+    --card-fill: rgba(255, 255, 255, 0.09);
+    --card-btn-bg: linear-gradient(180deg, #3a3e46, #2c3037);
+    --card-btn-ink: #e8e6df;
   }
   /* 黒板（チョークで書く） */
   body[data-paper="board"] {
@@ -88,6 +106,13 @@
     --today-ring: rgba(240, 168, 160, 0.85);
     --stitch: rgba(255, 255, 255, 0.25);
     --divider-label: #d8b8b2;
+    --card-paper: #3e6857;
+    --card-edge: rgba(255, 255, 255, 0.22);
+    /* 黒板の地は中くらいの明るさなので、白を重ねると明るい文字とのコントラストが
+       足りなくなる（表の見出しで4.27まで落ちた）。ここだけ暗い側に重ねる */
+    --card-fill: rgba(0, 0, 0, 0.14);
+    --card-btn-bg: linear-gradient(180deg, #4b8069, #3d6a56);
+    --card-btn-ink: #eef3ee;
   }
   /* 電光掲示板（駅の発車標。アンバーLED＋緑LED） */
   body[data-paper="led"] {
@@ -109,6 +134,11 @@
     --today-ring: rgba(255, 176, 46, 0.85);
     --stitch: rgba(255, 255, 255, 0.14);
     --divider-label: #c88f3a;
+    --card-paper: #1a1e26;
+    --card-edge: rgba(255, 176, 46, 0.3);
+    --card-fill: rgba(255, 176, 46, 0.08);
+    --card-btn-bg: linear-gradient(180deg, #2b3038, #1f242b);
+    --card-btn-ink: #ffb02e;
   }
   /* 桜（淡い桜色の和紙） */
   body[data-paper="sakura"] {
@@ -130,6 +160,11 @@
     --today-ring: rgba(220, 100, 130, 0.8);
     --stitch: rgba(180, 120, 140, 0.4);
     --divider-label: #c07d95;
+    --card-paper: #fff6f8;
+    --card-edge: rgba(190, 130, 155, 0.35);
+    --card-fill: rgba(255, 255, 255, 0.62);
+    --card-btn-bg: linear-gradient(180deg, #f8e2e8, #efd2da);
+    --card-btn-ink: #5f4c54;
   }
   /* ミント（淡い緑＋白罫） */
   body[data-paper="mint"] {
@@ -151,6 +186,11 @@
     --today-ring: rgba(70, 160, 120, 0.8);
     --stitch: rgba(100, 140, 120, 0.4);
     --divider-label: #7ba491;
+    --card-paper: #f6fbf8;
+    --card-edge: rgba(100, 160, 130, 0.35);
+    --card-fill: rgba(255, 255, 255, 0.62);
+    --card-btn-bg: linear-gradient(180deg, #e2f0e8, #d2e6da);
+    --card-btn-ink: #44544c;
   }
   /* 藤色（くすみ紫の大人可愛い） */
   body[data-paper="lavender"] {
@@ -172,6 +212,11 @@
     --today-ring: rgba(150, 110, 190, 0.8);
     --stitch: rgba(140, 120, 160, 0.4);
     --divider-label: #9a82b0;
+    --card-paper: #f9f6fd;
+    --card-edge: rgba(150, 130, 190, 0.35);
+    --card-fill: rgba(255, 255, 255, 0.62);
+    --card-btn-bg: linear-gradient(180deg, #ebe4f4, #ddd3ec);
+    --card-btn-ink: #514b5e;
   }
 
   /* 机（手ざわり手帳と同じ木目の暗色。紙を引き立てる） */
@@ -513,31 +558,30 @@
     margin: auto;
     width: 100%;
     max-width: 340px;
-    background: #f8f3e6;
-    border: 1px solid rgba(120, 100, 60, 0.35);
+    background: var(--card-paper);
+    border: 1px solid var(--card-edge);
     border-radius: 12px;
     box-shadow: 0 12px 32px rgba(30, 22, 10, 0.5);
     padding: 18px 18px 16px;
-    color: #454a58;
-    /* このカードは常にアイボリー紙。黒板/黒ノート/電光掲示板テーマの薄い文字色を
-       ここで上書きし、中の文字（書きこみ欄など）がどのテーマでも読める濃さになるようにする */
-    --ink-text: #4a4e5c;
-    --ink-strong: #454a58;
-    --ink-soft: #8a8d99;
-    --placeholder: rgba(122, 126, 140, 0.4);
+    /* かみ（テーマ）に合わせて地も文字も変わる。黒板なら黒板色のカードになる。
+       文字色はテーマの --ink-* をそのまま使うので、暗いかみでは明るい文字になる */
+    color: var(--ink-text);
   }
   .settings-card h2 { font-size: 20px; font-weight: 600; margin-bottom: 12px; }
   .settings-card h2 .sub { font-size: 13px; font-weight: 400; color: var(--ink-soft); margin-left: 8px; }
-  .settings-label { font-size: 14px; color: #6b6046; margin-bottom: 8px; }
-  .settings-note { font-size: 12px; color: #8a8d99; margin-top: 10px; }
+  .settings-label { font-size: 14px; color: var(--ink-text); margin-bottom: 8px; }
+  /* 注記は本文より控えめに見せたいが、かみによって薄くなりすぎないよう
+     本文色を薄めて使う（--ink-soft はテーマごとに濃さがまちまちで、
+     ミントだと地との差が2.6まで落ちて読みづらかった） */
+  .settings-note { font-size: 12px; color: var(--ink-text); opacity: 0.75; margin-top: 10px; }
   .week-chips { display: flex; gap: 6px; flex-wrap: wrap; }
   .week-chips button {
     width: 40px; height: 40px;
     font-family: inherit;
     font-size: 15px;
-    color: #4a4e5c;
-    background: rgba(255, 255, 255, 0.5);
-    border: 1px solid rgba(120, 100, 60, 0.3);
+    color: var(--ink-text);
+    background: var(--card-fill);
+    border: 1px solid var(--card-edge);
     border-radius: 50%;
     cursor: pointer;
   }
@@ -556,8 +600,8 @@
     font-size: 18px;
     letter-spacing: 2px;
     color: var(--ink-strong);
-    background: rgba(255, 255, 255, 0.5);
-    border: 1px solid rgba(120, 100, 60, 0.3);
+    background: var(--card-fill);
+    border: 1px solid var(--card-edge);
     border-radius: 8px;
     padding: 8px 10px;
     text-align: center;
@@ -635,7 +679,7 @@
     color: #8a8d99;
     cursor: pointer;
   }
-  .card-close-x:active { background: rgba(120, 100, 60, 0.12); }
+  .card-close-x:active { background: rgba(128, 128, 128, 0.18); }
 
   .settings-close {
     margin-top: 14px;
@@ -643,9 +687,9 @@
     padding: 10px;
     font-family: inherit;
     font-size: 15px;
-    color: #4a4030;
-    background: linear-gradient(180deg, #f3ecd9, #e7dfc8);
-    border: 1px solid rgba(120, 100, 60, 0.35);
+    color: var(--card-btn-ink);
+    background: var(--card-btn-bg);
+    border: 1px solid var(--card-edge);
     border-radius: 8px;
     cursor: pointer;
   }
@@ -655,7 +699,7 @@
      めったに触らない技術的な項目はここへ隠す */
   .settings-adv {
     margin-top: 18px;
-    border-top: 1px solid rgba(120, 100, 60, 0.22);
+    border-top: 1px solid var(--card-edge);
   }
   .settings-adv > summary {
     list-style: none;
@@ -785,19 +829,19 @@
   .copy-cal-head { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
   .copy-cal-head button {
     font-family: inherit; font-size: 15px;
-    background: none; border: none; color: #4a4030;
+    background: none; border: none; color: var(--card-btn-ink);
     padding: 6px 10px; cursor: pointer;
   }
-  .copy-cal-head span { font-size: 14px; font-weight: 600; color: #4a4030; }
+  .copy-cal-head span { font-size: 14px; font-weight: 600; color: var(--card-btn-ink); }
   .copy-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 8px; }
   .copy-cal-dow { text-align: center; font-size: 11px; color: #8a8d99; padding-bottom: 2px; }
   .copy-cal-day {
     aspect-ratio: 1;
     font-family: inherit;
     font-size: 13px;
-    color: #4a4030;
-    background: rgba(255, 255, 255, 0.5);
-    border: 1px solid rgba(120, 100, 60, 0.25);
+    color: var(--card-btn-ink);
+    background: var(--card-fill);
+    border: 1px solid var(--card-edge);
     border-radius: 8px;
     cursor: pointer;
   }
@@ -811,9 +855,9 @@
     padding: 9px;
     font-family: inherit;
     font-size: 14px;
-    color: #4a4030;
-    background: linear-gradient(180deg, #f3ecd9, #e7dfc8);
-    border: 1px solid rgba(120, 100, 60, 0.35);
+    color: var(--card-btn-ink);
+    background: var(--card-btn-bg);
+    border: 1px solid var(--card-edge);
     border-radius: 8px;
     cursor: pointer;
   }
@@ -821,18 +865,18 @@
   .detail-table-wrap {
     overflow-x: auto;
     margin-top: 10px;
-    border: 1px solid rgba(120, 100, 60, 0.25);
+    border: 1px solid var(--card-edge);
     border-radius: 8px;
   }
   .detail-table { border-collapse: collapse; width: 100%; font-size: 12px; }
   .detail-table th, .detail-table td {
-    border: 1px solid rgba(120, 100, 60, 0.18);
+    border: 1px solid var(--rule);
     padding: 2px;
     text-align: center;
     white-space: nowrap;
   }
   .detail-table th {
-    background: #f3ecd9;
+    background: var(--card-fill);
     color: var(--ink-strong);
     font-weight: 600;
     padding: 5px 2px;
@@ -904,9 +948,9 @@
     padding: 0;
     font-family: inherit;
     font-size: 12px;
-    color: #4a4030;
-    background: linear-gradient(180deg, #f3ecd9, #e7dfc8);
-    border: 1px solid rgba(120, 100, 60, 0.35);
+    color: var(--card-btn-ink);
+    background: var(--card-btn-bg);
+    border: 1px solid var(--card-edge);
     border-radius: 6px;
     cursor: pointer;
   }
@@ -932,9 +976,12 @@
   #detailPlanModal .detail-plan-tools,
   #detailPlanModal .modal-btns { flex-shrink: 0; }
   #detailPlanModal .detail-table-wrap { flex: 1; min-height: 0; overflow-y: auto; }
+  /* 押されている状態は、色を決め打ちにせず影を内側に落として表す
+     （かみの色が変わっても「へこんでいる」ことは同じように伝わる） */
   .cell-add-item.is-on {
-    background: linear-gradient(180deg, #e0d4ae, #cfc199);
-    border-color: rgba(120, 100, 60, 0.5);
+    background: var(--card-btn-bg);
+    border-color: var(--card-edge);
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.22);
   }
   .cell-add-item:active { transform: translateY(1px); }
   .modal-btns { display: flex; gap: 8px; margin-top: 14px; align-items: center; }
@@ -944,9 +991,9 @@
     font-size: 14px;
     padding: 9px 14px;
     border-radius: 8px;
-    border: 1px solid rgba(120, 100, 60, 0.35);
-    background: linear-gradient(180deg, #f3ecd9, #e7dfc8);
-    color: #4a4030;
+    border: 1px solid var(--card-edge);
+    background: var(--card-btn-bg);
+    color: var(--card-btn-ink);
     cursor: pointer;
   }
   .modal-btns button.primary { background: #5a7d5a; border-color: #4d6b4d; color: #fff; }
@@ -973,9 +1020,9 @@
     padding: 9px;
     font-family: inherit;
     font-size: 14px;
-    color: #4a4030;
-    background: linear-gradient(180deg, #f3ecd9, #e7dfc8);
-    border: 1px solid rgba(120, 100, 60, 0.35);
+    color: var(--card-btn-ink);
+    background: var(--card-btn-bg);
+    border: 1px solid var(--card-edge);
     border-radius: 8px;
     cursor: pointer;
   }
@@ -996,9 +1043,9 @@
     height: 40px;
     font-family: inherit;
     font-size: 16px;
-    color: #4a4030;
-    background: linear-gradient(180deg, #f3ecd9, #e7dfc8);
-    border: 1px solid rgba(120, 100, 60, 0.35);
+    color: var(--card-btn-ink);
+    background: var(--card-btn-bg);
+    border: 1px solid var(--card-edge);
     border-radius: 8px;
     cursor: pointer;
   }
@@ -1013,9 +1060,9 @@
     padding: 10px;
     font-family: inherit;
     font-size: 14px;
-    color: #4a4030;
-    background: linear-gradient(180deg, #f3ecd9, #e7dfc8);
-    border: 1px solid rgba(120, 100, 60, 0.35);
+    color: var(--card-btn-ink);
+    background: var(--card-btn-bg);
+    border: 1px solid var(--card-edge);
     border-radius: 8px;
     cursor: pointer;
   }
@@ -1027,8 +1074,8 @@
     flex: 0 0 auto;
     width: 48px; height: 64px;
     display: flex; align-items: center; justify-content: center;
-    background: #efe7d3;
-    border: 1px solid rgba(120, 100, 60, 0.35);
+    background: var(--card-fill);
+    border: 1px solid var(--card-edge);
     border-radius: 4px;
     overflow: hidden;
     box-shadow: 1px 1px 3px rgba(60, 45, 25, 0.25);
@@ -1042,9 +1089,9 @@
     font-size: 13px;
     padding: 7px 12px;
     border-radius: 7px;
-    border: 1px solid rgba(120, 100, 60, 0.35);
-    background: linear-gradient(180deg, #f3ecd9, #e7dfc8);
-    color: #4a4030;
+    border: 1px solid var(--card-edge);
+    background: var(--card-btn-bg);
+    color: var(--card-btn-ink);
     cursor: pointer;
     width: fit-content;
   }
@@ -1150,7 +1197,7 @@
   .ocr-status { font-size: 15px; color: var(--ink-text); margin-bottom: 14px; min-height: 1.4em; }
   .ocr-bar {
     height: 8px;
-    background: rgba(120, 100, 60, 0.18);
+    background: var(--card-fill);
     border-radius: 5px;
     overflow: hidden;
     margin-bottom: 16px;
@@ -1219,11 +1266,11 @@
     font-size: 13px;
     color: #5a6b5a;
     background: transparent;
-    border: 1px dashed rgba(120, 100, 60, 0.4);
+    border: 1px dashed var(--card-edge);
     border-radius: 8px;
     cursor: pointer;
   }
-  .toc-reread:active { background: rgba(120, 100, 60, 0.08); }
+  .toc-reread:active { background: rgba(128, 128, 128, 0.12); }
 
   /* 保存の合図（手帳と同じ） */
   .save-note {
@@ -1367,8 +1414,8 @@
     font-size: 12px;
     line-height: 1.5;
     color: #3a3f4c;
-    background: rgba(255, 255, 255, 0.6);
-    border: 1px solid rgba(120, 100, 60, 0.3);
+    background: var(--card-fill);
+    border: 1px solid var(--card-edge);
     border-radius: 8px;
     resize: none;
     white-space: pre;
