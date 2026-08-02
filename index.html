@@ -1560,7 +1560,8 @@
     </div>
     <div class="modal-btns">
       <span class="spacer"></span>
-      <button class="primary" id="detailPlanClose">閉じる</button>
+      <button id="detailPlanClose">閉じる</button>
+      <button class="primary" id="detailPlanSave" style="display:none">保存</button>
     </div>
   </div>
 </div>
@@ -1755,6 +1756,7 @@
     setText('cellClear', tx('clearBtn'));
     setText('subjectCancel', tx('closeBtn'));
     setText('detailPlanClose', tx('closeBtn'));
+    setText('detailPlanSave', tx('saveBtn'));
     setText('scanClose', tx('closeBtn'));
     document.getElementById('subjectName').placeholder = tx('subjectPlace');
     setText('subjectDelete', tx('subjectDelete'));
@@ -2138,8 +2140,13 @@
   }
   // 保存できたかを返す（容量不足等で失敗したとき、呼び出し側がメインを触らずに済むように）
   function writeDetail(sid, data) {
-    try { localStorage.setItem(keyDetail(sid), JSON.stringify(data)); return true; }
-    catch (e) { return false; }
+    try {
+      localStorage.setItem(keyDetail(sid), JSON.stringify(data));
+      // 細かい計画表の変更はすべてここを通るので、「保存」の出し入れもここで合わせる
+      // （日付・行名・行の追加や削除・並べ替えのそれぞれで呼び忘れる心配がない）
+      updateDetailSaveBtn();
+      return true;
+    } catch (e) { return false; }
   }
   // 細かい計画表のセルに日付を書く／変える／消すと、メイン(日別グリッド)の該当日のマスにも
   // 「行ラベル（列ラベル回目）」という項目として書き込む・移動する・消す。初めて書くときは
@@ -3133,10 +3140,23 @@
     detailEditBtn.setAttribute('aria-pressed', detailEditMode ? 'true' : 'false');
     detailEditBtn.textContent = detailEditMode ? '✓ 完了' : '✎ 編集';
   }
+  // 開いた時点の中身。これと違えば「保存」を出す。中身は触るたびに保存済みなので、
+  // このボタンは「変えたところは書けています」と見せて閉じるためのもの
+  var detailBaseline = null;
+  function detailDirty() {
+    if (!detailSubjectId || detailBaseline === null) return false;
+    return JSON.stringify(readDetail(detailSubjectId)) !== detailBaseline;
+  }
+  function updateDetailSaveBtn() {
+    var btn = document.getElementById('detailPlanSave');
+    if (btn) btn.style.display = detailDirty() ? '' : 'none';
+  }
   function openDetailPlanModal(subject) {
     detailSubjectId = subject.id;
     document.getElementById('detailPlanTitle').textContent = subject.name;
     setDetailEditMode(false);      // 開いたときは必ずふつうの表示から
+    detailBaseline = JSON.stringify(readDetail(subject.id));
+    updateDetailSaveBtn();
     renderDetailTable();
     detailPlanModal.style.display = 'flex';
   }
@@ -3144,6 +3164,8 @@
     if (detailSubjectId) reconcileDetailsToMain([detailSubjectId]);   // 閉じる時点の中身をメインへ揃える
     detailPlanModal.style.display = 'none';
     detailSubjectId = null;
+    detailBaseline = null;
+    updateDetailSaveBtn();
     render();
   }
   // 日付のマスに出す短い文字（「7/22」）を作る。年は入れない代わりに5列とも画面に収まる。
@@ -3333,6 +3355,12 @@
     if (last) last.focus();
   });
   detailEditBtn.addEventListener('click', function () { setDetailEditMode(!detailEditMode); });
+  // 中身は触るたびに書けているので、ここでやることは合図を出して閉じるだけ。
+  // それでも押せるようにしてあるのは、変えたぶんが残ったことを確かめて閉じたいため
+  document.getElementById('detailPlanSave').addEventListener('click', function () {
+    flashSaved();
+    closeDetailPlanModal();
+  });
   document.getElementById('detailPlanClose').addEventListener('click', closeDetailPlanModal);
   detailPlanModal.addEventListener('click', function (e) { if (e.target === detailPlanModal) closeDetailPlanModal(); });
 
