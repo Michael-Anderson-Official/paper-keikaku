@@ -3000,6 +3000,13 @@
   function updateSubjectSaveBtn() {
     document.getElementById('subjectSave').style.display = subjectDirty() ? '' : 'none';
   }
+  // 名前欄をプログラムから書き換えるときは必ずこれを通す。input イベントは手で打った
+  // ときしか出ないので、値を入れただけでは保存ボタンの出し分けが更新されない
+  // （バーコードで書名が入ったのに「保存」が出ない、という取りこぼしを防ぐ）
+  function setSubjectNameField(v) {
+    document.getElementById('subjectName').value = v;
+    updateSubjectSaveBtn();
+  }
   function updateCoverPreview() {
     var box = document.getElementById('coverPreview');
     var empty = document.getElementById('coverPreviewEmpty');
@@ -3044,8 +3051,7 @@
     subjectBaseline = { name: (subject ? subject.name : '').trim(), cover: pendingCover };
     updateCoverPreview();
     document.getElementById('subjectModalTitle').textContent = subject ? tx('subjectEdit') : tx('subjectAdd');
-    document.getElementById('subjectName').value = subject ? subject.name : '';
-    updateSubjectSaveBtn();   // 名前を入れ終えてから判定する（入れる前だと前回の値で誤判定する）
+    setSubjectNameField(subject ? subject.name : '');   // 名前を入れ終えてから判定する（入れる前だと前回の値で誤判定する）
     document.getElementById('subjectDelete').style.display = subject ? '' : 'none';
     // バーコードで入れるのは「新規追加」のときだけ（教材の身元が既に決まっている編集時は無意味）。
     // 代わりに「既存の教材を編集」のときだけ、その教材専用の細かい計画表を開くボタンを出す
@@ -3441,14 +3447,20 @@
   function handleIsbn(isbn) {
     scanBusy = true;                 // 照会中は次のフレームを無視
     setScanStatus('scanLooking');
+    // 照会のあいだに教材モーダルを閉じたり別の教材へ移ったりしたら、その結果は捨てる。
+    // 捨てないと、読み取った書名や表紙が別の教材に入ってしまう
+    // （subjectBaseline は教材モーダルを開くたびに作り直すので、同じ物かどうかで見分けられる）
+    var openedFor = subjectBaseline;
     // 表紙は裏で取りに行く（見つかれば教材モーダルのプレビューに自動で入る。手動で選んでいたら上書きしない）
     lookupCover(isbn).then(function (cover) {
+      if (subjectBaseline !== openedFor) return;
       if (cover && !pendingCover) { pendingCover = cover; updateCoverPreview(); }
     });
     lookupIsbn(isbn).then(function (title) {
+      if (subjectBaseline !== openedFor) { scanBusy = false; return; }
       if (title) {
         stopCamera();
-        document.getElementById('subjectName').value = title.slice(0, 60);
+        setSubjectNameField(title.slice(0, 60));
         scanModal.style.display = 'none';   // 教材モーダルへ戻る（名前が入った状態で確認・編集できる）
         flashSaved('読み取りました');
       } else {
