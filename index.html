@@ -1624,7 +1624,7 @@
     scanManual:     'うまく読めないときは、本の裏の番号（978…）を入力',
     scanStarting:   'カメラを準備しています…',
     scanPoint:      '本の裏のバーコードを枠の中へ',
-    scanLooking:    '書名をさがしています…',
+    scanLooking:    '書名を探しています…',
     scanNotFound:   'この本は見つかりませんでした。名前は手で入力してください。',
     scanBadCode:    'これは本のバーコードではないようです。978で始まる方をかざしてください。',
     scanNoCamera:   'カメラが使えませんでした。下に番号を入力してください。',
@@ -1676,7 +1676,7 @@
     stWeekStartNote:'計画表の曜日の並びが変わります。手ざわり手帳と共通の設定です。',
     stLink:         '手帳と連携',
     stLinkNoteOff:  '別々のアプリとして使うときは、この連携コードで手ざわり手帳と接続します。「始める」でコードを作り、手帳の設定に同じコードを入れてください（計画がサーバー経由で手帳に届きます）。',
-    stLinkNoteOn:   'このコードを手ざわり手帳の設定に入れると、書いた計画が手帳の今日のページに出ます。同じコードなら別の端末ともつながります。',
+    stLinkNoteOn:   'このコードを手ざわり手帳の設定に入れると、書いた計画が手帳の今日のページに出ます。同じコードなら別の端末とも接続できます。',
     linkCopied:     'コピーしました',
     linkBadCode:    'コードは8〜40文字の英数字で入力してください。',
     linkStopConfirm:'連携を止めますか？（手帳への同期が止まります。計画そのものは消えません）',
@@ -2992,6 +2992,9 @@
   function subjectDirty() {
     if (!subjectBaseline) return false;
     var name = document.getElementById('subjectName').value.trim();
+    // 名前が空のときは保存を押しても閉じるだけ（下の subjectSave 参照）。
+    // 押しても何も起きないボタンは出さない
+    if (!name) return false;
     return name !== subjectBaseline.name || (pendingCover || null) !== (subjectBaseline.cover || null);
   }
   function updateSubjectSaveBtn() {
@@ -3020,7 +3023,14 @@
   document.getElementById('coverFileInput').addEventListener('change', function (e) {
     var file = e.target.files && e.target.files[0];
     if (!file) return;
-    imageToCoverDataURL(file).then(function (url) { pendingCover = url; updateCoverPreview(); }).catch(function () {});
+    // 読み込んでいる間にモーダルを閉じたり別の教材へ移ったりしたら、その画像は捨てる。
+    // 捨てないと、教材Aで選んだ表紙が、開き直した教材Bに付いてしまう。
+    // subjectBaseline は開くたびに作り直すので、同じ物かどうかで見分けられる
+    var openedFor = subjectBaseline;
+    imageToCoverDataURL(file).then(function (url) {
+      if (subjectBaseline !== openedFor) return;
+      pendingCover = url; updateCoverPreview();
+    }).catch(function () {});
   });
   document.getElementById('coverRemoveBtn').addEventListener('click', function () { pendingCover = null; updateCoverPreview(); });
 
@@ -3029,7 +3039,9 @@
     pendingCover = subject && subject.cover || null;
     // 開いた時点の内容を控えておく。何も変えていないなら「保存」は出さず、
     // 「閉じる」だけで済ませる（押さなくていいボタンを見せないため）
-    subjectBaseline = { name: subject ? subject.name : '', cover: pendingCover };
+    // 名前は trim して控える。比較する側も trim するので、前後に空白が残った古いデータでも
+    // 「開いただけなのに保存が出る」ことがない
+    subjectBaseline = { name: (subject ? subject.name : '').trim(), cover: pendingCover };
     updateCoverPreview();
     document.getElementById('subjectModalTitle').textContent = subject ? tx('subjectEdit') : tx('subjectAdd');
     document.getElementById('subjectName').value = subject ? subject.name : '';
@@ -3919,7 +3931,7 @@
     localStorage.removeItem('pk:linkCode');
     wsDisconnect();
     renderLinkSection();
-    flashSaved('連携をやめました');
+    flashSaved('連携を止めました');
   });
   document.getElementById('linkCopyBtn').addEventListener('click', function () {
     var code = linkCode();
