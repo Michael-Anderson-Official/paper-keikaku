@@ -1388,15 +1388,15 @@
 <button id="menuBtn" type="button" class="menu-btn" aria-label="メニュー">☰</button>
 <div id="menuPanel" class="menu-panel" style="display:none;">
   <button id="menuSettings" type="button">⚙ 設定</button>
-  <button id="menuStats" type="button">📊 きろく</button>
+  <button id="menuStats" type="button">📊 記録</button>
   <button id="menuExport" type="button">📤 書き出す（AIに貼る）</button>
-  <button id="menuTecho" type="button">📖 手ざわり手帳をひらく</button>
+  <button id="menuTecho" type="button">📖 手ざわり手帳を開く</button>
 </div>
 
 <!-- 計画と○✕記録の書き出し（AIに貼って合格確率を計算させる用） -->
 <div id="exportModal" class="settings-modal" style="display:none;">
   <div class="settings-card">
-    <button id="exportCloseX" type="button" class="card-close-x" aria-label="とじる">×</button>
+    <button id="exportCloseX" type="button" class="card-close-x" aria-label="閉じる">×</button>
     <h2>書き出す</h2>
     <p class="settings-note" style="margin-top:0;">計画と○✕の記録を全部テキストにします。「コピー」してAI（ChatGPTなど）に貼り、「この記録で試験に受かりそうか、確率を出して」と聞けます。</p>
     <textarea id="exportText" class="export-text" readonly spellcheck="false"></textarea>
@@ -1404,23 +1404,23 @@
       <button id="exportCopyBtn" type="button" class="primary" style="flex:1;">コピー</button>
       <button id="exportSaveBtn" type="button" class="settings-close" style="margin-top:0; flex:1;">ファイルに保存</button>
     </div>
-    <button id="exportClose" type="button" class="settings-close">とじる</button>
+    <button id="exportClose" type="button" class="settings-close">閉じる</button>
   </div>
 </div>
 
 <!-- きろく（教材ごとの達成率） -->
 <div id="statsModal" class="settings-modal" style="display:none;">
   <div class="settings-card">
-    <h2>きろく</h2>
-    <p class="settings-note" style="margin-top:0;">今日までに書きこんだマスが対象です（先の予定は数えません）。</p>
+    <h2>記録</h2>
+    <p class="settings-note" style="margin-top:0;">今日までに書き込んだマスが対象です（先の予定は数えません）。</p>
     <div id="statsList" class="stats-list"></div>
-    <button id="statsClose" type="button" class="settings-close">とじる</button>
+    <button id="statsClose" type="button" class="settings-close">閉じる</button>
   </div>
 </div>
 
 <div id="settingsModal" class="settings-modal" style="display:none;">
   <div class="settings-card">
-    <button id="settingsCloseX" type="button" class="card-close-x" aria-label="とじる">×</button>
+    <button id="settingsCloseX" type="button" class="card-close-x" aria-label="閉じる">×</button>
     <h2 id="stTitle">設定</h2>
     <p class="settings-label" id="stThemeLabel">かみ</p>
     <div id="themeChips" class="week-chips"></div>
@@ -1444,13 +1444,13 @@
     <p class="settings-note" id="stLinkNote" style="margin-top:0;"></p>
     <div id="linkOn" style="display:none;">
       <div class="link-code-row"><span id="linkCodeShow" class="link-code"></span><button id="linkCopyBtn" type="button" class="settings-close" style="margin-top:0; width:auto; padding:8px 12px;">コピー</button></div>
-      <button id="linkStopBtn" type="button" class="settings-close" style="margin-top:8px; color:#c4645c;">連携をやめる</button>
+      <button id="linkStopBtn" type="button" class="settings-close" style="margin-top:8px; color:#c4645c;">連携を止める</button>
     </div>
     <div id="linkOff">
-      <button id="linkStartBtn" type="button" class="settings-close" style="margin-top:0;">連携をはじめる（コードを作る）</button>
+      <button id="linkStartBtn" type="button" class="settings-close" style="margin-top:0;">連携を始める（コードを作る）</button>
       <div class="link-enter-row" style="margin-top:8px;">
         <input id="linkCodeInput" type="text" class="write-input" placeholder="手帳のコードを入れる" autocapitalize="off" autocorrect="off" spellcheck="false">
-        <button id="linkJoinBtn" type="button" class="primary">つなぐ</button>
+        <button id="linkJoinBtn" type="button" class="primary">接続</button>
       </div>
     </div>
     <p class="settings-label" style="margin-top:16px;">自動バックアップ（じぶんのひかえ）</p>
@@ -1474,7 +1474,7 @@
     <input id="backupImportInput" type="file" accept="application/json" style="display:none;">
       </div>
     </details>
-    <button id="settingsClose" type="button" class="settings-close">とじる</button>
+    <button id="settingsClose" type="button" class="settings-close">閉じる</button>
   </div>
 </div>
 
@@ -1485,9 +1485,9 @@
     <div id="cellItemsList" class="cell-items"></div>
     <button type="button" id="cellAddItem" class="cell-add-item">＋ <span id="cellAddItemLabel">もう1つ書く</span></button>
     <div class="modal-btns">
-      <button class="danger" id="cellClear">けす</button>
+      <button class="danger" id="cellClear">消す</button>
       <span class="spacer"></span>
-      <button id="cellCancel">とじる</button>
+      <button id="cellCancel">閉じる</button>
       <button class="primary" id="cellSave">保存</button>
     </div>
   </div>
@@ -1506,7 +1506,7 @@
     <div id="copyCalGrid" class="copy-cal-grid"></div>
     <div class="modal-btns">
       <span class="spacer"></span>
-      <button class="primary" id="copyDatesClose">とじる</button>
+      <button class="primary" id="copyDatesClose">閉じる</button>
     </div>
   </div>
 </div>
@@ -1514,13 +1514,13 @@
 <!-- 教材の追加・改名 -->
 <div id="subjectModal" class="settings-modal" style="display:none;">
   <div class="settings-card">
-    <h2 id="subjectModalTitle">教材をふやす</h2>
+    <h2 id="subjectModalTitle">教材を増やす</h2>
     <input type="text" id="subjectName" class="write-input" maxlength="60">
     <div class="cover-row">
       <div id="coverPreview" class="cover-preview"><span id="coverPreviewEmpty">📖</span></div>
       <div class="cover-actions">
         <button type="button" id="coverPickBtn" class="cover-pick">表紙を選ぶ</button>
-        <button type="button" id="coverRemoveBtn" class="cover-remove" style="display:none;">はずす</button>
+        <button type="button" id="coverRemoveBtn" class="cover-remove" style="display:none;">外す</button>
       </div>
     </div>
     <input type="file" id="coverFileInput" accept="image/*" style="display:none;">
@@ -1535,9 +1535,9 @@
       <button type="button" id="subjectMoveRight" aria-label="右へ">▶</button>
     </div>
     <div class="modal-btns">
-      <button class="danger" id="subjectDelete" style="display:none">この列をけす</button>
+      <button class="danger" id="subjectDelete" style="display:none">この列を消す</button>
       <span class="spacer"></span>
-      <button id="subjectCancel">とじる</button>
+      <button id="subjectCancel">閉じる</button>
       <button class="primary" id="subjectSave">保存</button>
     </div>
   </div>
@@ -1560,7 +1560,7 @@
     </div>
     <div class="modal-btns">
       <span class="spacer"></span>
-      <button class="primary" id="detailPlanClose">とじる</button>
+      <button class="primary" id="detailPlanClose">閉じる</button>
     </div>
   </div>
 </div>
@@ -1576,10 +1576,10 @@
     <p id="scanManualLabel" class="scan-manual-label"></p>
     <div class="scan-manual-row">
       <input type="text" id="scanIsbnInput" class="write-input" inputmode="numeric" maxlength="13" placeholder="978…">
-      <button type="button" id="scanIsbnGo" class="primary">さがす</button>
+      <button type="button" id="scanIsbnGo" class="primary">探す</button>
     </div>
   </div>
-  <button type="button" id="scanClose" class="scan-close">とじる</button>
+  <button type="button" id="scanClose" class="scan-close">閉じる</button>
 </div>
 
 <!-- 目次OCRの進み具合 -->
@@ -1587,7 +1587,7 @@
   <div class="settings-card ocr-progress">
     <p id="ocrStatus" class="ocr-status"></p>
     <div class="ocr-bar"><span id="ocrBar"></span></div>
-    <button type="button" id="ocrCancel" class="settings-close">とじる</button>
+    <button type="button" id="ocrCancel" class="settings-close">閉じる</button>
   </div>
 </div>
 
@@ -1599,7 +1599,7 @@
     <div id="tocList" class="toc-list"></div>
     <button type="button" id="tocReread" class="toc-reread">↕ <span id="tocRereadLabel">縦書きの本？ 縦書きで読み直す</span></button>
     <div class="modal-btns">
-      <button id="tocCancel">とじる</button>
+      <button id="tocCancel">閉じる</button>
       <span class="spacer"></span>
       <button class="primary" id="tocAdd">今日から入れる</button>
     </div>
@@ -1612,11 +1612,11 @@
 
   // ---- ことばづかい（大人向け・漢字。対象は中学生〜社会人のため固定） ----
   var WORDS = {
-    emptyNote:      'まだ何もありません。<br>右上の「＋」から教材や科目をふやして、<br>1週間の計画を書きこもう。<br><br>書いた計画は<b>手ざわり手帳</b>の<br>その日のタスク欄に印刷されます。',
-    subjectAdd:     '教材をふやす',
-    subjectEdit:    '教材の名前をかえる',
+    emptyNote:      'まだ何もありません。<br>右上の「＋」から教材や科目を増やして、<br>1週間の計画を書き込もう。<br><br>書いた計画は<b>手ざわり手帳</b>の<br>その日のタスク欄に印刷されます。',
+    subjectAdd:     '教材を増やす',
+    subjectEdit:    '教材の名前を変える',
     subjectPlace:   '教材や科目の名前（例: 英語）',
-    subjectDelete:  'この列をけす',
+    subjectDelete:  'この列を消す',
     reorderLabel:   '列の並び替え',
     cellCarry:      '翌日へ繰り越す',
     carryDone:      '翌日へ繰り越しました',
@@ -1625,42 +1625,42 @@
     scanStarting:   'カメラを準備しています…',
     scanPoint:      '本の裏のバーコードを枠の中へ',
     scanLooking:    '書名をさがしています…',
-    scanNotFound:   'この本は見つかりませんでした。名前は手で入れてね。',
-    scanBadCode:    'これは本のバーコードではないみたい。978で始まる方をかざしてね。',
-    scanNoCamera:   'カメラが使えませんでした。下に番号を入力してね。',
-    scanBadIsbn:    '本の番号は13桁（978…）で入れてね。',
-    scanGo:         'さがす',
+    scanNotFound:   'この本は見つかりませんでした。名前は手で入力してください。',
+    scanBadCode:    'これは本のバーコードではないようです。978で始まる方をかざしてください。',
+    scanNoCamera:   'カメラが使えませんでした。下に番号を入力してください。',
+    scanBadIsbn:    '本の番号は13桁（978…）で入力してください。',
+    scanGo:         '探す',
     tocOpen:        '目次の写真から章を入れる',
     ocrPreparing:   '読み取りの準備をしています…（初回は少し時間がかかります）',
     ocrReading:     '文字を読んでいます…',
     ocrFailed:      '読み取れませんでした。目次がはっきり写った写真を、まっすぐ撮る／選ぶと読みやすいです。',
-    ocrNoLines:     '章が見つかりませんでした。別の写真を選ぶ／撮り直すか、手で入力してね。',
+    ocrNoLines:     '章が見つかりませんでした。別の写真を選ぶ／撮り直すか、手で入力してください。',
     tocTitle:       '読み取った章',
-    tocNote:        'いる章だけ○にして「今日から入れる」を押すと、今日から1日ずつ計画に入ります。文字は直せます。',
+    tocNote:        '必要な章だけ○にして「今日から入れる」を押すと、今日から1日ずつ計画に入ります。文字は直せます。',
     tocAdd:         '今日から入れる',
     tocReread:      '縦書きの本？ 縦書きで読み直す',
     tocAddedMsg:    '{n}個を計画に入れました',
     tocNonePicked:  '入れる章に○を付けてね。',
     subjectUntitled:'教材',
     coverPick:      '表紙を選ぶ／撮る',
-    coverRemove:    'はずす',
-    deleteConfirm:  '「{name}」の列と、書いた計画をぜんぶ消します。よろしいですか？',
+    coverRemove:    '外す',
+    deleteConfirm:  '「{name}」の列と、書いた計画を全部消します。よろしいですか？',
     cellPlace:      'やることを書く（例: 長文2ページ）',
     cellAddItem:    'もう1つ書く',
-    itemDelete:     'この行をけす',
+    itemDelete:     'この行を消す',
     copyDatesTitle: '複数の日にコピー',
     copyDatesSub:   '「{text}」を、タップした日に次々とコピーします',
     copyDatesDone:  'コピーしました',
     copyDatesDup:   'この日にはもうあります',
-    doneLabel:      'できた（○をつける）',
-    clearBtn:       'けす',
-    closeBtn:       'とじる',
+    doneLabel:      '完了（○を付ける）',
+    clearBtn:       '消す',
+    closeBtn:       '閉じる',
     saveBtn:        '保存',
     prevBtn:        '◀ 前へ',
     nextBtn:        '次へ ▶',
     todayBtn:       '今週',
     menuSettings:   '⚙ 設定',
-    menuTecho:      '📖 手ざわり手帳をひらく',
+    menuTecho:      '📖 手ざわり手帳を開く',
     stTitle:        '設定',
     stTheme:        'かみ（テーマ）',
     stThemeNote:    '紙の色やふんいきを変えます。手ざわり手帳と共通の設定です。',
@@ -1675,12 +1675,12 @@
     stWeekStart:    '週の始まり',
     stWeekStartNote:'計画表の曜日の並びが変わります。手ざわり手帳と共通の設定です。',
     stLink:         '手帳と連携',
-    stLinkNoteOff:  '別々のアプリとして使うときは、この連携コードで手ざわり手帳とつなぎます。「はじめる」でコードを作り、手帳の設定に同じコードを入れてください（計画がサーバー経由で手帳に届きます）。',
+    stLinkNoteOff:  '別々のアプリとして使うときは、この連携コードで手ざわり手帳と接続します。「始める」でコードを作り、手帳の設定に同じコードを入れてください（計画がサーバー経由で手帳に届きます）。',
     stLinkNoteOn:   'このコードを手ざわり手帳の設定に入れると、書いた計画が手帳の今日のページに出ます。同じコードなら別の端末ともつながります。',
     linkCopied:     'コピーしました',
-    linkBadCode:    'コードは8〜40文字の英数字で入れてね。',
-    linkStopConfirm:'連携をやめますか？（手帳への同期が止まります。計画そのものは消えません）',
-    linkJoined:     'つなぎました',
+    linkBadCode:    'コードは8〜40文字の英数字で入力してください。',
+    linkStopConfirm:'連携を止めますか？（手帳への同期が止まります。計画そのものは消えません）',
+    linkJoined:     '接続しました',
     stBackup:       'データのひかえ',
     stBackupNote:   '計画表の中身をファイルに保存できます。機種変や、アイコンを消す前のお守りに。',
     backupExport:   'ファイルに保存',
@@ -1748,6 +1748,14 @@
     setText('cellAddItemLabel', tx('cellAddItem'));
     setText('copyDatesTitle', tx('copyDatesTitle'));
     setText('copyDatesClose', tx('closeBtn'));
+    // 「閉じる」「消す」はHTMLに直書きしていた分もここで揃える（文言の変更を一箇所で効かせる）
+    setText('exportClose', tx('closeBtn'));
+    setText('statsClose', tx('closeBtn'));
+    setText('cellCancel', tx('closeBtn'));
+    setText('cellClear', tx('clearBtn'));
+    setText('subjectCancel', tx('closeBtn'));
+    setText('detailPlanClose', tx('closeBtn'));
+    setText('scanClose', tx('closeBtn'));
     document.getElementById('subjectName').placeholder = tx('subjectPlace');
     setText('subjectDelete', tx('subjectDelete'));
     setText('coverPickBtn', tx('coverPick'));
@@ -2558,7 +2566,7 @@
     var row = document.createElement('div');
     row.className = 'stats-row' + (isTotal ? ' stats-total' : '');
     var pct = st.planned ? Math.round(st.done / st.planned * 100) : 0;
-    var sub = 'できた○ ' + st.done + ' ／ 書いた ' + st.planned;
+    var sub = '完了○ ' + st.done + ' ／ 書いた ' + st.planned;
     row.innerHTML =
       '<div class="stats-head"><span class="stats-name">' + esc(name) + '</span>' +
       '<span class="stats-pct">' + pct + '%</span></div>' +
@@ -2579,10 +2587,10 @@
       shown++;
     });
     if (!shown) {
-      list.innerHTML = '<p class="stats-empty">まだ記録がありません。マスに書いて「できた○」を付けると、ここに育っていきます。</p>';
+      list.innerHTML = '<p class="stats-empty">まだ記録がありません。マスに書いて「完了○」を付けると、ここに育っていきます。</p>';
       return;
     }
-    if (shown > 1) list.appendChild(buildStatsRow('ぜんぶ', total, true));
+    if (shown > 1) list.appendChild(buildStatsRow('全部', total, true));
   }
 
   // ---- 計画と○✕記録の全書き出し（AIに貼って合格確率を計算させる用） ----
@@ -2595,7 +2603,7 @@
     var lines = [];
     lines.push('# 手ざわり計画表 — 学習記録の書き出し');
     lines.push('書き出し日: ' + todayIso + '（' + DOW[fromISO(todayIso).getDay()] + '）');
-    lines.push('記号: [○]=できた  [✕]=まだ（予定日を過ぎた）  [ ]=これからの予定');
+    lines.push('記号: [○]=完了  [✕]=未完了（予定日を過ぎた）  [ ]=これからの予定');
     lines.push('');
 
     // 試験情報
@@ -2619,11 +2627,11 @@
       anyStat = true;
       totalP += st.planned; totalD += st.done;
       var pct = st.planned ? Math.round(st.done / st.planned * 100) : 0;
-      lines.push('- ' + s.name + '：' + pct + '%（できた ' + st.done + ' / 予定 ' + st.planned + '）');
+      lines.push('- ' + s.name + '：' + pct + '%（完了 ' + st.done + ' / 予定 ' + st.planned + '）');
     });
     if (anyStat) {
       var totalPct = totalP ? Math.round(totalD / totalP * 100) : 0;
-      lines.push('- ぜんぶ：' + totalPct + '%（できた ' + totalD + ' / 予定 ' + totalP + '）');
+      lines.push('- 全部：' + totalPct + '%（完了 ' + totalD + ' / 予定 ' + totalP + '）');
     } else {
       lines.push('（まだ記録がありません）');
     }
@@ -2979,6 +2987,16 @@
       img.src = URL.createObjectURL(file);
     });
   }
+  var subjectBaseline = null;   // 教材モーダルを開いた時点の内容（保存ボタンの出し分けに使う）
+  // 名前か表紙が開いたときと変わっていれば true。並び替えはその場で保存済みなので数えない
+  function subjectDirty() {
+    if (!subjectBaseline) return false;
+    var name = document.getElementById('subjectName').value.trim();
+    return name !== subjectBaseline.name || (pendingCover || null) !== (subjectBaseline.cover || null);
+  }
+  function updateSubjectSaveBtn() {
+    document.getElementById('subjectSave').style.display = subjectDirty() ? '' : 'none';
+  }
   function updateCoverPreview() {
     var box = document.getElementById('coverPreview');
     var empty = document.getElementById('coverPreviewEmpty');
@@ -2993,6 +3011,7 @@
       empty.style.display = '';
       document.getElementById('coverRemoveBtn').style.display = 'none';
     }
+    updateSubjectSaveBtn();   // 表紙を選んだ／外した直後にも保存ボタンの出し入れを合わせる
   }
   document.getElementById('coverPickBtn').addEventListener('click', function () {
     document.getElementById('coverFileInput').value = '';
@@ -3008,9 +3027,13 @@
   function openSubjectModal(subject) {
     editingSubject = subject;
     pendingCover = subject && subject.cover || null;
+    // 開いた時点の内容を控えておく。何も変えていないなら「保存」は出さず、
+    // 「閉じる」だけで済ませる（押さなくていいボタンを見せないため）
+    subjectBaseline = { name: subject ? subject.name : '', cover: pendingCover };
     updateCoverPreview();
     document.getElementById('subjectModalTitle').textContent = subject ? tx('subjectEdit') : tx('subjectAdd');
     document.getElementById('subjectName').value = subject ? subject.name : '';
+    updateSubjectSaveBtn();   // 名前を入れ終えてから判定する（入れる前だと前回の値で誤判定する）
     document.getElementById('subjectDelete').style.display = subject ? '' : 'none';
     // バーコードで入れるのは「新規追加」のときだけ（教材の身元が既に決まっている編集時は無意味）。
     // 代わりに「既存の教材を編集」のときだけ、その教材専用の細かい計画表を開くボタンを出す
@@ -3045,7 +3068,9 @@
   }
   document.getElementById('subjectMoveLeft').addEventListener('click', function () { if (editingSubject) moveSubject(editingSubject.id, -1); });
   document.getElementById('subjectMoveRight').addEventListener('click', function () { if (editingSubject) moveSubject(editingSubject.id, 1); });
-  function closeSubjectModal() { subjectModal.style.display = 'none'; editingSubject = null; }
+  // 名前を打つそばから「保存」の出し入れを合わせる（入れ直して元通りにしたら、また引っ込む）
+  document.getElementById('subjectName').addEventListener('input', updateSubjectSaveBtn);
+  function closeSubjectModal() { subjectModal.style.display = 'none'; editingSubject = null; subjectBaseline = null; }
   document.getElementById('subjectSave').addEventListener('click', function () {
     var name = document.getElementById('subjectName').value.trim();
     if (!name) { closeSubjectModal(); return; }
@@ -3206,11 +3231,11 @@
       rowDelBtn.type = 'button';
       rowDelBtn.className = 'detail-row-del';
       rowDelBtn.textContent = '✕';
-      rowDelBtn.setAttribute('aria-label', 'この行をけす');
+      rowDelBtn.setAttribute('aria-label', 'この行を消す');
       rowDelBtn.addEventListener('click', function () {
         // 消すと入れた日付とメインのマスの項目まで消えるので、必ず確認してから
         var name = (row.label || '').trim();
-        if (!confirm((name ? '「' + name + '」の行' : 'この行') + 'を本当に消しますか？\n入れた日付と、メインの表にできた項目も消えます。')) return;
+        if (!confirm((name ? '「' + name + '」の行' : 'この行') + 'を本当に消しますか？\n入れた日付と、メインの表に作られた項目も消えます。')) return;
         // 行を消す前に、その行がメインに作った項目を「削除予定」として書き留めてから
         // 計画表を保存する。こうすればメイン側の削除が失敗しても消し残しを識別でき、
         // 次回の照合が片付けられる（手書き項目と区別がつかなくなるのを防ぐ）
@@ -4067,7 +4092,7 @@
       if (!vaultOn()) {
         st.textContent = 'いまはオフです。オンにすると、書くたびに中身をサーバーへ自動で預け、アプリを消しても復元コードで戻せます。';
         onBox.style.display = 'none';
-        toggle.textContent = '自動バックアップをはじめる';
+        toggle.textContent = '自動バックアップを始める';
         return;
       }
       var at = parseInt(localStorage.getItem('pk:vaultAt') || '0', 10);
@@ -4076,7 +4101,7 @@
         : '書くたびに自動でサーバーへ預けます（まだ預けていません。何か書くと始まります）。';
       onBox.style.display = '';
       document.getElementById('vaultCodeShow').textContent = vaultCode();
-      toggle.textContent = '自動バックアップをやめる';
+      toggle.textContent = '自動バックアップを止める';
     }
     document.getElementById('vaultCopyBtn').addEventListener('click', function () {
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(vaultCode()).catch(function () {});
@@ -4085,14 +4110,14 @@
     document.getElementById('vaultToggleBtn').addEventListener('click', function () {
       var wasOn = vaultOn();   // 切替後は状態が変わるので、押す前の状態で合図の文言を決める
       if (wasOn) {
-        if (!confirm('自動バックアップをやめますか？\nサーバーに預けた分は残りますが、以後は更新されません。')) return;
+        if (!confirm('自動バックアップを止めますか？\nサーバーに預けた分は残りますが、以後は更新されません。')) return;
         localStorage.setItem('pk:vaultOff', '1');
       } else {
         localStorage.removeItem('pk:vaultOff');
         vaultPushSoon();
       }
       renderVaultSection();
-      flashSaved(wasOn ? '自動バックアップをやめました' : '自動バックアップを始めました');
+      flashSaved(wasOn ? '自動バックアップを止めました' : '自動バックアップを始めました');
     });
     document.getElementById('vaultRestoreBtn').addEventListener('click', function () {
       var v = (document.getElementById('vaultRestoreInput').value || '').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
@@ -4178,7 +4203,7 @@
       bar.className = 'backup-nudge';
       bar.innerHTML =
         '<span class="backup-nudge-text">計画はこの端末の中だけにあります。ときどき「ひかえ」をファイルに保存しておくと、機種変や万一の消失でも戻せます。</span>' +
-        '<span class="backup-nudge-btns"><button type="button" class="backup-nudge-open">設定をひらく</button><button type="button" class="backup-nudge-later">あとで</button></span>';
+        '<span class="backup-nudge-btns"><button type="button" class="backup-nudge-open">設定を開く</button><button type="button" class="backup-nudge-later">後で</button></span>';
       document.body.appendChild(bar);
       function dismiss() {
         localStorage.setItem('pk:backupNudgeAt', String(Date.now()));
