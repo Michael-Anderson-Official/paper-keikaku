@@ -883,8 +883,35 @@
     background: none;
     color: var(--sun);
     font-size: 13px;
-    padding: 6px 8px;
+    padding: 6px 6px;
     cursor: pointer;
+  }
+  /* 並べ替え（▲▼）と ✕ は「編集」を押しているあいだだけ出す。
+     ふだんは列ごと消えるので表が細くなり、日付を触るときに✕を誤タップしない */
+  .detail-table .detail-row-ops,
+  .detail-table .detail-row-del-cell { display: none; }
+  .detail-table.is-editing .detail-row-ops,
+  .detail-table.is-editing .detail-row-del-cell { display: table-cell; }
+  .detail-table .detail-row-move {
+    width: 22px;
+    padding: 5px 0;
+    font-family: inherit;
+    font-size: 10px;
+    color: #4a4030;
+    background: linear-gradient(180deg, #f3ecd9, #e7dfc8);
+    border: 1px solid rgba(120, 100, 60, 0.35);
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .detail-table .detail-row-move + .detail-row-move { margin-left: 2px; }
+  .detail-table .detail-row-move:active { transform: translateY(1px); }
+  .detail-table .detail-row-move:disabled { opacity: 0.3; cursor: default; }
+  /* 「＋行を追加」と「編集」を横に並べる */
+  .detail-plan-tools { display: flex; gap: 8px; }
+  .detail-plan-tools .cell-add-item { flex: 1; width: auto; }
+  .cell-add-item.is-on {
+    background: linear-gradient(180deg, #e0d4ae, #cfc199);
+    border-color: rgba(120, 100, 60, 0.5);
   }
   .cell-add-item:active { transform: translateY(1px); }
   .modal-btns { display: flex; gap: 8px; margin-top: 14px; align-items: center; }
@@ -1513,14 +1540,17 @@
 <div id="detailPlanModal" class="settings-modal" style="display:none;">
   <div class="settings-card">
     <h2 id="detailPlanTitle"></h2>
-    <p class="settings-note" style="margin-top:0;">行は自由に追加できます。列は1〜5回目の復習で、日付はすべて自分で入れます。日付を入れると、その日のマスに「行名（○回目）」が済んだ項目として入ります。</p>
+    <p class="settings-note" style="margin-top:0;">行は自由に追加できます。列は1〜5回目の復習で、日付はすべて自分で入れます。日付を入れると、その日のマスに「行名（○回目）」が済んだ項目として入ります。行の並べ替えと削除は「編集」を押すと出てきます。</p>
     <div class="detail-table-wrap">
-      <table class="detail-table">
+      <table class="detail-table" id="detailTable">
         <thead id="detailTableHead"></thead>
         <tbody id="detailTableBody"></tbody>
       </table>
     </div>
-    <button type="button" id="detailAddRowBtn" class="cell-add-item">＋ 行を追加</button>
+    <div class="detail-plan-tools">
+      <button type="button" id="detailAddRowBtn" class="cell-add-item">＋ 行を追加</button>
+      <button type="button" id="detailEditBtn" class="cell-add-item" aria-pressed="false">✎ 編集</button>
+    </div>
     <div class="modal-btns">
       <span class="spacer"></span>
       <button class="primary" id="detailPlanClose">とじる</button>
@@ -3042,10 +3072,21 @@
   var detailPlanModal = document.getElementById('detailPlanModal');
   var detailTableHead = document.getElementById('detailTableHead');
   var detailTableBody = document.getElementById('detailTableBody');
+  var detailTable = document.getElementById('detailTable');
+  var detailEditBtn = document.getElementById('detailEditBtn');
   var detailSubjectId = null;
+  var detailEditMode = false;      // 編集中だけ、行の並べ替えと ✕ を出す
+  function setDetailEditMode(on) {
+    detailEditMode = !!on;
+    detailTable.classList.toggle('is-editing', detailEditMode);
+    detailEditBtn.classList.toggle('is-on', detailEditMode);
+    detailEditBtn.setAttribute('aria-pressed', detailEditMode ? 'true' : 'false');
+    detailEditBtn.textContent = detailEditMode ? '✓ 完了' : '✎ 編集';
+  }
   function openDetailPlanModal(subject) {
     detailSubjectId = subject.id;
     document.getElementById('detailPlanTitle').textContent = subject.name;
+    setDetailEditMode(false);      // 開いたときは必ずふつうの表示から
     renderDetailTable();
     detailPlanModal.style.display = 'flex';
   }
@@ -3072,7 +3113,12 @@
       th.textContent = col.label;
       headTr.appendChild(th);
     });
-    headTr.appendChild(document.createElement('th'));
+    var thOps = document.createElement('th');
+    thOps.className = 'detail-row-ops';
+    headTr.appendChild(thOps);
+    var thDel = document.createElement('th');
+    thDel.className = 'detail-row-del-cell';
+    headTr.appendChild(thDel);
     detailTableHead.innerHTML = '';
     detailTableHead.appendChild(headTr);
 
@@ -3129,13 +3175,31 @@
         td.appendChild(dateWrap);
         tr.appendChild(td);
       });
+      // 行の並べ替え（▲▼）。編集中だけ見える
+      var tdOps = document.createElement('td');
+      tdOps.className = 'detail-row-ops';
+      [['▲', -1, '上へ'], ['▼', 1, '下へ']].forEach(function (m) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'detail-row-move';
+        b.textContent = m[0];
+        b.setAttribute('aria-label', 'この行を' + m[2]);
+        b.disabled = (m[1] < 0) ? (idx === 0) : (idx === data.rows.length - 1);
+        b.addEventListener('click', function () { moveDetailRow(idx, m[1]); });
+        tdOps.appendChild(b);
+      });
+      tr.appendChild(tdOps);
       var tdDel = document.createElement('td');
+      tdDel.className = 'detail-row-del-cell';
       var rowDelBtn = document.createElement('button');
       rowDelBtn.type = 'button';
       rowDelBtn.className = 'detail-row-del';
       rowDelBtn.textContent = '✕';
       rowDelBtn.setAttribute('aria-label', 'この行をけす');
       rowDelBtn.addEventListener('click', function () {
+        // 消すと入れた日付とメインのマスの項目まで消えるので、必ず確認してから
+        var name = (row.label || '').trim();
+        if (!confirm((name ? '「' + name + '」の行' : 'この行') + 'を本当に消しますか？\n入れた日付と、メインの表にできた項目も消えます。')) return;
         // 行を消す前に、その行がメインに作った項目を「削除予定」として書き留めてから
         // 計画表を保存する。こうすればメイン側の削除が失敗しても消し残しを識別でき、
         // 次回の照合が片付けられる（手書き項目と区別がつかなくなるのを防ぐ）
@@ -3161,6 +3225,18 @@
       detailTableBody.appendChild(tr);
     });
   }
+  // 行の入れ替え。行の順番はメイン（日別グリッド）の項目とは結び付いていない
+  // （結び付きは cell.itemId と日付なので）ため、計画表だけ保存すれば済む
+  function moveDetailRow(idx, dir) {
+    if (!detailSubjectId) return;
+    var data = readDetail(detailSubjectId);
+    var j = idx + dir;
+    if (idx < 0 || idx >= data.rows.length || j < 0 || j >= data.rows.length) return;
+    var tmp = data.rows[idx]; data.rows[idx] = data.rows[j]; data.rows[j] = tmp;
+    if (!saveDetailOrWarn(detailSubjectId, data)) { renderDetailTable(); return; }   // 保存済みの内容に戻す
+    renderDetailTable();
+    flashSaved('並べ替えました');
+  }
   // 計画表の保存に失敗（端末の容量不足など）したときは黙って進めず知らせる。
   // メイン側だけ変わって計画表が古いまま残っても、次に開いたときの照合で計画表を正として
   // 戻すので食い違いは残らない。ユーザーには「保存できていない」ことを伝える。
@@ -3182,6 +3258,7 @@
     var last = inputs[inputs.length - 1];
     if (last) last.focus();
   });
+  detailEditBtn.addEventListener('click', function () { setDetailEditMode(!detailEditMode); });
   document.getElementById('detailPlanClose').addEventListener('click', closeDetailPlanModal);
   detailPlanModal.addEventListener('click', function (e) { if (e.target === detailPlanModal) closeDetailPlanModal(); });
 
