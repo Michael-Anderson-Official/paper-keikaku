@@ -2209,7 +2209,10 @@
       // （日付・行名・行の追加や削除・並べ替えのそれぞれで呼び忘れる心配がない）
       updateDetailSaveBtn();
       return true;
-    } catch (e) { return false; }
+    } catch (e) {
+      updateDetailSaveBtn();   // 書けなかったときも、いまの中身に合わせて出し入れを直す
+      return false;
+    }
   }
   // 細かい計画表のセルに日付を書く／変える／消すと、メイン(日別グリッド)の該当日のマスにも
   // 「行ラベル（列ラベル回目）」という項目として書き込む・移動する・消す。初めて書くときは
@@ -3068,6 +3071,9 @@
   var subjectModal = document.getElementById('subjectModal');
   var reorderRow = document.getElementById('subjectReorder');
   var pendingCover = null; // このモーダルで設定中の表紙（dataURL）
+  // 表紙と書名は裏で取りに行くので、選び直すと応答が前後することがある。
+  // 何番目の依頼かを控えて、いちばん新しいものだけを採る
+  var coverSeq = 0, titleSeq = 0;
 
   // 選んだ画像を小さく縮めてJPEGのdataURLに（端末内保存・オフライン表示のため）
   function imageToCoverDataURL(file) {
@@ -3130,10 +3136,14 @@
     if (!file) return;
     // 読み込んでいる間にモーダルを閉じたり別の教材へ移ったりしたら、その画像は捨てる。
     // 捨てないと、教材Aで選んだ表紙が、開き直した教材Bに付いてしまう。
-    // subjectBaseline は開くたびに作り直すので、同じ物かどうかで見分けられる
+    // subjectBaseline は開くたびに作り直すので、同じ物かどうかで見分けられる。
+    // ただし同じ教材の中で選び直したときは baseline が変わらないので見分けられない。
+    // 連番も見て、あとから選んだほうが必ず勝つようにする（先に選んだ重い画像が
+    // 遅れて届いて、選び直した新しい表紙を上書きするのを防ぐ）
     var openedFor = subjectBaseline;
+    var mySeq = ++coverSeq;
     imageToCoverDataURL(file).then(function (url) {
-      if (subjectBaseline !== openedFor) return;
+      if (subjectBaseline !== openedFor || mySeq !== coverSeq) return;
       pendingCover = url; updateCoverPreview();
     }).catch(function () {});
   });
@@ -3570,13 +3580,16 @@
     // 捨てないと、読み取った書名や表紙が別の教材に入ってしまう
     // （subjectBaseline は教材モーダルを開くたびに作り直すので、同じ物かどうかで見分けられる）
     var openedFor = subjectBaseline;
+    // 別の本を続けて読ませたときにも、あとの照会が勝つようにする（表紙とファイル選択は
+    // 同じ連番を分け合うので、手で選んだ表紙が古い照会に奪われることもない）
+    var myCover = ++coverSeq, myTitle = ++titleSeq;
     // 表紙は裏で取りに行く（見つかれば教材モーダルのプレビューに自動で入る。手動で選んでいたら上書きしない）
     lookupCover(isbn).then(function (cover) {
-      if (subjectBaseline !== openedFor) return;
+      if (subjectBaseline !== openedFor || myCover !== coverSeq) return;
       if (cover && !pendingCover) { pendingCover = cover; updateCoverPreview(); }
     });
     lookupIsbn(isbn).then(function (title) {
-      if (subjectBaseline !== openedFor) { scanBusy = false; return; }
+      if (subjectBaseline !== openedFor || myTitle !== titleSeq) { scanBusy = false; return; }
       if (title) {
         stopCamera();
         setSubjectNameField(title.slice(0, 60));
